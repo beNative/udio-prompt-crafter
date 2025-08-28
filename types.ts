@@ -24,11 +24,13 @@ export type Taxonomy = Category[];
 export interface SelectedTag extends Tag {
   weight: number;
   categoryId: string;
+  impliedBy?: string; // ID of the tag that implied this one
+  implyingTagLabel?: string; // Label of the tag that implied this one
 }
 
 export interface Preset {
   name:string;
-  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'emoji'>>;
+  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'emoji' | 'impliedBy' | 'implyingTagLabel'>>;
   categoryOrder: string[];
 }
 

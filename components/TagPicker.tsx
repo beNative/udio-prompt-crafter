@@ -6,7 +6,6 @@ import { TagChip } from './TagChip';
 interface TagPickerProps {
   category: Category | undefined;
   selectedTags: Record<string, SelectedTag>;
-  suggestedTagIds: Set<string>;
   onToggleTag: (tag: Tag) => void;
   onWeightChange: (tagId: string, weight: number) => void;
   textCategoryValues: Record<string, string>;
@@ -16,7 +15,6 @@ interface TagPickerProps {
 export const TagPicker: React.FC<TagPickerProps> = ({ 
     category, 
     selectedTags, 
-    suggestedTagIds, 
     onToggleTag, 
     onWeightChange,
     textCategoryValues,
@@ -71,17 +69,24 @@ export const TagPicker: React.FC<TagPickerProps> = ({
       />
       <div className="flex-grow overflow-y-auto pr-2">
         <div className="flex flex-wrap gap-3">
-          {filteredTags.map((tag) => (
-            <TagChip
-              key={tag.id}
-              tag={tag}
-              isSelected={!!selectedTags[tag.id]}
-              weight={selectedTags[tag.id]?.weight || 1}
-              onToggle={onToggleTag}
-              onWeightChange={onWeightChange}
-              isSuggested={suggestedTagIds.has(tag.id)}
-            />
-          ))}
+          {filteredTags.map((tag) => {
+            const selection = selectedTags[tag.id];
+            const isSelected = !!selection;
+            const isImplied = isSelected && !!selection.impliedBy;
+
+            return (
+              <TagChip
+                key={tag.id}
+                tag={tag}
+                isSelected={isSelected}
+                weight={selection?.weight || 1}
+                onToggle={onToggleTag}
+                onWeightChange={onWeightChange}
+                isImplied={isImplied}
+                implyingTagLabel={selection?.implyingTagLabel}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

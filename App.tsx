@@ -37,9 +37,29 @@ const App: React.FC = () => {
   const handleToggleTag = useCallback((tag: Tag) => {
     setSelectedTags(prev => {
       const newSelected = { ...prev };
-      if (newSelected[tag.id]) {
+      const isCurrentlySelected = !!newSelected[tag.id];
+
+      if (isCurrentlySelected) {
+        // --- REMOVAL LOGIC ---
+        const removedTag = newSelected[tag.id];
         delete newSelected[tag.id];
+
+        if (removedTag?.implies) {
+          removedTag.implies.forEach(impliedId => {
+            const impliedTag = newSelected[impliedId];
+            if (impliedTag && impliedTag.impliedBy) {
+              const isStillImplied = Object.values(newSelected).some(
+                t => t.implies?.includes(impliedId)
+              );
+              if (!isStillImplied) {
+                delete newSelected[impliedId];
+              }
+            }
+          });
+        }
+
       } else {
+        // --- ADDITION LOGIC ---
         const categoryId = taxonomyMap.get(tag.id)?.categoryId;
         if (categoryId) {
           newSelected[tag.id] = { ...tag, categoryId, weight: tag.default_weight || 1 };
@@ -48,7 +68,12 @@ const App: React.FC = () => {
               if (!newSelected[impliedId]) {
                  const impliedTag = taxonomyMap.get(impliedId);
                  if (impliedTag) {
-                     newSelected[impliedId] = { ...impliedTag, weight: impliedTag.default_weight || 1 };
+                     newSelected[impliedId] = { 
+                       ...impliedTag, 
+                       weight: impliedTag.default_weight || 1,
+                       impliedBy: tag.id,
+                       implyingTagLabel: tag.label
+                     };
                  }
               }
           });
@@ -77,11 +102,30 @@ const App: React.FC = () => {
               newSelectedTags[tagId] = { ...fullTag, weight: weights[tagId] || fullTag.default_weight || 1 };
           }
       });
-      setSelectedTags(newSelectedTags);
+      
+      const tagsToAddFromImplications: Record<string, SelectedTag> = {};
+      Object.values(newSelectedTags).forEach(tag => {
+          tag.implies?.forEach(impliedId => {
+              if (!newSelectedTags[impliedId] && !tagsToAddFromImplications[impliedId]) {
+                  const impliedTag = taxonomyMap.get(impliedId);
+                  if (impliedTag) {
+                      tagsToAddFromImplications[impliedId] = {
+                          ...impliedTag,
+                          weight: impliedTag.default_weight || 1,
+                          impliedBy: tag.id,
+                          implyingTagLabel: tag.label,
+                      };
+                  }
+              }
+          });
+      });
+      
+      setSelectedTags({ ...newSelectedTags, ...tagsToAddFromImplications });
   };
 
   const handleApplyMacro = (macro: Macro) => {
     loadTagsFromList(macro.tags);
+    setTextCategoryValues({});
   };
 
   const handleLoadPreset = (preset: Preset) => {
@@ -92,7 +136,26 @@ const App: React.FC = () => {
         newSelectedTags[tagId] = { ...fullTag, ...data };
       }
     });
-    setSelectedTags(newSelectedTags);
+
+    const tagsToAddFromImplications: Record<string, SelectedTag> = {};
+    Object.values(newSelectedTags).forEach(tag => {
+        tag.implies?.forEach(impliedId => {
+            if (!newSelectedTags[impliedId] && !tagsToAddFromImplications[impliedId]) {
+                const impliedTag = taxonomyMap.get(impliedId);
+                if (impliedTag) {
+                    tagsToAddFromImplications[impliedId] = {
+                        ...impliedTag,
+                        weight: impliedTag.default_weight || 1,
+                        impliedBy: tag.id,
+                        implyingTagLabel: tag.label,
+                    };
+                }
+            }
+        });
+    });
+
+    setSelectedTags({ ...newSelectedTags, ...tagsToAddFromImplications });
+    setTextCategoryValues({});
     setCategories(prevCategories => {
         const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
         const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter(Boolean) as Category[];
@@ -106,7 +169,10 @@ const App: React.FC = () => {
     if (name) {
       const selectedTagsForPreset: Preset['selectedTags'] = {};
       Object.entries(selectedTags).forEach(([id, tag]) => {
-          selectedTagsForPreset[id] = { categoryId: tag.categoryId, weight: tag.weight };
+          // Only save manually selected tags to presets
+          if (!tag.impliedBy) {
+            selectedTagsForPreset[id] = { categoryId: tag.categoryId, weight: tag.weight };
+          }
       });
 
       const newPreset: Preset = {
@@ -126,7 +192,26 @@ const App: React.FC = () => {
             newSelected[randomTag.id] = { ...randomTag, categoryId: category.id, weight: 1.0 };
         }
     });
-    setSelectedTags(newSelected);
+
+    const tagsToAddFromImplications: Record<string, SelectedTag> = {};
+    Object.values(newSelected).forEach(tag => {
+        tag.implies?.forEach(impliedId => {
+            if (!newSelected[impliedId] && !tagsToAddFromImplications[impliedId]) {
+                const impliedTag = taxonomyMap.get(impliedId);
+                if (impliedTag) {
+                    tagsToAddFromImplications[impliedId] = {
+                        ...impliedTag,
+                        weight: impliedTag.default_weight || 1,
+                        impliedBy: tag.id,
+                        implyingTagLabel: tag.label,
+                    };
+                }
+            }
+        });
+    });
+
+    setSelectedTags({ ...newSelected, ...tagsToAddFromImplications });
+    setTextCategoryValues({});
   };
 
   const handleClear = () => {
@@ -147,9 +232,8 @@ const App: React.FC = () => {
     return counts;
   }, [selectedTags, textCategoryValues]);
 
-  const { conflicts, suggestedTagIds } = useMemo(() => {
+  const conflicts = useMemo(() => {
     const newConflicts: Conflict[] = [];
-    const newSuggestions = new Set<string>();
     const selectedList = Object.values(selectedTags);
 
     for (const tagA of selectedList) {
@@ -163,15 +247,8 @@ const App: React.FC = () => {
                 }
             }
         }
-        if (tagA.implies) {
-            for (const impliedId of tagA.implies) {
-                if (!selectedTags[impliedId]) {
-                    newSuggestions.add(impliedId);
-                }
-            }
-        }
     }
-    return { conflicts: newConflicts, suggestedTagIds: newSuggestions };
+    return newConflicts;
   }, [selectedTags]);
 
   return (
@@ -201,7 +278,6 @@ const App: React.FC = () => {
           <TagPicker
             category={activeCategory}
             selectedTags={selectedTags}
-            suggestedTagIds={suggestedTagIds}
             onToggleTag={handleToggleTag}
             onWeightChange={handleWeightChange}
             textCategoryValues={textCategoryValues}
