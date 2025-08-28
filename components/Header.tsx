@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Preset, Macro } from '../types';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -13,9 +14,10 @@ interface HeaderProps {
   onSavePreset: () => void;
   onRandomize: () => void;
   onClear: () => void;
+  onOpenCommandPalette: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
   const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
@@ -23,6 +25,11 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
     <header className="bg-bunker-50 dark:bg-bunker-900 text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200 dark:border-bunker-800 shadow-md shrink-0">
       <h1 className="text-xl font-bold">UDIO Prompt Crafter</h1>
       <div className="flex items-center space-x-2">
+        <Tooltip text={<>Open Command Palette <kbd className="ml-2 px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">Ctrl</kbd>+<kbd className="px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">;</kbd></>}>
+          <button onClick={onOpenCommandPalette} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700">
+              <Icon name="search" className="w-5 h-5" />
+          </button>
+        </Tooltip>
         <div className="relative">
           <button
             onClick={() => setIsMacroDropdownOpen(!isMacroDropdownOpen)}

@@ -9,6 +9,7 @@ import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
 import { PromptPreview } from './components/PromptPreview';
 import { ConflictResolutionModal } from './components/ConflictResolutionModal';
+import { CommandPalette } from './components/CommandPalette';
 
 const taxonomyMap = new Map<string, Tag & { categoryId: string }>();
 starterTaxonomy.forEach(cat => cat.tags.forEach(tag => taxonomyMap.set(tag.id, { ...tag, categoryId: cat.id })));
@@ -29,11 +30,25 @@ const App: React.FC = () => {
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
   const [udioParams, setUDIOParams] = useState<UDIOParams>({ promptStrength: 94, remixDifference: 0.75 });
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === ';') {
+        event.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
@@ -317,6 +332,8 @@ const App: React.FC = () => {
     return newConflicts;
   }, [selectedTags]);
 
+  const allTags = useMemo(() => starterTaxonomy.flatMap(c => c.tags), []);
+
   return (
     <div className="h-screen w-screen flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
       <Header 
@@ -329,6 +346,7 @@ const App: React.FC = () => {
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
       <main className="flex-grow grid grid-cols-12 min-h-0">
         <div className="col-span-3 border-r border-bunker-200 dark:border-bunker-800">
@@ -366,6 +384,19 @@ const App: React.FC = () => {
           onResolve={handleResolveConflict}
         />
       )}
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        tags={allTags}
+        presets={presets}
+        macros={starterMacros}
+        onToggleTag={handleToggleTag}
+        onLoadPreset={handleLoadPreset}
+        onApplyMacro={handleApplyMacro}
+        onSavePreset={handleSavePreset}
+        onRandomize={handleRandomize}
+        onClear={handleClear}
+      />
     </div>
   );
 };

@@ -22,6 +22,7 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     grip: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l.01 0M9 8l.01 0M9 11l.01 0M12 5l.01 0M12 8l.01 0M12 11l.01 0M15 5l.01 0M15 8l.01 0M15 11l.01 0M5 5h.01M5 8h.01M5 11h.01M5 14h.01M5 17h.01M9 14l.01 0M9 17l.01 0M12 14l.01 0M12 17l.01 0M15 14l.01 0M15 17l.01 0M19 5h.01M19 8h.01M19 11h.01M19 14h.01M19 17h.01" />,
     warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />,
     wandSparkles: <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />,
+    search: <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />,
   };
 
   return (
