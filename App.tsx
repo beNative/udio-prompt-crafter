@@ -3,7 +3,7 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterTaxonomy } from './data/taxonomy';
 import { starterPresets } from './data/presets';
 import { starterMacros } from './data/macros';
-import type { Tag, Category, SelectedTag, Preset, Conflict, UDIOParams, Macro } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Macro } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -28,7 +28,6 @@ const App: React.FC = () => {
   const [activeCategoryId, setActiveCategoryId] = useState<string>(starterTaxonomy[0].id);
   const [selectedTags, setSelectedTags] = useState<Record<string, SelectedTag>>({});
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
-  const [udioParams, setUDIOParams] = useState<UDIOParams>({ promptStrength: 94, remixDifference: 0.75 });
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
@@ -358,7 +357,7 @@ const App: React.FC = () => {
             onCategoryOrderChange={handleCategoryOrderChange}
           />
         </div>
-        <div className="col-span-5">
+        <div className="col-span-5 overflow-y-auto">
           <TagPicker
             category={activeCategory}
             selectedTags={selectedTags}
@@ -373,8 +372,6 @@ const App: React.FC = () => {
             selectedTags={selectedTags}
             textCategoryValues={textCategoryValues}
             conflicts={conflicts}
-            udioParams={udioParams}
-            onUDIOParamsChange={setUDIOParams}
           />
         </div>
       </main>

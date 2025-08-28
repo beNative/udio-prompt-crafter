@@ -36,11 +36,6 @@ export interface Conflict {
   tagB: Tag;
 }
 
-export interface UDIOParams {
-    promptStrength: number;
-    remixDifference: number;
-}
-
 export interface Macro {
     name: string;
     description: string;

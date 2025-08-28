@@ -232,8 +232,8 @@ export const starterTaxonomy: Taxonomy = [
       { id: 'i_piano', label: 'Piano', description: 'Acoustic or electric piano for melody or chords.', color: 'gray' },
       { id: 'i_harpsichord', label: 'Harpsichord', description: 'A historical keyboard instrument with a distinctive plucked string sound.', color: 'gray' },
       // Guitars
-      { id: 'i_acoustic_guitar', label: 'Acoustic Guitar', description: 'The sound of an acoustic guitar.', conflictsWith: ['neg_no_guitars'], color: 'green' },
-      { id: 'i_electric_guitar', label: 'Electric Guitar', description: 'The sound of an electric guitar, can be clean or distorted.', conflictsWith: ['neg_no_guitars'], color: 'green' },
+      { id: 'i_acoustic_guitar', label: 'Acoustic Guitar', description: 'The sound of an acoustic guitar.', color: 'green' },
+      { id: 'i_electric_guitar', label: 'Electric Guitar', description: 'The sound of an electric guitar, can be clean or distorted.', color: 'green' },
       // Orchestral
       { id: 'i_strings', label: 'Strings', description: 'Violins, cellos, etc., either acoustic or synthesized.', color: 'indigo' },
       { id: 'i_brass_section', label: 'Brass Section', description: 'Trumpets, trombones, horns, etc.', color: 'indigo' },
@@ -249,7 +249,7 @@ export const starterTaxonomy: Taxonomy = [
       // World
       { id: 'i_sitar', label: 'Sitar', description: 'A plucked stringed instrument originating from the Indian subcontinent.', color: 'orange' },
       // Tech
-      { id: 'i_drum_machine', label: 'Drum Machine', description: 'Programmed, electronic percussion.', conflictsWith: ['neg_no_drums'], color: 'teal' },
+      { id: 'i_drum_machine', label: 'Drum Machine', description: 'Programmed, electronic percussion.', color: 'teal' },
       { id: 'i_sampler', label: 'Sampler', description: 'An electronic instrument that uses sound recordings (samples) as a source.', color: 'teal' },
     ],
   },
@@ -268,9 +268,9 @@ export const starterTaxonomy: Taxonomy = [
       { id: 'cs_sq80', label: 'SQ-80', description: 'A late 80s digital/analog hybrid synth known for its gritty and unique character.', implies: ['i_synthesizer'], color: 'blue' },
       { id: 'cs_cs80', label: 'CS-80', description: 'Iconic Yamaha poly-synth, famous for its expressive controls and the "Blade Runner" sound.', implies: ['i_synthesizer'], color: 'blue' },
       { id: 'cs_303', label: 'TB-303', description: 'The source of the "acid" sound with its squelchy, resonant filter.', implies: ['i_synthesizer', 't_acidline'], color: 'purple' },
-      { id: 'cs_808', label: 'TR-808', description: 'The legendary drum machine with deep kicks and snappy snares.', implies: ['i_drum_machine'], conflictsWith: ['neg_no_drums'], color: 'red' },
-      { id: 'cs_909', label: 'TR-909', description: 'The heartbeat of house and techno, known for its punchy kick and hi-hats.', implies: ['i_drum_machine'], conflictsWith: ['neg_no_drums'], color: 'red' },
-      { id: 'cs_linndrum', label: 'LinnDrum', description: 'An iconic 80s drum machine using sampled sounds, defining the sound of pop music of that era.', implies: ['i_drum_machine'], conflictsWith: ['neg_no_drums'], color: 'red' },
+      { id: 'cs_808', label: 'TR-808', description: 'The legendary drum machine with deep kicks and snappy snares.', implies: ['i_drum_machine'], color: 'red' },
+      { id: 'cs_909', label: 'TR-909', description: 'The heartbeat of house and techno, known for its punchy kick and hi-hats.', implies: ['i_drum_machine'], color: 'red' },
+      { id: 'cs_linndrum', label: 'LinnDrum', description: 'An iconic 80s drum machine using sampled sounds, defining the sound of pop music of that era.', implies: ['i_drum_machine'], color: 'red' },
     ],
   },
   {
@@ -287,7 +287,7 @@ export const starterTaxonomy: Taxonomy = [
       { id: 'p_saturation', label: 'Tape-like Saturation', description: 'Adds warmth, harmonics, and subtle compression.', color: 'yellow' },
       { id: 'p_gatedreverb', label: 'Gated Reverb', description: 'A classic 80s effect with a sharp reverb tail cutoff.', color: 'yellow' },
       { id: 'p_warm', label: 'Warm / Analog', description: 'Rich low-mids, smooth highs, often with saturation.', implies: ['st_warm'], color: 'yellow' },
-      { id: 'p_wide', label: 'Wide Stereo Image', description: 'Sounds are spread far to the left and right.', conflictsWith: ['neg_mono_mix'], color: 'blue' },
+      { id: 'p_wide', label: 'Wide Stereo Image', description: 'Sounds are spread far to the left and right.', color: 'blue' },
       { id: 'p_dry_mix', label: 'Dry Mix', description: 'Few time-based effects like reverb or delay.', conflictsWith: ['p_wet_mix', 'p_ambient_reverb', 'p_reverb_heavy'], color: 'blue' },
       { id: 'p_wet_mix', label: 'Wet Mix', description: 'Heavy use of effects like reverb and delay.', conflictsWith: ['p_dry_mix'], implies: ['p_ambient_reverb'], color: 'blue' },
       { id: 'p_ambient_reverb', label: 'Ambient Reverb', description: 'Large, spacious reverb that creates a sense of atmosphere.', conflictsWith: ['p_dry_mix'], color: 'blue' },
@@ -342,19 +342,6 @@ export const starterTaxonomy: Taxonomy = [
     type: 'text',
     description: 'Enter a short concept or theme for the lyrics (e.g., "english lyrics about secrets", "storytelling", "empowerment"). This will be added to your prompt.',
     tags: [],
-  },
-  {
-    id: 'negative',
-    name: 'Negative/Avoid',
-    tags: [
-        { id: 'neg_no_guitars', label: '[NO GUITARS]', description: 'Explicitly exclude guitars from the track.', conflictsWith: ['i_acoustic_guitar', 'i_electric_guitar'], color: 'red' },
-        { id: 'neg_no_drums', label: '[NO DRUMS]', description: 'Explicitly exclude drums from the track.', conflictsWith: ['i_drum_machine', 'cs_808', 'cs_909', 'cs_linndrum'], color: 'red' },
-        { id: 'neg_muddy', label: 'Avoid muddy mix', description: 'Request a clean mix, avoiding frequency clashes in the low-mids.', color: 'red' },
-        { id: 'neg_harsh', label: 'Avoid harsh frequencies', description: 'Request a smooth high-end, avoiding piercing or sibilant sounds.', color: 'red' },
-        { id: 'neg_overcrowding', label: 'Avoid overcrowding', description: 'Request a sparse arrangement with space between elements.', conflictsWith: ['p_maximalist', 'p_layered'], color: 'red' },
-        { id: 'neg_mono_mix', label: 'Mono mix', description: 'Request a mix with no stereo width.', conflictsWith: ['p_wide'], color: 'red' },
-        { id: 'neg_soft_synths', label: '[soft synths]', description: 'NOTE: This is a positive prompt to EMPHASIZE soft synths, not a negative one.', color: 'green' },
-    ],
   },
   {
     id: 'references',

@@ -25,24 +25,34 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
 
   return (
     <div>
-      <div className="flex items-center space-x-2 py-1">
-        <div style={{ paddingLeft: `${level * 1.5}rem` }} className="flex items-center flex-grow">
+      <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,auto,1fr] items-center gap-x-4 py-1 pr-4">
+        {/* Column 1: Indentation and Chevron */}
+        <div style={{ paddingLeft: `${level * 1.5}rem` }} className="flex items-center">
           {hasChildren ? (
             <button onClick={() => setIsOpen(!isOpen)} className="p-1 rounded-full hover:bg-bunker-100 dark:hover:bg-bunker-800" aria-label={isOpen ? 'Collapse' : 'Expand'}>
               <Icon name="chevronRight" className={`w-4 h-4 text-bunker-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
             </button>
           ) : (
-            <div className="w-6" /> 
+            <div className="w-6" />
           )}
-          <div className="ml-2">
-            <TagChip
-              tag={node}
-              isSelected={isSelected}
-              onToggle={onToggleTag}
-              isImplied={isImplied}
-              implyingTagLabel={selection?.implyingTagLabel}
-            />
-          </div>
+        </div>
+
+        {/* Column 2: Tag Chip */}
+        <div>
+          <TagChip
+            tag={node}
+            isSelected={isSelected}
+            onToggle={onToggleTag}
+            isImplied={isImplied}
+            implyingTagLabel={selection?.implyingTagLabel}
+          />
+        </div>
+
+        {/* Column 3: Description */}
+        <div className="min-w-0 hidden md:block">
+          <p className="text-sm text-bunker-500 dark:text-bunker-400 truncate" title={node.description}>
+            {node.description}
+          </p>
         </div>
       </div>
       {isOpen && hasChildren && (

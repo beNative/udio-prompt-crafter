@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import type { SelectedTag, Conflict, UDIOParams } from '../types';
+import type { SelectedTag, Conflict } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
-import { UDIOParamsEditor } from './UDIOParams';
 
 interface PromptPreviewProps {
   orderedCategories: { id: string, name: string, type?: 'tags' | 'text' }[];
   selectedTags: Record<string, SelectedTag>;
   textCategoryValues: Record<string, string>;
   conflicts: Conflict[];
-  udioParams: UDIOParams;
-  onUDIOParamsChange: (params: UDIOParams) => void;
 }
 
 const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
@@ -34,7 +31,7 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
   );
 };
 
-export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts, udioParams, onUDIOParamsChange }) => {
+export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts }) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [activeTab, setActiveTab] = useState('prompt');
@@ -58,13 +55,12 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
 
     const json = {
       prompt: promptString,
-      udio_params: udioParams,
       tags: sortedTags.map(({ id, label, categoryId }) => ({ id, label, categoryId })),
       text_inputs: textCategoryValues,
       category_order: orderedCategories.map(c => c.id),
     };
     setJsonOutput(JSON.stringify(json, null, 2));
-  }, [selectedTags, orderedCategories, textCategoryValues, udioParams]);
+  }, [selectedTags, orderedCategories, textCategoryValues]);
 
   return (
     <div className="p-4 bg-bunker-50 dark:bg-bunker-900 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
@@ -107,9 +103,6 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
             </div>
           )}
         </div>
-      </div>
-      <div className="shrink-0 mt-4">
-        <UDIOParamsEditor params={udioParams} onChange={onUDIOParamsChange} />
       </div>
     </div>
   );
