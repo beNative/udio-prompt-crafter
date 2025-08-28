@@ -1,0 +1,25 @@
+
+import React, { useState } from 'react';
+
+interface TooltipProps {
+  children: React.ReactElement;
+  text: React.ReactNode;
+}
+
+export const Tooltip: React.FC<TooltipProps> = ({ children, text }) => {
+  const [visible, setVisible] = useState(false);
+
+  const showTooltip = () => setVisible(true);
+  const hideTooltip = () => setVisible(false);
+
+  return (
+    <div className="relative flex items-center" onMouseEnter={showTooltip} onMouseLeave={hideTooltip}>
+      {children}
+      {visible && text && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs p-2 bg-bunker-800 text-white text-xs rounded-md shadow-lg z-10 transition-opacity duration-200">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};

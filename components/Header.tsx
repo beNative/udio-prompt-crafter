@@ -1,0 +1,65 @@
+
+import React, { useState } from 'react';
+import type { Preset } from '../types';
+import { Icon } from './icons';
+
+interface HeaderProps {
+  theme: 'light' | 'dark';
+  presets: Preset[];
+  onToggleTheme: () => void;
+  onLoadPreset: (preset: Preset) => void;
+  onSavePreset: () => void;
+  onRandomize: () => void;
+  onClear: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ theme, presets, onToggleTheme, onLoadPreset, onSavePreset, onRandomize, onClear }) => {
+  const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
+
+  return (
+    <header className="bg-bunker-900 text-white p-3 flex items-center justify-between border-b border-bunker-800 shadow-md">
+      <h1 className="text-xl font-bold">UDIO Prompt Crafter</h1>
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <button
+            onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
+            className="px-4 py-2 bg-bunker-800 text-sm rounded-md hover:bg-bunker-700 flex items-center"
+          >
+            Presets <Icon name="chevronDown" className="w-4 h-4 ml-2" />
+          </button>
+          {isPresetDropdownOpen && (
+            <div className="absolute top-full mt-2 right-0 w-48 bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-700">
+              <ul>
+                {presets.map((preset) => (
+                  <li key={preset.name}>
+                    <button
+                      onClick={() => {
+                        onLoadPreset(preset);
+                        setIsPresetDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-bunker-200 hover:bg-blue-600 hover:text-white"
+                    >
+                      {preset.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <button onClick={onSavePreset} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700" title="Save Current as Preset">
+          <Icon name="save" className="w-5 h-5" />
+        </button>
+        <button onClick={onRandomize} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700" title="Randomize">
+          <Icon name="sparkles" className="w-5 h-5" />
+        </button>
+        <button onClick={onClear} className="px-3 py-2 bg-red-600/80 rounded-md hover:bg-red-500" title="Clear All">
+          <Icon name="trash" className="w-5 h-5" />
+        </button>
+        <button onClick={onToggleTheme} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700">
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-5 h-5" />
+        </button>
+      </div>
+    </header>
+  );
+};
