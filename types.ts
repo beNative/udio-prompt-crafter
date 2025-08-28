@@ -7,6 +7,7 @@ export interface Tag {
   conflictsWith?: string[];
   implies?: string[];
   emoji?: string;
+  color?: 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'blue' | 'indigo' | 'purple' | 'pink' | 'gray';
 }
 
 export interface Category {
@@ -27,7 +28,7 @@ export interface SelectedTag extends Tag {
 
 export interface Preset {
   name:string;
-  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'emoji' | 'impliedBy' | 'implyingTagLabel'>>;
+  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'emoji' | 'impliedBy' | 'implyingTagLabel' | 'color'>>;
   categoryOrder: string[];
 }
 

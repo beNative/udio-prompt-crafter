@@ -8,11 +8,17 @@ import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
 import { PromptPreview } from './components/PromptPreview';
+import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 
 const taxonomyMap = new Map<string, Tag & { categoryId: string }>();
 starterTaxonomy.forEach(cat => cat.tags.forEach(tag => taxonomyMap.set(tag.id, { ...tag, categoryId: cat.id })));
 
 const initialCategoryOrder = starterTaxonomy.map(c => c.id);
+
+interface ConflictState {
+  newlySelectedTag: Tag;
+  conflictingTag: Tag;
+}
 
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
@@ -22,6 +28,8 @@ const App: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<Record<string, SelectedTag>>({});
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
   const [udioParams, setUDIOParams] = useState<UDIOParams>({ promptStrength: 94, remixDifference: 0.75 });
+  const [conflictState, setConflictState] = useState<ConflictState | null>(null);
+
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -34,11 +42,33 @@ const App: React.FC = () => {
   };
   
   const handleToggleTag = useCallback((tag: Tag) => {
+    const isCurrentlySelected = !!selectedTags[tag.id];
+
+    if (!isCurrentlySelected) {
+      let conflict: Tag | null = null;
+      if (tag.conflictsWith) {
+        for (const conflictId of tag.conflictsWith) {
+          if (selectedTags[conflictId]) {
+            conflict = selectedTags[conflictId];
+            break;
+          }
+        }
+      }
+
+      if (conflict) {
+        setConflictState({
+          newlySelectedTag: tag,
+          conflictingTag: conflict,
+        });
+        return; 
+      }
+    }
+
     setSelectedTags(prev => {
       const newSelected = { ...prev };
-      const isCurrentlySelected = !!newSelected[tag.id];
+      const isSelectedInPrev = !!newSelected[tag.id];
 
-      if (isCurrentlySelected) {
+      if (isSelectedInPrev) {
         // --- REMOVAL LOGIC ---
         const removedTag = newSelected[tag.id];
         delete newSelected[tag.id];
@@ -46,7 +76,7 @@ const App: React.FC = () => {
         if (removedTag?.implies) {
           removedTag.implies.forEach(impliedId => {
             const impliedTag = newSelected[impliedId];
-            if (impliedTag && impliedTag.impliedBy) {
+            if (impliedTag && impliedTag.impliedBy === removedTag.id) {
               const isStillImplied = Object.values(newSelected).some(
                 t => t.implies?.includes(impliedId)
               );
@@ -56,7 +86,6 @@ const App: React.FC = () => {
             }
           });
         }
-
       } else {
         // --- ADDITION LOGIC ---
         const categoryId = taxonomyMap.get(tag.id)?.categoryId;
@@ -79,7 +108,56 @@ const App: React.FC = () => {
       }
       return newSelected;
     });
-  }, []);
+  }, [selectedTags]);
+
+  const handleResolveConflict = (keepNew: boolean) => {
+    if (!conflictState) return;
+
+    if (keepNew) {
+      const { newlySelectedTag, conflictingTag } = conflictState;
+
+      setSelectedTags(prev => {
+        const newSelected = { ...prev };
+
+        // --- 1. REMOVE conflictingTag ---
+        const removedTag = newSelected[conflictingTag.id];
+        delete newSelected[conflictingTag.id];
+        if (removedTag?.implies) {
+          removedTag.implies.forEach(impliedId => {
+            const impliedTag = newSelected[impliedId];
+            if (impliedTag && impliedTag.impliedBy === removedTag.id) {
+              const isStillImplied = Object.values(newSelected).some(
+                t => t.implies?.includes(impliedId)
+              );
+              if (!isStillImplied) {
+                delete newSelected[impliedId];
+              }
+            }
+          });
+        }
+
+        // --- 2. ADD newlySelectedTag ---
+        const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
+        if (categoryId) {
+          newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
+          newlySelectedTag.implies?.forEach(impliedId => {
+            if (!newSelected[impliedId]) {
+              const impliedTagDetails = taxonomyMap.get(impliedId);
+              if (impliedTagDetails) {
+                newSelected[impliedId] = {
+                  ...impliedTagDetails,
+                  impliedBy: newlySelectedTag.id,
+                  implyingTagLabel: newlySelectedTag.label
+                };
+              }
+            }
+          });
+        }
+        return newSelected;
+      });
+    }
+    setConflictState(null);
+  };
   
   const handleTextCategoryChange = (categoryId: string, value: string) => {
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
@@ -282,6 +360,12 @@ const App: React.FC = () => {
           />
         </div>
       </main>
+       {conflictState && (
+        <ConflictResolutionModal
+          conflict={conflictState}
+          onResolve={handleResolveConflict}
+        />
+      )}
     </div>
   );
 };
