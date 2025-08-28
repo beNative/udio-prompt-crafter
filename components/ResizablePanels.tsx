@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, Children, useEffect } from 'react';
+import React, { useRef, useCallback, Children, useEffect, useState } from 'react';
 
 interface ResizablePanelsProps {
   children: React.ReactNode;
@@ -21,6 +21,7 @@ const ResizeHandle: React.FC<{ onMouseDown: (e: React.MouseEvent) => void }> = (
 
 export const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children, sizes, onResize, minSize = 10, className = '' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const dragInfoRef = useRef<{
     index: number;
     startX: number;
@@ -33,10 +34,12 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children, size
       startX: e.clientX,
       initialSizes: [...sizes],
     };
+    setIsDragging(true);
     e.preventDefault();
   };
 
   const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
     dragInfoRef.current = null;
   }, []);
 
@@ -82,23 +85,24 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children, size
   }, [onResize, minSize, children]);
 
   useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+    
+    document.body.style.cursor = 'col-resize';
+
     const onMove = (e: MouseEvent) => handleMouseMove(e);
     const onUp = () => handleMouseUp();
-    
-    if (dragInfoRef.current) {
-        document.body.style.cursor = 'col-resize';
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp, { once: true });
-    } else {
-        document.body.style.cursor = '';
-    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
 
     return () => {
-        document.body.style.cursor = '';
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const panels = Children.toArray(children);
 
