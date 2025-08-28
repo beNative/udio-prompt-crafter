@@ -3,17 +3,17 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterTaxonomy } from './data/taxonomy';
 import { starterPresets } from './data/presets';
-import type { Tag, Category, SelectedTag, Preset, Conflict } from './types';
+import { starterMacros } from './data/macros';
+import type { Tag, Category, SelectedTag, Preset, Conflict, UDIOParams, Macro } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
 import { PromptPreview } from './components/PromptPreview';
 
-// Helper to create a map for faster lookups
-// FIX: The taxonomyMap now stores tags with their categoryId to prevent type errors when creating SelectedTag for implied tags.
 const taxonomyMap = new Map<string, Tag & { categoryId: string }>();
 starterTaxonomy.forEach(cat => cat.tags.forEach(tag => taxonomyMap.set(tag.id, { ...tag, categoryId: cat.id })));
 
+const initialCategoryOrder = starterTaxonomy.map(c => c.id);
 
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
@@ -21,6 +21,8 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>(starterTaxonomy);
   const [activeCategoryId, setActiveCategoryId] = useState<string>(starterTaxonomy[0].id);
   const [selectedTags, setSelectedTags] = useState<Record<string, SelectedTag>>({});
+  const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
+  const [udioParams, setUDIOParams] = useState<UDIOParams>({ promptStrength: 94, remixDifference: 0.75 });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -38,11 +40,10 @@ const App: React.FC = () => {
       if (newSelected[tag.id]) {
         delete newSelected[tag.id];
       } else {
-        const categoryId = starterTaxonomy.find(c => c.tags.some(t => t.id === tag.id))?.id;
+        const categoryId = taxonomyMap.get(tag.id)?.categoryId;
         if (categoryId) {
           newSelected[tag.id] = { ...tag, categoryId, weight: tag.default_weight || 1 };
 
-          // Handle implications
           tag.implies?.forEach(impliedId => {
               if (!newSelected[impliedId]) {
                  const impliedTag = taxonomyMap.get(impliedId);
@@ -62,6 +63,25 @@ const App: React.FC = () => {
       ...prev,
       [tagId]: { ...prev[tagId], weight },
     }));
+  };
+  
+  const handleTextCategoryChange = (categoryId: string, value: string) => {
+      setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
+  };
+
+  const loadTagsFromList = (tagIds: string[], weights: Record<string, number> = {}) => {
+      const newSelectedTags: Record<string, SelectedTag> = {};
+      tagIds.forEach(tagId => {
+          const fullTag = taxonomyMap.get(tagId);
+          if (fullTag) {
+              newSelectedTags[tagId] = { ...fullTag, weight: weights[tagId] || fullTag.default_weight || 1 };
+          }
+      });
+      setSelectedTags(newSelectedTags);
+  };
+
+  const handleApplyMacro = (macro: Macro) => {
+    loadTagsFromList(macro.tags);
   };
 
   const handleLoadPreset = (preset: Preset) => {
@@ -101,7 +121,7 @@ const App: React.FC = () => {
   const handleRandomize = () => {
     const newSelected: Record<string, SelectedTag> = {};
     categories.forEach(category => {
-        if(category.tags.length > 0) {
+        if(category.tags.length > 0 && category.type !== 'text') {
             const randomTag = category.tags[Math.floor(Math.random() * category.tags.length)];
             newSelected[randomTag.id] = { ...randomTag, categoryId: category.id, weight: 1.0 };
         }
@@ -111,6 +131,7 @@ const App: React.FC = () => {
 
   const handleClear = () => {
     setSelectedTags({});
+    setTextCategoryValues({});
   };
   
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
@@ -120,8 +141,11 @@ const App: React.FC = () => {
     Object.values(selectedTags).forEach(tag => {
       counts[tag.categoryId] = (counts[tag.categoryId] || 0) + 1;
     });
+     Object.entries(textCategoryValues).forEach(([catId, value]) => {
+        if(value) counts[catId] = (counts[catId] || 0) + 1;
+    })
     return counts;
-  }, [selectedTags]);
+  }, [selectedTags, textCategoryValues]);
 
   const { conflicts, suggestedTagIds } = useMemo(() => {
     const newConflicts: Conflict[] = [];
@@ -129,19 +153,16 @@ const App: React.FC = () => {
     const selectedList = Object.values(selectedTags);
 
     for (const tagA of selectedList) {
-        // Check for conflicts
         if (tagA.conflictsWith) {
             for (const conflictId of tagA.conflictsWith) {
                 if (selectedTags[conflictId]) {
                     const tagB = selectedTags[conflictId];
-                    // Avoid duplicate warnings (A->B and B->A)
                     if (tagA.id < tagB.id) {
                          newConflicts.push({ tagA, tagB });
                     }
                 }
             }
         }
-        // Check for implications (suggestions)
         if (tagA.implies) {
             for (const impliedId of tagA.implies) {
                 if (!selectedTags[impliedId]) {
@@ -158,13 +179,15 @@ const App: React.FC = () => {
       <Header 
         theme={theme} 
         presets={presets}
+        macros={starterMacros}
         onToggleTheme={toggleTheme}
         onLoadPreset={handleLoadPreset}
+        onApplyMacro={handleApplyMacro}
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}
       />
-      <main className="flex-grow grid grid-cols-12" style={{height: 'calc(100vh - 60px)'}}>
+      <main className="flex-grow grid grid-cols-12 min-h-0">
         <div className="col-span-3 border-r border-bunker-800">
           <CategoryList
             categories={categories}
@@ -181,13 +204,18 @@ const App: React.FC = () => {
             suggestedTagIds={suggestedTagIds}
             onToggleTag={handleToggleTag}
             onWeightChange={handleWeightChange}
+            textCategoryValues={textCategoryValues}
+            onTextCategoryChange={handleTextCategoryChange}
           />
         </div>
         <div className="col-span-4 border-l border-bunker-800">
           <PromptPreview 
             orderedCategories={categories}
             selectedTags={selectedTags}
+            textCategoryValues={textCategoryValues}
             conflicts={conflicts}
+            udioParams={udioParams}
+            onUDIOParamsChange={setUDIOParams}
           />
         </div>
       </main>

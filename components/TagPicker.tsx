@@ -9,13 +9,23 @@ interface TagPickerProps {
   suggestedTagIds: Set<string>;
   onToggleTag: (tag: Tag) => void;
   onWeightChange: (tagId: string, weight: number) => void;
+  textCategoryValues: Record<string, string>;
+  onTextCategoryChange: (categoryId: string, value: string) => void;
 }
 
-export const TagPicker: React.FC<TagPickerProps> = ({ category, selectedTags, suggestedTagIds, onToggleTag, onWeightChange }) => {
+export const TagPicker: React.FC<TagPickerProps> = ({ 
+    category, 
+    selectedTags, 
+    suggestedTagIds, 
+    onToggleTag, 
+    onWeightChange,
+    textCategoryValues,
+    onTextCategoryChange,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTags = useMemo(() => {
-    if (!category) return [];
+    if (!category || category.type === 'text') return [];
     if (!searchTerm) return category.tags;
     
     const lowerCaseSearch = searchTerm.toLowerCase();
@@ -32,6 +42,21 @@ export const TagPicker: React.FC<TagPickerProps> = ({ category, selectedTags, su
         <p>Select a category to begin</p>
       </div>
     );
+  }
+
+  if (category.type === 'text') {
+    return (
+        <div className="p-6 h-full flex flex-col">
+            <h2 className="text-2xl font-bold mb-4 text-white">{category.name}</h2>
+            {category.description && <p className="text-bunker-400 mb-4 text-sm">{category.description}</p>}
+            <textarea
+                value={textCategoryValues[category.id] || ''}
+                onChange={e => onTextCategoryChange(category.id, e.target.value)}
+                className="w-full flex-grow p-3 bg-bunker-900 border border-bunker-700 rounded-md text-white placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder={`Enter ${category.name.toLowerCase()} here...`}
+            />
+        </div>
+    )
   }
 
   return (

@@ -14,6 +14,8 @@ export interface Tag {
 export interface Category {
   id: string;
   name: string;
+  description?: string;
+  type?: 'tags' | 'text';
   tags: Tag[];
 }
 
@@ -25,7 +27,7 @@ export interface SelectedTag extends Tag {
 }
 
 export interface Preset {
-  name: string;
+  name:string;
   selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'emoji'>>;
   categoryOrder: string[];
 }
@@ -33,4 +35,15 @@ export interface Preset {
 export interface Conflict {
   tagA: Tag;
   tagB: Tag;
+}
+
+export interface UDIOParams {
+    promptStrength: number;
+    remixDifference: number;
+}
+
+export interface Macro {
+    name: string;
+    description: string;
+    tags: string[];
 }

@@ -1,26 +1,57 @@
 
 import React, { useState } from 'react';
-import type { Preset } from '../types';
+import type { Preset, Macro } from '../types';
 import { Icon } from './icons';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
   presets: Preset[];
+  macros: Macro[];
   onToggleTheme: () => void;
   onLoadPreset: (preset: Preset) => void;
+  onApplyMacro: (macro: Macro) => void;
   onSavePreset: () => void;
   onRandomize: () => void;
   onClear: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, onToggleTheme, onLoadPreset, onSavePreset, onRandomize, onClear }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
+  const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
   return (
-    <header className="bg-bunker-900 text-white p-3 flex items-center justify-between border-b border-bunker-800 shadow-md">
+    <header className="bg-bunker-900 text-white p-3 flex items-center justify-between border-b border-bunker-800 shadow-md shrink-0">
       <h1 className="text-xl font-bold">UDIO Prompt Crafter</h1>
       <div className="flex items-center space-x-2">
         <div className="relative">
+          <button
+            onClick={() => setIsMacroDropdownOpen(!isMacroDropdownOpen)}
+            className="px-4 py-2 bg-bunker-800 text-sm rounded-md hover:bg-bunker-700 flex items-center"
+          >
+            <Icon name="wandSparkles" className="w-4 h-4 mr-2" /> Macros <Icon name="chevronDown" className="w-4 h-4 ml-2" />
+          </button>
+          {isMacroDropdownOpen && (
+            <div className="absolute top-full mt-2 right-0 w-56 bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-700">
+              <ul>
+                {macros.map((macro) => (
+                  <li key={macro.name}>
+                    <button
+                      onClick={() => {
+                        onApplyMacro(macro);
+                        setIsMacroDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-bunker-200 hover:bg-blue-600 hover:text-white"
+                      title={macro.description}
+                    >
+                      {macro.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+         <div className="relative">
           <button
             onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
             className="px-4 py-2 bg-bunker-800 text-sm rounded-md hover:bg-bunker-700 flex items-center"

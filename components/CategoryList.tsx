@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Category } from '../types';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 
 interface CategoryListProps {
   categories: Category[];
@@ -67,7 +68,9 @@ export const CategoryList: React.FC<CategoryListProps> = ({
           >
             <div className="flex items-center">
               <Icon name="grip" className="w-5 h-5 mr-3 text-bunker-500 cursor-grab" />
-              <span>{category.name}</span>
+              <Tooltip text={category.description}>
+                <span>{category.name}</span>
+              </Tooltip>
             </div>
             <div
               className={`w-3 h-3 rounded-full border-2 border-bunker-500 transition-colors ${
