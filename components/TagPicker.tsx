@@ -9,6 +9,7 @@ interface TagPickerProps {
   onToggleTag: (tag: Tag) => void;
   textCategoryValues: Record<string, string>;
   onTextCategoryChange: (categoryId: string, value: string) => void;
+  taxonomyMap: Map<string, Tag & { categoryId: string }>;
 }
 
 export const TagPicker: React.FC<TagPickerProps> = ({ 
@@ -17,6 +18,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
     onToggleTag, 
     textCategoryValues,
     onTextCategoryChange,
+    taxonomyMap,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -43,7 +45,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
     const roots: TreeNodeData[] = [];
     tags.forEach(tag => {
         const node = nodeMap.get(tag.id)!;
-        const parentId = tag.implies?.find(id => nodeMap.has(id));
+        const parentId = tag.suggests?.find(id => nodeMap.has(id));
         
         if (parentId) {
             const parentNode = nodeMap.get(parentId);
@@ -55,6 +57,26 @@ export const TagPicker: React.FC<TagPickerProps> = ({
 
     return roots;
   }, [category]);
+  
+  const suggestions = useMemo(() => {
+    if (!category || category.type === 'text') return [];
+
+    const selectedInCategory = Object.values(selectedTags).filter(t => t.categoryId === category.id);
+    
+    const suggestedIds = new Set<string>();
+    selectedInCategory.forEach(tag => {
+        tag.suggests?.forEach(id => {
+            if (!selectedTags[id]) { // don't suggest already selected tags
+                suggestedIds.add(id);
+            }
+        });
+    });
+    
+    // FIX: A type predicate's type must be assignable to its parameter's type.
+    // `Tag` is not assignable to `Tag & { categoryId: string; }`.
+    // Changed to `SelectedTag` which correctly includes `categoryId`.
+    return Array.from(suggestedIds).map(id => taxonomyMap.get(id)).filter((t): t is SelectedTag => !!t);
+  }, [category, selectedTags, taxonomyMap]);
 
 
   if (!category) {
@@ -94,18 +116,13 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         {searchTerm ? (
           <div className="flex flex-wrap gap-3">
             {filteredTags.map((tag) => {
-                const selection = selectedTags[tag.id];
-                const isSelected = !!selection;
-                const isImplied = isSelected && !!selection.impliedBy;
-
+                const isSelected = !!selectedTags[tag.id];
                 return (
                 <TagChip
                     key={tag.id}
                     tag={tag}
                     isSelected={isSelected}
                     onToggle={onToggleTag}
-                    isImplied={isImplied}
-                    implyingTagLabel={selection?.implyingTagLabel}
                 />
                 );
             })}
@@ -118,6 +135,21 @@ export const TagPicker: React.FC<TagPickerProps> = ({
             />
         )}
       </div>
+      {suggestions.length > 0 && (
+        <div className="mt-8 pt-4 border-t border-bunker-200 dark:border-bunker-700">
+            <h3 className="text-base font-semibold mb-4 text-bunker-600 dark:text-bunker-300">Suggestions</h3>
+            <div className="flex flex-wrap gap-3">
+            {suggestions.map((tag) => (
+                <TagChip
+                key={tag.id}
+                tag={tag}
+                isSelected={!!selectedTags[tag.id]}
+                onToggle={onToggleTag}
+                />
+            ))}
+            </div>
+        </div>
+      )}
     </div>
   );
 };

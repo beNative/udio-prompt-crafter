@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
@@ -19,9 +18,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = node.children.length > 0;
 
-  const selection = selectedTags[node.id];
-  const isSelected = !!selection;
-  const isImplied = isSelected && !!selection.impliedBy;
+  const isSelected = !!selectedTags[node.id];
 
   return (
     <div>
@@ -43,8 +40,6 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
             tag={node}
             isSelected={isSelected}
             onToggle={onToggleTag}
-            isImplied={isImplied}
-            implyingTagLabel={selection?.implyingTagLabel}
           />
         </div>
 

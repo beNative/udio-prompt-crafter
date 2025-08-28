@@ -80,44 +80,12 @@ const App: React.FC = () => {
 
     setSelectedTags(prev => {
       const newSelected = { ...prev };
-      const isSelectedInPrev = !!newSelected[tag.id];
-
-      if (isSelectedInPrev) {
-        // --- REMOVAL LOGIC ---
-        const removedTag = newSelected[tag.id];
+      if (newSelected[tag.id]) {
         delete newSelected[tag.id];
-
-        if (removedTag?.implies) {
-          removedTag.implies.forEach(impliedId => {
-            const impliedTag = newSelected[impliedId];
-            if (impliedTag && impliedTag.impliedBy === removedTag.id) {
-              const isStillImplied = Object.values(newSelected).some(
-                t => t.implies?.includes(impliedId)
-              );
-              if (!isStillImplied) {
-                delete newSelected[impliedId];
-              }
-            }
-          });
-        }
       } else {
-        // --- ADDITION LOGIC ---
         const categoryId = taxonomyMap.get(tag.id)?.categoryId;
         if (categoryId) {
           newSelected[tag.id] = { ...tag, categoryId };
-
-          tag.implies?.forEach(impliedId => {
-              if (!newSelected[impliedId]) {
-                 const impliedTag = taxonomyMap.get(impliedId);
-                 if (impliedTag) {
-                     newSelected[impliedId] = { 
-                       ...impliedTag, 
-                       impliedBy: tag.id,
-                       implyingTagLabel: tag.label
-                     };
-                 }
-              }
-          });
         }
       }
       return newSelected;
@@ -129,43 +97,15 @@ const App: React.FC = () => {
 
     if (keepNew) {
       const { newlySelectedTag, conflictingTag } = conflictState;
-
       setSelectedTags(prev => {
         const newSelected = { ...prev };
-
-        // --- 1. REMOVE conflictingTag ---
-        const removedTag = newSelected[conflictingTag.id];
+        // Remove conflicting tag
         delete newSelected[conflictingTag.id];
-        if (removedTag?.implies) {
-          removedTag.implies.forEach(impliedId => {
-            const impliedTag = newSelected[impliedId];
-            if (impliedTag && impliedTag.impliedBy === removedTag.id) {
-              const isStillImplied = Object.values(newSelected).some(
-                t => t.implies?.includes(impliedId)
-              );
-              if (!isStillImplied) {
-                delete newSelected[impliedId];
-              }
-            }
-          });
-        }
 
-        // --- 2. ADD newlySelectedTag ---
+        // Add new tag
         const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
         if (categoryId) {
           newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
-          newlySelectedTag.implies?.forEach(impliedId => {
-            if (!newSelected[impliedId]) {
-              const impliedTagDetails = taxonomyMap.get(impliedId);
-              if (impliedTagDetails) {
-                newSelected[impliedId] = {
-                  ...impliedTagDetails,
-                  impliedBy: newlySelectedTag.id,
-                  implyingTagLabel: newlySelectedTag.label
-                };
-              }
-            }
-          });
         }
         return newSelected;
       });
@@ -185,24 +125,7 @@ const App: React.FC = () => {
               newSelectedTags[tagId] = { ...fullTag };
           }
       });
-      
-      const tagsToAddFromImplications: Record<string, SelectedTag> = {};
-      Object.values(newSelectedTags).forEach(tag => {
-          tag.implies?.forEach(impliedId => {
-              if (!newSelectedTags[impliedId] && !tagsToAddFromImplications[impliedId]) {
-                  const impliedTag = taxonomyMap.get(impliedId);
-                  if (impliedTag) {
-                      tagsToAddFromImplications[impliedId] = {
-                          ...impliedTag,
-                          impliedBy: tag.id,
-                          implyingTagLabel: tag.label,
-                      };
-                  }
-              }
-          });
-      });
-      
-      setSelectedTags({ ...newSelectedTags, ...tagsToAddFromImplications });
+      setSelectedTags(newSelectedTags);
   };
 
   const handleApplyMacro = (macro: Macro) => {
@@ -219,23 +142,7 @@ const App: React.FC = () => {
       }
     });
 
-    const tagsToAddFromImplications: Record<string, SelectedTag> = {};
-    Object.values(newSelectedTags).forEach(tag => {
-        tag.implies?.forEach(impliedId => {
-            if (!newSelectedTags[impliedId] && !tagsToAddFromImplications[impliedId]) {
-                const impliedTag = taxonomyMap.get(impliedId);
-                if (impliedTag) {
-                    tagsToAddFromImplications[impliedId] = {
-                        ...impliedTag,
-                        impliedBy: tag.id,
-                        implyingTagLabel: tag.label,
-                    };
-                }
-            }
-        });
-    });
-
-    setSelectedTags({ ...newSelectedTags, ...tagsToAddFromImplications });
+    setSelectedTags(newSelectedTags);
     setTextCategoryValues({});
     setCategories(prevCategories => {
         const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
@@ -250,10 +157,7 @@ const App: React.FC = () => {
     if (name) {
       const selectedTagsForPreset: Preset['selectedTags'] = {};
       Object.entries(selectedTags).forEach(([id, tag]) => {
-          // Only save manually selected tags to presets
-          if (!tag.impliedBy) {
-            selectedTagsForPreset[id] = { categoryId: tag.categoryId };
-          }
+          selectedTagsForPreset[id] = { categoryId: tag.categoryId };
       });
 
       const newPreset: Preset = {
@@ -273,24 +177,7 @@ const App: React.FC = () => {
             newSelected[randomTag.id] = { ...randomTag, categoryId: category.id };
         }
     });
-
-    const tagsToAddFromImplications: Record<string, SelectedTag> = {};
-    Object.values(newSelected).forEach(tag => {
-        tag.implies?.forEach(impliedId => {
-            if (!newSelected[impliedId] && !tagsToAddFromImplications[impliedId]) {
-                const impliedTag = taxonomyMap.get(impliedId);
-                if (impliedTag) {
-                    tagsToAddFromImplications[impliedId] = {
-                        ...impliedTag,
-                        impliedBy: tag.id,
-                        implyingTagLabel: tag.label,
-                    };
-                }
-            }
-        });
-    });
-
-    setSelectedTags({ ...newSelected, ...tagsToAddFromImplications });
+    setSelectedTags(newSelected);
     setTextCategoryValues({});
   };
 
@@ -364,6 +251,7 @@ const App: React.FC = () => {
             onToggleTag={handleToggleTag}
             textCategoryValues={textCategoryValues}
             onTextCategoryChange={handleTextCategoryChange}
+            taxonomyMap={taxonomyMap}
           />
         </div>
         <div className="col-span-4 border-l border-bunker-200 dark:border-bunker-800">

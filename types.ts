@@ -5,7 +5,7 @@ export interface Tag {
   synonyms?: string[];
   example_snippet?: string;
   conflictsWith?: string[];
-  implies?: string[];
+  suggests?: string[];
   color?: 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'blue' | 'indigo' | 'purple' | 'pink' | 'gray';
 }
 
@@ -21,13 +21,11 @@ export type Taxonomy = Category[];
 
 export interface SelectedTag extends Tag {
   categoryId: string;
-  impliedBy?: string; // ID of the tag that implied this one
-  implyingTagLabel?: string; // Label of the tag that implied this one
 }
 
 export interface Preset {
   name:string;
-  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'implies' | 'impliedBy' | 'implyingTagLabel' | 'color'>>;
+  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'suggests' | 'color'>>;
   categoryOrder: string[];
 }
 
