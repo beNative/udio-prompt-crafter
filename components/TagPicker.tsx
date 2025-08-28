@@ -1,6 +1,8 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
+import { TagTreeView, TreeNodeData } from './TagTreeView';
 
 interface TagPickerProps {
   category: Category | undefined;
@@ -20,8 +22,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTags = useMemo(() => {
-    if (!category || category.type === 'text') return [];
-    if (!searchTerm) return category.tags;
+    if (!category || category.type === 'text' || !searchTerm) return [];
     
     const lowerCaseSearch = searchTerm.toLowerCase();
     return category.tags.filter(
@@ -30,6 +31,32 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         tag.synonyms?.some((s) => s.toLowerCase().includes(lowerCaseSearch))
     );
   }, [category, searchTerm]);
+
+  const tagTree = useMemo((): TreeNodeData[] => {
+    if (!category || category.type === 'text' || !category.tags) return [];
+    
+    const tags = category.tags;
+    const nodeMap: Map<string, TreeNodeData> = new Map();
+    tags.forEach(tag => {
+        nodeMap.set(tag.id, { ...tag, children: [] });
+    });
+
+    const roots: TreeNodeData[] = [];
+    tags.forEach(tag => {
+        const node = nodeMap.get(tag.id)!;
+        const parentId = tag.implies?.find(id => nodeMap.has(id));
+        
+        if (parentId) {
+            const parentNode = nodeMap.get(parentId);
+            parentNode?.children.push(node);
+        } else {
+            roots.push(node);
+        }
+    });
+
+    return roots;
+  }, [category]);
+
 
   if (!category) {
     return (
@@ -65,24 +92,32 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         className="w-full p-2 mb-6 bg-bunker-100 dark:bg-bunker-900 border border-bunker-300 dark:border-bunker-700 rounded-md text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <div className="flex-grow overflow-y-auto pr-2">
-        <div className="flex flex-wrap gap-3">
-          {filteredTags.map((tag) => {
-            const selection = selectedTags[tag.id];
-            const isSelected = !!selection;
-            const isImplied = isSelected && !!selection.impliedBy;
+        {searchTerm ? (
+          <div className="flex flex-wrap gap-3">
+            {filteredTags.map((tag) => {
+                const selection = selectedTags[tag.id];
+                const isSelected = !!selection;
+                const isImplied = isSelected && !!selection.impliedBy;
 
-            return (
-              <TagChip
-                key={tag.id}
-                tag={tag}
-                isSelected={isSelected}
-                onToggle={onToggleTag}
-                isImplied={isImplied}
-                implyingTagLabel={selection?.implyingTagLabel}
-              />
-            );
-          })}
-        </div>
+                return (
+                <TagChip
+                    key={tag.id}
+                    tag={tag}
+                    isSelected={isSelected}
+                    onToggle={onToggleTag}
+                    isImplied={isImplied}
+                    implyingTagLabel={selection?.implyingTagLabel}
+                />
+                );
+            })}
+          </div>
+        ) : (
+            <TagTreeView
+                nodes={tagTree}
+                selectedTags={selectedTags}
+                onToggleTag={onToggleTag}
+            />
+        )}
       </div>
     </div>
   );
