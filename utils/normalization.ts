@@ -1,4 +1,3 @@
-
 const PLURAL_TO_SINGULAR: Record<string, string> = {
     'breakdowns': 'breakdown',
     'crescendos': 'crescendo',
@@ -63,25 +62,11 @@ export function normalizeTagLabels(labels: string[]): string[] {
     const processedLabels = new Set<string>();
 
     for (const label of labels) {
-        // Strip weighting syntax for normalization
-        const match = label.match(/(\(\(|\()(.+?)(?::\d\.\d{1,2})?(\)\)|\))/);
-        let coreLabel = match ? match[2] : label;
-        const prefix = match ? match[1] : '';
-        const suffix = match ? match[3] : '';
-        const weight = match ? label.substring(label.indexOf(':'), label.lastIndexOf(')')) : '';
-
         // Handle combo tags like "synthwave / electro"
-        const splitLabels = coreLabel.split(/\s*\/\s*/).map(s => s.trim());
+        const splitLabels = label.split(/\s*\/\s*/).map(s => s.trim());
 
         for (let part of splitLabels) {
             let normalized = normalizeWord(part);
-            
-            // Re-apply weighting syntax if it existed
-            if (prefix && suffix) {
-                // If weight exists, keep it. Otherwise, just wrap.
-                normalized = weight ? `${prefix}${normalized}${weight}${suffix}` : `${prefix}${normalized}${suffix}`;
-            }
-
             processedLabels.add(normalized);
         }
     }

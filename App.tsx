@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterTaxonomy } from './data/taxonomy';
@@ -62,7 +61,7 @@ const App: React.FC = () => {
         // --- ADDITION LOGIC ---
         const categoryId = taxonomyMap.get(tag.id)?.categoryId;
         if (categoryId) {
-          newSelected[tag.id] = { ...tag, categoryId, weight: tag.default_weight || 1 };
+          newSelected[tag.id] = { ...tag, categoryId };
 
           tag.implies?.forEach(impliedId => {
               if (!newSelected[impliedId]) {
@@ -70,7 +69,6 @@ const App: React.FC = () => {
                  if (impliedTag) {
                      newSelected[impliedId] = { 
                        ...impliedTag, 
-                       weight: impliedTag.default_weight || 1,
                        impliedBy: tag.id,
                        implyingTagLabel: tag.label
                      };
@@ -82,24 +80,17 @@ const App: React.FC = () => {
       return newSelected;
     });
   }, []);
-
-  const handleWeightChange = (tagId: string, weight: number) => {
-    setSelectedTags(prev => ({
-      ...prev,
-      [tagId]: { ...prev[tagId], weight },
-    }));
-  };
   
   const handleTextCategoryChange = (categoryId: string, value: string) => {
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
 
-  const loadTagsFromList = (tagIds: string[], weights: Record<string, number> = {}) => {
+  const loadTagsFromList = (tagIds: string[]) => {
       const newSelectedTags: Record<string, SelectedTag> = {};
       tagIds.forEach(tagId => {
           const fullTag = taxonomyMap.get(tagId);
           if (fullTag) {
-              newSelectedTags[tagId] = { ...fullTag, weight: weights[tagId] || fullTag.default_weight || 1 };
+              newSelectedTags[tagId] = { ...fullTag };
           }
       });
       
@@ -111,7 +102,6 @@ const App: React.FC = () => {
                   if (impliedTag) {
                       tagsToAddFromImplications[impliedId] = {
                           ...impliedTag,
-                          weight: impliedTag.default_weight || 1,
                           impliedBy: tag.id,
                           implyingTagLabel: tag.label,
                       };
@@ -145,7 +135,6 @@ const App: React.FC = () => {
                 if (impliedTag) {
                     tagsToAddFromImplications[impliedId] = {
                         ...impliedTag,
-                        weight: impliedTag.default_weight || 1,
                         impliedBy: tag.id,
                         implyingTagLabel: tag.label,
                     };
@@ -171,7 +160,7 @@ const App: React.FC = () => {
       Object.entries(selectedTags).forEach(([id, tag]) => {
           // Only save manually selected tags to presets
           if (!tag.impliedBy) {
-            selectedTagsForPreset[id] = { categoryId: tag.categoryId, weight: tag.weight };
+            selectedTagsForPreset[id] = { categoryId: tag.categoryId };
           }
       });
 
@@ -189,7 +178,7 @@ const App: React.FC = () => {
     categories.forEach(category => {
         if(category.tags.length > 0 && category.type !== 'text') {
             const randomTag = category.tags[Math.floor(Math.random() * category.tags.length)];
-            newSelected[randomTag.id] = { ...randomTag, categoryId: category.id, weight: 1.0 };
+            newSelected[randomTag.id] = { ...randomTag, categoryId: category.id };
         }
     });
 
@@ -201,7 +190,6 @@ const App: React.FC = () => {
                 if (impliedTag) {
                     tagsToAddFromImplications[impliedId] = {
                         ...impliedTag,
-                        weight: impliedTag.default_weight || 1,
                         impliedBy: tag.id,
                         implyingTagLabel: tag.label,
                     };
@@ -279,7 +267,6 @@ const App: React.FC = () => {
             category={activeCategory}
             selectedTags={selectedTags}
             onToggleTag={handleToggleTag}
-            onWeightChange={handleWeightChange}
             textCategoryValues={textCategoryValues}
             onTextCategoryChange={handleTextCategoryChange}
           />

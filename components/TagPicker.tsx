@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
@@ -7,7 +6,6 @@ interface TagPickerProps {
   category: Category | undefined;
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
-  onWeightChange: (tagId: string, weight: number) => void;
   textCategoryValues: Record<string, string>;
   onTextCategoryChange: (categoryId: string, value: string) => void;
 }
@@ -16,7 +14,6 @@ export const TagPicker: React.FC<TagPickerProps> = ({
     category, 
     selectedTags, 
     onToggleTag, 
-    onWeightChange,
     textCategoryValues,
     onTextCategoryChange,
 }) => {
@@ -79,9 +76,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                 key={tag.id}
                 tag={tag}
                 isSelected={isSelected}
-                weight={selection?.weight || 1}
                 onToggle={onToggleTag}
-                onWeightChange={onWeightChange}
                 isImplied={isImplied}
                 implyingTagLabel={selection?.implyingTagLabel}
               />

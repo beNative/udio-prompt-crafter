@@ -44,13 +44,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
       Object.values(selectedTags).filter(tag => tag.categoryId === category.id)
     );
 
-    const weightedTagLabels = sortedTags.map(tag => {
-        if (tag.weight === 1) return tag.label;
-        if (tag.weight < 1) return `(${tag.label}:${tag.weight.toFixed(2)})`;
-        return `((${tag.label}:${tag.weight.toFixed(2)}))`;
-    });
-
-    const normalizedLabels = normalizeTagLabels(weightedTagLabels);
+    const tagLabels = sortedTags.map(tag => tag.label);
+    const normalizedLabels = normalizeTagLabels(tagLabels);
 
     const textInputs = orderedCategories
         .filter(cat => cat.type === 'text' && textCategoryValues[cat.id])
@@ -64,7 +59,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
     const json = {
       prompt: promptString,
       udio_params: udioParams,
-      tags: sortedTags.map(({ id, label, weight, categoryId }) => ({ id, label, weight, categoryId })),
+      tags: sortedTags.map(({ id, label, categoryId }) => ({ id, label, categoryId })),
       text_inputs: textCategoryValues,
       category_order: orderedCategories.map(c => c.id),
     };

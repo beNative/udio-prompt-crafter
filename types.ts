@@ -1,11 +1,9 @@
-
 export interface Tag {
   id: string;
   label: string;
   description: string;
   synonyms?: string[];
   example_snippet?: string;
-  default_weight?: number;
   conflictsWith?: string[];
   implies?: string[];
   emoji?: string;
@@ -22,7 +20,6 @@ export interface Category {
 export type Taxonomy = Category[];
 
 export interface SelectedTag extends Tag {
-  weight: number;
   categoryId: string;
   impliedBy?: string; // ID of the tag that implied this one
   implyingTagLabel?: string; // Label of the tag that implied this one
