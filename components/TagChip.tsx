@@ -64,7 +64,7 @@ export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle, isI
       role="button"
       tabIndex={isImplied ? -1 : 0}
     >
-      <span>{tag.emoji} {tag.label}</span>
+      <span>{tag.label}</span>
       <Tooltip text={tooltipText}>
         <button onClick={(e) => e.stopPropagation()} className="p-0 m-0 leading-none" aria-label={`More info about ${tag.label}`}>
             <Icon name="info" className={`w-4 h-4 ${isSelected ? (isImplied ? 'text-purple-800 dark:text-purple-200' : 'text-white') : ''}`} />
