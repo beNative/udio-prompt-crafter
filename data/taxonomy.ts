@@ -109,6 +109,8 @@ export const starterTaxonomy: Taxonomy = [
       { id: 'mo_dynamic_shifts', label: 'Dynamic Shifts', description: 'Variations in volume and intensity throughout the track.' },
       { id: 'mo_evolving_melody', label: 'Evolving Melody', description: 'A melody that changes and develops over the course of the track.', implies: ['mo_melodic_transitions', 'mo_dynamic_shifts'] },
       { id: 'mo_anthemic', label: 'Anthemic', description: 'A powerful, uplifting track meant to be sung by a crowd.' },
+      { id: 'mo_variative', label: 'Variative', description: 'Features significant variation and change in melodies, rhythms, or textures throughout the track.', implies: ['mo_evolving_melody'] },
+      { id: 'mo_transformative', label: 'Transformative', description: 'The track undergoes a fundamental shift or transformation in its character or genre.', implies: ['mo_evolving_melody'] },
     ],
   },
   {

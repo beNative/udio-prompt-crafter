@@ -20,18 +20,18 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
   const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
   return (
-    <header className="bg-bunker-900 text-white p-3 flex items-center justify-between border-b border-bunker-800 shadow-md shrink-0">
+    <header className="bg-bunker-50 dark:bg-bunker-900 text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200 dark:border-bunker-800 shadow-md shrink-0">
       <h1 className="text-xl font-bold">UDIO Prompt Crafter</h1>
       <div className="flex items-center space-x-2">
         <div className="relative">
           <button
             onClick={() => setIsMacroDropdownOpen(!isMacroDropdownOpen)}
-            className="px-4 py-2 bg-bunker-800 text-sm rounded-md hover:bg-bunker-700 flex items-center"
+            className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800 text-sm rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 flex items-center"
           >
             <Icon name="wandSparkles" className="w-4 h-4 mr-2" /> Macros <Icon name="chevronDown" className="w-4 h-4 ml-2" />
           </button>
           {isMacroDropdownOpen && (
-            <div className="absolute top-full mt-2 right-0 w-56 bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-700">
+            <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-200 dark:border-bunker-700">
               <ul>
                 {macros.map((macro) => (
                   <li key={macro.name}>
@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
                         onApplyMacro(macro);
                         setIsMacroDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-bunker-200 hover:bg-blue-600 hover:text-white"
+                      className="block w-full text-left px-4 py-2 text-sm text-bunker-800 dark:text-bunker-200 hover:bg-blue-600 hover:text-white"
                       title={macro.description}
                     >
                       {macro.name}
@@ -54,12 +54,12 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
          <div className="relative">
           <button
             onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
-            className="px-4 py-2 bg-bunker-800 text-sm rounded-md hover:bg-bunker-700 flex items-center"
+            className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800 text-sm rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 flex items-center"
           >
             Presets <Icon name="chevronDown" className="w-4 h-4 ml-2" />
           </button>
           {isPresetDropdownOpen && (
-            <div className="absolute top-full mt-2 right-0 w-48 bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-700">
+            <div className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-200 dark:border-bunker-700">
               <ul>
                 {presets.map((preset) => (
                   <li key={preset.name}>
@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
                         onLoadPreset(preset);
                         setIsPresetDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-bunker-200 hover:bg-blue-600 hover:text-white"
+                      className="block w-full text-left px-4 py-2 text-sm text-bunker-800 dark:text-bunker-200 hover:bg-blue-600 hover:text-white"
                     >
                       {preset.name}
                     </button>
@@ -78,16 +78,16 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
             </div>
           )}
         </div>
-        <button onClick={onSavePreset} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700" title="Save Current as Preset">
+        <button onClick={onSavePreset} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Save Current as Preset">
           <Icon name="save" className="w-5 h-5" />
         </button>
-        <button onClick={onRandomize} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700" title="Randomize">
+        <button onClick={onRandomize} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Randomize">
           <Icon name="sparkles" className="w-5 h-5" />
         </button>
-        <button onClick={onClear} className="px-3 py-2 bg-red-600/80 rounded-md hover:bg-red-500" title="Clear All">
+        <button onClick={onClear} className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600" title="Clear All">
           <Icon name="trash" className="w-5 h-5" />
         </button>
-        <button onClick={onToggleTheme} className="px-3 py-2 bg-bunker-800 rounded-md hover:bg-bunker-700">
+        <button onClick={onToggleTheme} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700">
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-5 h-5" />
         </button>
       </div>

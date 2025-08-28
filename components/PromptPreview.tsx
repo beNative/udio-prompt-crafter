@@ -26,10 +26,10 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 bg-bunker-700 rounded-md hover:bg-bunker-600 transition-colors"
+      className="absolute top-2 right-2 p-1.5 bg-bunker-200 dark:bg-bunker-700 rounded-md hover:bg-bunker-300 dark:hover:bg-bunker-600 transition-colors"
       title="Copy to clipboard"
     >
-      {copied ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="copy" className="w-4 h-4 text-bunker-300" />}
+      {copied ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-300" />}
     </button>
   );
 };
@@ -67,9 +67,9 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
   }, [selectedTags, orderedCategories, textCategoryValues, udioParams]);
 
   return (
-    <div className="p-4 bg-bunker-900 text-bunker-300 h-full flex flex-col">
+    <div className="p-4 bg-bunker-50 dark:bg-bunker-900 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
       <div className="flex-grow flex flex-col min-h-0">
-        <h2 className="text-lg font-semibold mb-4 text-white">Live Preview</h2>
+        <h2 className="text-lg font-semibold mb-4 text-bunker-900 dark:text-white">Live Preview</h2>
         
         {conflicts.length > 0 && (
           <div className="bg-red-900/50 border border-red-500 text-red-300 p-3 rounded-md mb-4 shrink-0">
@@ -80,9 +80,9 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
           </div>
         )}
         
-        <div className="flex border-b border-bunker-700 mb-4 shrink-0">
-          <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm ${activeTab === 'prompt' ? 'text-white border-b-2 border-blue-500' : 'text-bunker-400'}`}>Prompt String</button>
-          <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm ${activeTab === 'json' ? 'text-white border-b-2 border-blue-500' : 'text-bunker-400'}`}>JSON Output</button>
+        <div className="flex border-b border-bunker-200 dark:border-bunker-700 mb-4 shrink-0">
+          <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm ${activeTab === 'prompt' ? 'text-bunker-900 dark:text-white border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400'}`}>Prompt String</button>
+          <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm ${activeTab === 'json' ? 'text-bunker-900 dark:text-white border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400'}`}>JSON Output</button>
         </div>
         
         <div className="flex-grow relative min-h-0">
@@ -91,7 +91,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
               <textarea
                 readOnly
                 value={prompt}
-                className="w-full h-full p-3 bg-bunker-950 rounded-md text-bunker-200 resize-none font-mono text-sm border border-bunker-800"
+                className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
                 placeholder="Your generated prompt will appear here..."
               />
               <CopyButton textToCopy={prompt} />
@@ -101,7 +101,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
               <textarea
                 readOnly
                 value={jsonOutput}
-                className="w-full h-full p-3 bg-bunker-950 rounded-md text-bunker-200 resize-none font-mono text-sm border border-bunker-800"
+                className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
               />
               <CopyButton textToCopy={jsonOutput} />
             </div>

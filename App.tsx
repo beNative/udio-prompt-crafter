@@ -240,7 +240,7 @@ const App: React.FC = () => {
   }, [selectedTags]);
 
   return (
-    <div className="h-screen w-screen flex flex-col font-sans bg-bunker-950 text-bunker-200">
+    <div className="h-screen w-screen flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
       <Header 
         theme={theme} 
         presets={presets}
@@ -253,7 +253,7 @@ const App: React.FC = () => {
         onClear={handleClear}
       />
       <main className="flex-grow grid grid-cols-12 min-h-0">
-        <div className="col-span-3 border-r border-bunker-800">
+        <div className="col-span-3 border-r border-bunker-200 dark:border-bunker-800">
           <CategoryList
             categories={categories}
             activeCategoryId={activeCategoryId}
@@ -271,7 +271,7 @@ const App: React.FC = () => {
             onTextCategoryChange={handleTextCategoryChange}
           />
         </div>
-        <div className="col-span-4 border-l border-bunker-800">
+        <div className="col-span-4 border-l border-bunker-200 dark:border-bunker-800">
           <PromptPreview 
             orderedCategories={categories}
             selectedTags={selectedTags}

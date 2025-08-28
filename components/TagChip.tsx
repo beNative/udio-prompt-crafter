@@ -21,8 +21,8 @@ export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle, isI
 
   const baseStyle = "flex items-center space-x-2 border rounded-full px-3 py-1 text-sm transition-all duration-200";
   const selectedStyle = "bg-blue-600 text-white border-blue-600 shadow-md";
-  const unselectedStyle = "bg-bunker-800/50 dark:bg-bunker-800 border-bunker-700 hover:border-blue-500 hover:bg-bunker-700";
-  const impliedStyle = "border-dashed border-purple-500 bg-purple-900/40 text-purple-200";
+  const unselectedStyle = "bg-bunker-100 text-bunker-700 border-bunker-200 hover:border-blue-500 hover:bg-bunker-200 dark:bg-bunker-800/50 dark:text-bunker-300 dark:border-bunker-700 dark:hover:bg-bunker-700";
+  const impliedStyle = "border-dashed border-purple-400 bg-purple-100 text-purple-800 dark:border-purple-500 dark:bg-purple-900/40 dark:text-purple-200";
 
   const cursorStyle = isImplied ? 'cursor-help' : 'cursor-pointer';
 
@@ -51,7 +51,7 @@ export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle, isI
       <span>{tag.emoji} {tag.label}</span>
       <Tooltip text={tooltipText}>
         <button onClick={(e) => e.stopPropagation()} className="p-0 m-0 leading-none" aria-label={`More info about ${tag.label}`}>
-            <Icon name="info" className={`w-4 h-4 ${isSelected ? (isImplied ? 'text-purple-200' : 'text-white') : 'text-bunker-400'}`} />
+            <Icon name="info" className={`w-4 h-4 ${isSelected ? (isImplied ? 'text-purple-800 dark:text-purple-200' : 'text-white') : 'text-bunker-500 dark:text-bunker-400'}`} />
         </button>
       </Tooltip>
     </div>
