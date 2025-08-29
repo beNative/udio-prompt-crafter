@@ -51,7 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newProvider = e.target.value as AiSettings['provider'];
     // Set default URL and first available model when provider changes
-    const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234';
+    const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
     const modelsForProvider = availableModels[newProvider] || [];
     const newModel = modelsForProvider[0] || '';
 

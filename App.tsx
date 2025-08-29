@@ -126,7 +126,7 @@ const App: React.FC = () => {
 
     // Detect LM Studio
     try {
-        const lmStudioRes = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(2000) });
+        const lmStudioRes = await fetch('http://127.0.0.1:1234/v1/models', { signal: AbortSignal.timeout(2000) });
         if (lmStudioRes.ok) {
             const data = await lmStudioRes.json();
             newDetected.push('lmstudio');
@@ -143,7 +143,7 @@ const App: React.FC = () => {
     // Auto-switch provider if the currently saved one isn't detected
     if (newDetected.length > 0 && !newDetected.includes(aiSettings.provider)) {
         const newProvider = newDetected[0];
-        const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234';
+        const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
         const newModel = newModels[newProvider][0] || '';
         setAiSettings({ provider: newProvider, baseUrl: newBaseUrl, model: newModel });
     }
@@ -175,7 +175,7 @@ const App: React.FC = () => {
         stream: false,
       };
     } else { // lmstudio (openai-compatible)
-      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/chat/completions`;
       body = {
         model: aiSettings.model,
         messages: [
