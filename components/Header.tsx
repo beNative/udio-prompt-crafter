@@ -15,9 +15,11 @@ interface HeaderProps {
   onRandomize: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
+  onOpenAiAssist: () => void;
+  onOpenSettings: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onOpenAiAssist, onOpenSettings }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
   const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
@@ -30,6 +32,10 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
               <Icon name="search" className="w-5 h-5" />
           </button>
         </Tooltip>
+        <button onClick={onOpenAiAssist} className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center" title="AI Prompt Deconstruction">
+          <Icon name="wandSparkles" className="w-5 h-5 mr-2" />
+          <span className="text-sm">AI Assist</span>
+        </button>
         <div className="relative">
           <button
             onClick={() => setIsMacroDropdownOpen(!isMacroDropdownOpen)}
@@ -93,6 +99,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
         </button>
         <button onClick={onClear} className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600" title="Clear All">
           <Icon name="trash" className="w-5 h-5" />
+        </button>
+         <button onClick={onOpenSettings} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Settings">
+          <Icon name="cog" className="w-5 h-5" />
         </button>
         <button onClick={onToggleTheme} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700">
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-5 h-5" />

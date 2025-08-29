@@ -39,3 +39,9 @@ export interface Macro {
     description: string;
     tags: string[];
 }
+
+export interface AiSettings {
+  provider: 'ollama' | 'openai-compatible';
+  baseUrl: string;
+  model: string;
+}

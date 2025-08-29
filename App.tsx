@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
 import { starterMacros } from './data/macros';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AiSettings } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -10,6 +10,8 @@ import { PromptPreview } from './components/PromptPreview';
 import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 import { CommandPalette } from './components/CommandPalette';
 import { ResizablePanels } from './components/ResizablePanels';
+import { SettingsModal } from './components/SettingsModal';
+import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -20,6 +22,11 @@ const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [presets, setPresets] = useLocalStorage<Preset[]>('user-presets', starterPresets);
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
+  const [aiSettings, setAiSettings] = useLocalStorage<AiSettings>('ai-settings', {
+    provider: 'ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3',
+  });
   
   const [taxonomy, setTaxonomy] = useState<Taxonomy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +38,8 @@ const App: React.FC = () => {
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
 
   useEffect(() => {
     fetch('/taxonomy.json')
@@ -41,7 +50,6 @@ const App: React.FC = () => {
         return res.json();
       })
       .then(data => {
-        // The JSON file has a root "taxonomy" key
         setTaxonomy(data.taxonomy);
       })
       .catch(e => {
@@ -58,9 +66,14 @@ const App: React.FC = () => {
       return { taxonomyMap: new Map(), allTags: [], initialCategories: [] };
     }
     const newTaxonomyMap = new Map<string, Tag & { categoryId: string }>();
-    taxonomy.forEach(cat => cat.tags.forEach(tag => newTaxonomyMap.set(tag.id, { ...tag, categoryId: cat.id })));
-    const newAllTags = taxonomy.flatMap(c => c.tags);
-    return { taxonomyMap: newTaxonomyMap, allTags: newAllTags, initialCategories: taxonomy };
+    const allT: Tag[] = [];
+    taxonomy.forEach(cat => {
+      cat.tags.forEach(tag => {
+        newTaxonomyMap.set(tag.id, { ...tag, categoryId: cat.id });
+        allT.push(tag);
+      });
+    });
+    return { taxonomyMap: newTaxonomyMap, allTags: allT, initialCategories: taxonomy };
   }, [taxonomy]);
 
   useEffect(() => {
@@ -87,6 +100,78 @@ const App: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
+    if (!aiSettings.baseUrl || !aiSettings.model) {
+      throw new Error("AI settings are not configured. Please configure them in the settings menu.");
+    }
+
+    let endpoint = '';
+    let body: any = {};
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+    if (aiSettings.provider === 'ollama') {
+      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/api/generate`;
+      body = {
+        model: aiSettings.model,
+        system: systemPrompt,
+        prompt: userPrompt,
+        format: 'json',
+        stream: false,
+      };
+    } else { // openai-compatible
+      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+      body = {
+        model: aiSettings.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
+        stream: false,
+      };
+    }
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`AI API request failed: ${response.status} ${response.statusText}. Response: ${errorText}`);
+      }
+      
+      const data = await response.json();
+
+      let jsonString: string;
+      if (aiSettings.provider === 'ollama') {
+        jsonString = data.response;
+      } else {
+        jsonString = data.choices[0].message.content;
+      }
+      
+      // The response might be a markdown block, so we need to extract the JSON
+      const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
+      const cleanJsonString = jsonMatch ? jsonMatch[1] : jsonString;
+
+      return JSON.parse(cleanJsonString);
+
+    } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error("AI API request timed out after 30 seconds.");
+        }
+        console.error("Error calling LLM:", error);
+        throw error;
+    }
+}, [aiSettings]);
 
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
@@ -153,8 +238,8 @@ const App: React.FC = () => {
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
 
-  const loadTagsFromList = useCallback((tagIds: string[]) => {
-      const newSelectedTags: Record<string, SelectedTag> = {};
+  const loadTagsFromList = useCallback((tagIds: string[], replace = true) => {
+      const newSelectedTags: Record<string, SelectedTag> = replace ? {} : {...selectedTags};
       tagIds.forEach(tagId => {
           const fullTag = taxonomyMap.get(tagId);
           if (fullTag) {
@@ -162,7 +247,7 @@ const App: React.FC = () => {
           }
       });
       setSelectedTags(newSelectedTags);
-  }, [taxonomyMap]);
+  }, [taxonomyMap, selectedTags]);
 
 
   const handleApplyMacro = useCallback((macro: Macro) => {
@@ -237,6 +322,18 @@ const App: React.FC = () => {
         return newSelected;
     });
   }, []);
+
+  const handleDeconstructPrompt = useCallback(async (prompt: string) => {
+    const systemPrompt = `You are an expert musicologist AI. Your task is to analyze a user's prompt and map it to a predefined list of tags. You will be given a JSON object of available tags. You must return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a tag that accurately represents the user's prompt. Only select tags from the provided list. Do not hallucinate new tags.`;
+    const userPrompt = `User Prompt: "${prompt}". Available Tags: ${JSON.stringify(allTags.map(({id, label, description, synonyms}) => ({id, label, description, synonyms})))}`;
+
+    const result = await callLlm(systemPrompt, userPrompt);
+    if (result && Array.isArray(result.tagIds)) {
+        loadTagsFromList(result.tagIds, true);
+        return true;
+    }
+    throw new Error("AI returned an invalid response format.");
+  }, [callLlm, allTags, loadTagsFromList]);
   
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -305,6 +402,8 @@ const App: React.FC = () => {
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onOpenAiAssist={() => setIsDeconstructModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
       />
       <main className="flex-grow flex min-h-0">
         <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
@@ -326,6 +425,7 @@ const App: React.FC = () => {
                 onTextCategoryChange={handleTextCategoryChange}
                 onClearCategoryTags={handleClearCategoryTags}
                 taxonomyMap={taxonomyMap}
+                callLlm={callLlm}
               />
             </div>
             <div className="h-full">
@@ -356,6 +456,17 @@ const App: React.FC = () => {
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}
+      />
+       <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        settings={aiSettings}
+        onSave={setAiSettings}
+      />
+      <DeconstructPromptModal
+        isOpen={isDeconstructModalOpen}
+        onClose={() => setIsDeconstructModalOpen(false)}
+        onDeconstruct={handleDeconstructPrompt}
       />
     </div>
   );
