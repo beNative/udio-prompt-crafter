@@ -166,20 +166,20 @@ const App: React.FC = () => {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
     if (aiSettings.provider === 'ollama') {
-      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/api/generate`;
+      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/api/chat`;
       body = {
         model: aiSettings.model,
-        system: systemPrompt,
-        prompt: userPrompt,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
         format: 'json',
         stream: false,
       };
     } else { // lmstudio (openai-compatible)
       endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/chat/completions`;
       body = {
-        // The 'model' parameter is intentionally omitted for LM Studio.
-        // It uses the model currently loaded in its UI, and sending a model
-        // can cause errors with some versions and model types.
+        model: aiSettings.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -208,7 +208,7 @@ const App: React.FC = () => {
 
       let jsonString: string;
       if (aiSettings.provider === 'ollama') {
-        jsonString = data.response;
+        jsonString = data.message.content;
       } else {
         jsonString = data.choices[0].message.content;
       }
