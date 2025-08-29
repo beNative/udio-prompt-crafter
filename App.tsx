@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
@@ -15,6 +16,8 @@ import { LogPanel } from './components/LogPanel';
 import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
 import { InfoPage } from './components/InfoPage';
 import { StatusBar } from './components/StatusBar';
+import { SavePresetModal } from './components/SavePresetModal';
+import { PresetManagerModal } from './components/PresetManagerModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -56,6 +59,9 @@ const App: React.FC = () => {
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info'>('crafter');
   
+  const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
+  const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
+
   // State for global features like status bar
   const [appVersion, setAppVersion] = useState('');
   const [aiStatus, setAiStatus] = useState<AiStatus>('checking');
@@ -398,18 +404,65 @@ const App: React.FC = () => {
     });
   }, [taxonomyMap]);
 
-  const handleSavePreset = () => {
-    const name = prompt("Enter a name for your preset:");
-    if (name && appSettings) {
-      logger.info(`Saving new preset: ${name}`);
-      const selectedTagsForPreset: Preset['selectedTags'] = {};
-      Object.entries(selectedTags).forEach(([id, tag]) => {
-          selectedTagsForPreset[id] = { categoryId: tag.categoryId };
-      });
-
-      const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id) };
-      setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
+  const handleSavePreset = (name: string): boolean => {
+    if (!name || !appSettings) return false;
+    if (appSettings.presets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        logger.error(`A preset with the name "${name}" already exists.`);
+        alert(`A preset with the name "${name}" already exists.`);
+        return false;
     }
+    
+    logger.info(`Saving new preset: ${name}`);
+    const selectedTagsForPreset: Preset['selectedTags'] = {};
+    Object.entries(selectedTags).forEach(([id, tag]) => {
+        selectedTagsForPreset[id] = { categoryId: tag.categoryId };
+    });
+
+    const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id) };
+    setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
+    return true;
+  };
+
+  const handleUpdatePreset = (presetName: string) => {
+    logger.info(`Updating preset: ${presetName}`);
+    if (!appSettings) return;
+
+    const selectedTagsForPreset: Preset['selectedTags'] = {};
+    Object.entries(selectedTags).forEach(([id, tag]) => {
+      selectedTagsForPreset[id] = { categoryId: tag.categoryId };
+    });
+    
+    const categoryOrder = categories.map(c => c.id);
+
+    const updatedPresets = appSettings.presets.map(p => {
+        if (p.name === presetName) {
+            return { ...p, selectedTags: selectedTagsForPreset, categoryOrder };
+        }
+        return p;
+    });
+
+    setAppSettings({ ...appSettings, presets: updatedPresets });
+  };
+  
+  const handleRenamePreset = (oldName: string, newName: string): boolean => {
+      if (!newName || !appSettings) return false;
+      if (oldName.toLowerCase() !== newName.toLowerCase() && appSettings.presets.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
+          logger.error(`A preset with the name "${newName}" already exists.`);
+          alert(`A preset with the name "${newName}" already exists.`);
+          return false;
+      }
+
+      logger.info(`Renaming preset "${oldName}" to "${newName}"`);
+      const renamedPresets = appSettings.presets.map(p => p.name === oldName ? { ...p, name: newName } : p);
+      setAppSettings({ ...appSettings, presets: renamedPresets });
+      return true;
+  };
+
+  const handleDeletePreset = (presetName: string) => {
+    logger.info(`Deleting preset: ${presetName}`);
+    if (!appSettings) return;
+    const filteredPresets = appSettings.presets.filter(p => p.name !== presetName);
+    setAppSettings({ ...appSettings, presets: filteredPresets });
   };
   
   const handleRandomize = useCallback(() => {
@@ -575,12 +628,11 @@ const App: React.FC = () => {
     <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
       <Header 
         theme={theme} 
-        presets={appSettings.presets}
         activeView={activeView}
         onSetView={setActiveView}
         onToggleTheme={toggleTheme}
-        onLoadPreset={handleLoadPreset}
-        onSavePreset={handleSavePreset}
+        onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
+        onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -608,9 +660,26 @@ const App: React.FC = () => {
         presets={appSettings.presets}
         onToggleTag={handleToggleTag}
         onLoadPreset={handleLoadPreset}
-        onSavePreset={handleSavePreset}
+        onSavePreset={() => setIsSavePresetModalOpen(true)}
         onRandomize={handleRandomize}
         onClear={handleClear}
+      />
+      <SavePresetModal
+        isOpen={isSavePresetModalOpen}
+        onClose={() => setIsSavePresetModalOpen(false)}
+        onSave={handleSavePreset}
+      />
+      <PresetManagerModal
+        isOpen={isPresetManagerModalOpen}
+        onClose={() => setIsPresetManagerModalOpen(false)}
+        presets={appSettings.presets}
+        onLoadPreset={(preset) => {
+            handleLoadPreset(preset);
+            setIsPresetManagerModalOpen(false);
+        }}
+        onUpdatePreset={handleUpdatePreset}
+        onDeletePreset={handleDeletePreset}
+        onRenamePreset={handleRenamePreset}
       />
     </div>
   );

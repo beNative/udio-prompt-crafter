@@ -1,37 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React from 'react';
 import type { Preset } from '../types';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
-  presets: Preset[];
   activeView: 'crafter' | 'settings' | 'info';
   onSetView: (view: 'crafter' | 'settings' | 'info') => void;
   onToggleTheme: () => void;
-  onLoadPreset: (preset: Preset) => void;
-  onSavePreset: () => void;
+  onOpenSavePresetModal: () => void;
+  onOpenPresetManagerModal: () => void;
   onRandomize: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
   onToggleLogPanel: () => void;
 }
-
-const useClickOutside = (handler: () => void) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        handler();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [ref, handler]);
-  return ref;
-};
 
 const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; children?: React.ReactNode; className?: string;}> = ({onClick, title, icon, children, className=""}) => (
     <Tooltip text={title}>
@@ -45,10 +29,7 @@ const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; 
     </Tooltip>
 );
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, activeView, onSetView, onToggleTheme, onLoadPreset, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onToggleLogPanel }) => {
-  const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
-
-  const presetsDropdownRef = useClickOutside(() => setIsPresetDropdownOpen(false));
+export const Header: React.FC<HeaderProps> = ({ theme, activeView, onSetView, onToggleTheme, onOpenSavePresetModal, onOpenPresetManagerModal, onRandomize, onClear, onOpenCommandPalette, onToggleLogPanel }) => {
   
   const tabButtonStyles = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors";
   const activeTabStyles = "bg-blue-600 text-white shadow-sm";
@@ -80,34 +61,8 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, activeView, onSe
                   </button>
                 </Tooltip>
                 
-                 <div className="relative" ref={presetsDropdownRef}>
-                  <button
-                    onClick={() => setIsPresetDropdownOpen(prev => !prev)}
-                    className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800/80 text-sm font-medium rounded-lg text-bunker-600 dark:text-bunker-300 hover:bg-bunker-200 hover:text-bunker-800 dark:hover:bg-bunker-700/80 dark:hover:text-white transition-colors flex items-center"
-                  >
-                    Presets <Icon name="chevronDown" className="w-4 h-4 ml-2" />
-                  </button>
-                  {isPresetDropdownOpen && (
-                    <div className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-bunker-800 rounded-lg shadow-lg z-20 border border-bunker-200 dark:border-bunker-700 overflow-hidden">
-                      <ul>
-                        {presets.map((preset) => (
-                          <li key={preset.name}>
-                            <button
-                              onClick={() => {
-                                onLoadPreset(preset);
-                                setIsPresetDropdownOpen(false);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-bunker-800 dark:text-bunker-200 hover:bg-blue-600 hover:text-white transition-colors"
-                            >
-                              {preset.name}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                <HeaderButton onClick={onSavePreset} title="Save Current as Preset" icon="save" />
+                <HeaderButton onClick={onOpenPresetManagerModal} title="Manage Presets" icon="list-bullet" />
+                <HeaderButton onClick={onOpenSavePresetModal} title="Save Current as Preset..." icon="save" />
                 <HeaderButton onClick={onRandomize} title="Randomize" icon="sparkles" />
                 <Tooltip text="Clear All">
                     <button onClick={onClear} className="px-3 py-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-colors" title="Clear All">

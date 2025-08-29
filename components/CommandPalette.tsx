@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Tag, Preset } from '../types';
 import { Icon } from './icons';
@@ -40,7 +41,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const actions: Command[] = [
       { type: 'action', data: { id: 'clear', name: 'Clear All Tags', icon: 'trash', handler: onClear } },
       { type: 'action', data: { id: 'randomize', name: 'Randomize Tags', icon: 'sparkles', handler: onRandomize } },
-      { type: 'action', data: { id: 'save', name: 'Save as Preset', icon: 'save', handler: onSavePreset } },
+      { type: 'action', data: { id: 'save', name: 'Save as Preset...', icon: 'save', handler: onSavePreset } },
     ];
     
     presets.forEach(preset => {
