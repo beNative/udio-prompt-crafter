@@ -2,14 +2,14 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { platform, cwd } from 'process';
-// Fix: Add necessary imports to recreate __dirname in an ES module environment.
-import { fileURLToPath } from 'url';
+// Fix: The 'process' module does not have named exports for 'platform' and 'cwd'. Changed to import the default 'process' object.
+import process from 'process';
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;
 // In dev, log to project root. In packaged app, log next to executable.
-const logDir = isDev ? cwd() : path.dirname(app.getPath('exe'));
+// Fix: Use `process.cwd()` to get the current working directory, as `cwd` is no longer directly imported.
+const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
 
 const getLogFileName = () => {
     const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -43,10 +43,6 @@ ipcMain.handle('get-logs-path', () => {
 });
 // --- End of new logging code ---
 
-// Fix: Recreate __dirname for ES modules in Electron, as it's not available by default. This resolves the "Cannot find name '__dirname'" error.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1400,
@@ -72,5 +68,6 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', function () {
-  if (platform !== 'darwin') app.quit();
+  // Fix: Use `process.platform` to get the OS platform, as `platform` is no longer directly imported.
+  if (process.platform !== 'darwin') app.quit();
 });
