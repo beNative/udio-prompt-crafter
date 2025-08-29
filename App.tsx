@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
-import { starterMacros } from './data/macros';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AppSettings } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -15,6 +14,7 @@ import { logger } from './utils/logger';
 import { LogPanel } from './components/LogPanel';
 import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
 import { InfoPage } from './components/InfoPage';
+import { StatusBar } from './components/StatusBar';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -42,8 +42,71 @@ const App: React.FC = () => {
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info'>('crafter');
   
+  // State for global features like status bar
+  const [appVersion, setAppVersion] = useState('');
+  const [aiStatus, setAiStatus] = useState<AiStatus>('checking');
+  const [detectedProviders, setDetectedProviders] = useState<('ollama' | 'lmstudio')[]>([]);
+  const [availableModels, setAvailableModels] = useState<{ ollama: string[]; lmstudio: string[] }>({ ollama: [], lmstudio: [] });
+  const [isDetecting, setIsDetecting] = useState(false);
+  
+  const detectServicesAndFetchModels = useCallback(async () => {
+    logger.info("Detecting local LLM services...");
+    setAiStatus('checking');
+    setIsDetecting(true);
+    const newDetected: ('ollama' | 'lmstudio')[] = [];
+    const newModels: { ollama: string[]; lmstudio: string[] } = { ollama: [], lmstudio: [] };
+
+    try {
+        const res = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+            const data = await res.json();
+            newDetected.push('ollama');
+            if (data.models) newModels.ollama = data.models.map((m: any) => m.name).sort();
+        }
+    } catch (e) { /* ignore */ }
+
+    try {
+        const res = await fetch('http://127.0.0.1:1234/v1/models', { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+            const data = await res.json();
+            newDetected.push('lmstudio');
+            if (data.data) newModels.lmstudio = data.data.map((m: any) => m.id).sort();
+        }
+    } catch (e) { /* ignore */ }
+
+    setDetectedProviders(newDetected);
+    setAvailableModels(newModels);
+    setIsDetecting(false);
+    setAiStatus(newDetected.length > 0 ? 'connected' : 'disconnected');
+    logger.info(`Service detection complete. Found: ${newDetected.join(', ') || 'None'}`);
+
+    setAppSettings(currentSettings => {
+        if (!currentSettings) return null;
+        if (newDetected.length > 0 && !newDetected.includes(currentSettings.aiSettings.provider)) {
+            const newProvider = newDetected[0];
+            logger.info(`Current AI provider not detected, switching to ${newProvider}.`);
+            return {
+                ...currentSettings,
+                aiSettings: {
+                    provider: newProvider,
+                    baseUrl: newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1',
+                    model: newModels[newProvider][0] || '',
+                }
+            };
+        }
+        return currentSettings;
+    });
+  }, [setAppSettings]);
+
   useEffect(() => {
     logger.info("Application starting up...");
+
+    if (isElectron) {
+      window.electronAPI.getAppVersion().then(version => {
+        setAppVersion(version);
+        logger.info(`App version: ${version}`);
+      });
+    }
 
     const loadAppSettings = async () => {
       if (isElectron) {
@@ -58,11 +121,9 @@ const App: React.FC = () => {
       } else {
         logger.info("Running in web mode, loading settings from localStorage.");
         const storedPresets = localStorage.getItem('user-presets');
-        const storedMacros = localStorage.getItem('user-macros');
         const storedAiSettings = localStorage.getItem('ai-settings');
         setAppSettings({
           presets: storedPresets ? JSON.parse(storedPresets) : starterPresets,
-          macros: storedMacros ? JSON.parse(storedMacros) : starterMacros,
           aiSettings: storedAiSettings ? JSON.parse(storedAiSettings) : {
             provider: 'ollama',
             baseUrl: 'http://localhost:11434',
@@ -88,10 +149,12 @@ const App: React.FC = () => {
         setError(errorMessage);
       });
 
-    Promise.all([loadAppSettings(), loadTaxonomy]).finally(() => {
+    Promise.all([loadAppSettings(), loadTaxonomy]).then(() => {
+        detectServicesAndFetchModels();
+    }).finally(() => {
         setIsLoading(false);
     });
-  }, []);
+  }, [detectServicesAndFetchModels]);
 
   useEffect(() => {
     if (!appSettings) return;
@@ -100,7 +163,6 @@ const App: React.FC = () => {
       window.electronAPI.writeSettings(appSettings);
     } else {
       localStorage.setItem('user-presets', JSON.stringify(appSettings.presets));
-      localStorage.setItem('user-macros', JSON.stringify(appSettings.macros));
       localStorage.setItem('ai-settings', JSON.stringify(appSettings.aiSettings));
     }
   }, [appSettings]);
@@ -303,18 +365,6 @@ const App: React.FC = () => {
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
   
-  const handleApplyMacro = useCallback((macro: Macro) => {
-    logger.info(`Applying macro: ${macro.name}`);
-    const newSelectedTags: Record<string, SelectedTag> = {};
-    macro.tags.forEach(tagId => {
-        const fullTag = taxonomyMap.get(tagId);
-        if (fullTag) newSelectedTags[tagId] = { ...fullTag };
-        else logger.warn('Tag from macro not found.', { tagId });
-    });
-    setSelectedTags(newSelectedTags);
-    setTextCategoryValues({});
-  }, [taxonomyMap]);
-
   const handleLoadPreset = useCallback((preset: Preset) => {
     logger.info(`Loading preset: ${preset.name}`);
     const newSelectedTags: Record<string, SelectedTag> = {};
@@ -473,7 +523,10 @@ const App: React.FC = () => {
               settings={appSettings}
               onSettingsChange={setAppSettings}
               defaultPresets={starterPresets}
-              defaultMacros={starterMacros}
+              detectedProviders={detectedProviders}
+              availableModels={availableModels}
+              isDetecting={isDetecting}
+              onRefresh={detectServicesAndFetchModels}
             />
           </div>
         );
@@ -509,12 +562,10 @@ const App: React.FC = () => {
       <Header 
         theme={theme} 
         presets={appSettings.presets}
-        macros={appSettings.macros}
         activeView={activeView}
         onSetView={setActiveView}
         onToggleTheme={toggleTheme}
         onLoadPreset={handleLoadPreset}
-        onApplyMacro={handleApplyMacro}
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}
@@ -524,6 +575,12 @@ const App: React.FC = () => {
       <main className="flex-grow flex flex-col min-h-0">
         {renderActiveView()}
       </main>
+      <StatusBar 
+        appVersion={appVersion}
+        tagCount={Object.keys(selectedTags).length}
+        conflictCount={conflicts.length}
+        aiStatus={aiStatus}
+      />
        {conflictState && (
         <ConflictResolutionModal
           conflict={conflictState}
@@ -535,10 +592,8 @@ const App: React.FC = () => {
         onClose={() => setIsCommandPaletteOpen(false)}
         tags={allTags}
         presets={appSettings.presets}
-        macros={appSettings.macros}
         onToggleTag={handleToggleTag}
         onLoadPreset={handleLoadPreset}
-        onApplyMacro={handleApplyMacro}
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}

@@ -11,11 +11,11 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 -   **Comprehensive Taxonomy:** Browse a curated library of hundreds of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
 -   **Live Prompt Preview:** See your prompt string and a structured JSON output update in real-time as you select and deselect tags.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
--   **Presets & Macros:** Save your favorite tag combinations as presets for later use, or create powerful macros to apply a whole set of tags with a single click.
+-   **Presets:** Save your favorite tag combinations as presets for later use.
 -   **AI-Powered Assistance:** Use the AI features to get suggestions for complementary tags or generate lyrical theme ideas based on your current selection.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").
 -   **Command Palette:** A powerful search tool (`Ctrl+;`) to quickly find and toggle any tag, or execute actions like loading a preset or clearing the board.
--   **File-Based Settings:** When running the desktop version, all your custom presets, macros, and settings are saved to a local file, making them persistent across sessions.
+-   **File-Based Settings:** When running the desktop version, all your custom presets and settings are saved to a local file, making them persistent across sessions.
 
 ## Getting Started
 

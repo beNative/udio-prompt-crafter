@@ -5,7 +5,6 @@ import * as fs from 'fs';
 // Note: 'process' is a global in Node.js environments and does not need to be imported.
 // The explicit import was removed to prevent shadowing the correctly-typed global variable.
 import { starterPresets } from '../data/presets';
-import { starterMacros } from '../data/macros';
 
 const isDev = !app.isPackaged;
 
@@ -20,7 +19,6 @@ const defaultSettings = {
     model: 'llama3',
   },
   presets: starterPresets,
-  macros: starterMacros,
 };
 
 ipcMain.handle('read-settings', () => {
@@ -67,6 +65,11 @@ ipcMain.handle('read-markdown-file', (event, filename) => {
     console.error(`Failed to read markdown file ${filename}:`, error);
     return `Error: Could not read documentation file. ${error.message}`;
   }
+});
+
+// --- App Info ---
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
 });
 
 // --- Logging ---

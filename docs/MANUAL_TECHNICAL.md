@@ -64,7 +64,7 @@ Secure communication between the frontend and backend is achieved via Electron's
 
 ### Settings & Data Persistence
 
-In Electron mode, application settings (presets, macros, AI config) are stored in `settings.json` within the user's application data directory (e.g., `%APPDATA%` on Windows). This provides a robust and standard way to persist user data. The `main.ts` process handles all file read/write operations for this file.
+In Electron mode, application settings (presets, AI config) are stored in `settings.json` within the user's application data directory (e.g., `%APPDATA%` on Windows). This provides a robust and standard way to persist user data. The `main.ts` process handles all file read/write operations for this file.
 
 ## Build System
 

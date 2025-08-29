@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import type { Tag, Preset, Macro } from '../types';
+import type { Tag, Preset } from '../types';
 import { Icon } from './icons';
 
 // Define a unified type for palette items
@@ -12,10 +12,8 @@ interface CommandPaletteProps {
   onClose: () => void;
   tags: Tag[];
   presets: Preset[];
-  macros: Macro[];
   onToggleTag: (tag: Tag) => void;
   onLoadPreset: (preset: Preset) => void;
-  onApplyMacro: (macro: Macro) => void;
   onSavePreset: () => void;
   onRandomize: () => void;
   onClear: () => void;
@@ -26,10 +24,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onClose,
   tags,
   presets,
-  macros,
   onToggleTag,
   onLoadPreset,
-  onApplyMacro,
   onSavePreset,
   onRandomize,
   onClear,
@@ -51,14 +47,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       actions.push({ type: 'action', data: { id: `preset-${preset.name}`, name: `Preset: ${preset.name}`, icon: 'load', handler: () => onLoadPreset(preset) }});
     });
 
-    macros.forEach(macro => {
-      actions.push({ type: 'action', data: { id: `macro-${macro.name}`, name: `Macro: ${macro.name}`, icon: 'wandSparkles', handler: () => onApplyMacro(macro) }});
-    });
-
     const tagCommands: Command[] = tags.map(tag => ({ type: 'tag', data: tag }));
 
     return [...actions, ...tagCommands];
-  }, [tags, presets, macros, onClear, onRandomize, onSavePreset, onLoadPreset, onApplyMacro]);
+  }, [tags, presets, onClear, onRandomize, onSavePreset, onLoadPreset]);
 
   const filteredCommands = useMemo<Command[]>(() => {
     if (!searchTerm) {

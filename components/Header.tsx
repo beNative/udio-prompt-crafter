@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Preset, Macro } from '../types';
+import type { Preset } from '../types';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
   presets: Preset[];
-  macros: Macro[];
   activeView: 'crafter' | 'settings' | 'info';
   onSetView: (view: 'crafter' | 'settings' | 'info') => void;
   onToggleTheme: () => void;
   onLoadPreset: (preset: Preset) => void;
-  onApplyMacro: (macro: Macro) => void;
   onSavePreset: () => void;
   onRandomize: () => void;
   onClear: () => void;
@@ -35,12 +33,10 @@ const useClickOutside = (handler: () => void) => {
   return ref;
 };
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, activeView, onSetView, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onToggleLogPanel }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, presets, activeView, onSetView, onToggleTheme, onLoadPreset, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onToggleLogPanel }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
-  const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
   const presetsDropdownRef = useClickOutside(() => setIsPresetDropdownOpen(false));
-  const macrosDropdownRef = useClickOutside(() => setIsMacroDropdownOpen(false));
   
   const tabButtonStyles = "px-3 py-1 rounded-md text-sm font-medium transition-colors";
   const activeTabStyles = "bg-blue-600 text-white";
@@ -72,34 +68,6 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, activeVi
                   </button>
                 </Tooltip>
                 
-                <div className="relative" ref={macrosDropdownRef}>
-                  <button
-                    onClick={() => setIsMacroDropdownOpen(prev => !prev)}
-                    className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800 text-sm rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 flex items-center"
-                  >
-                    <Icon name="wandSparkles" className="w-4 h-4 mr-2" /> Macros <Icon name="chevronDown" className="w-4 h-4 ml-2" />
-                  </button>
-                  {isMacroDropdownOpen && (
-                    <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-bunker-800 rounded-md shadow-lg z-20 border border-bunker-200 dark:border-bunker-700">
-                      <ul>
-                        {macros.map((macro) => (
-                          <li key={macro.name}>
-                            <button
-                              onClick={() => {
-                                onApplyMacro(macro);
-                                setIsMacroDropdownOpen(false);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-bunker-800 dark:text-bunker-200 hover:bg-blue-600 hover:text-white"
-                              title={macro.description}
-                            >
-                              {macro.name}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
                  <div className="relative" ref={presetsDropdownRef}>
                   <button
                     onClick={() => setIsPresetDropdownOpen(prev => !prev)}

@@ -34,22 +34,17 @@ export interface Conflict {
   tagB: Tag;
 }
 
-export interface Macro {
-    name: string;
-    description: string;
-    tags: string[];
-}
-
 export interface AiSettings {
   provider: 'ollama' | 'lmstudio';
   baseUrl: string;
   model: string;
 }
 
+export type AiStatus = 'checking' | 'connected' | 'disconnected';
+
 export interface AppSettings {
   aiSettings: AiSettings;
   presets: Preset[];
-  macros: Macro[];
 }
 
 // New Logging types
@@ -70,6 +65,7 @@ export interface IElectronAPI {
   readSettings: () => Promise<AppSettings>;
   writeSettings: (settings: AppSettings) => void;
   readMarkdownFile: (filename: string) => Promise<string>;
+  getAppVersion: () => Promise<string>;
 }
 
 declare global {
