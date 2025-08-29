@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
 import { starterMacros } from './data/macros';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AiSettings } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AiSettings, AppSettings } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -10,8 +10,7 @@ import { PromptPreview } from './components/PromptPreview';
 import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 import { CommandPalette } from './components/CommandPalette';
 import { ResizablePanels } from './components/ResizablePanels';
-import { SettingsModal } from './components/SettingsModal';
-import { DeconstructPromptModal } from './components/DeconstructPromptModal';
+import { SettingsPage } from './components/SettingsPage';
 import { logger } from './utils/logger';
 import { LogPanel } from './components/LogPanel';
 import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
@@ -21,16 +20,13 @@ interface ConflictState {
   conflictingTag: Tag;
 }
 
+const isElectron = !!window.electronAPI;
+
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
-  const [presets, setPresets] = useLocalStorage<Preset[]>('user-presets', starterPresets);
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
   const [logPanelHeight, setLogPanelHeight] = useLocalStorage('log-panel-height', 288);
-  const [aiSettings, setAiSettings] = useLocalStorage<AiSettings>('ai-settings', {
-    provider: 'ollama',
-    baseUrl: 'http://localhost:11434',
-    model: 'llama3',
-  });
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   
   const [taxonomy, setTaxonomy] = useState<Taxonomy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,27 +38,45 @@ const App: React.FC = () => {
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
   
-  // State for AI service detection
-  const [detectedProviders, setDetectedProviders] = useState<('ollama' | 'lmstudio')[]>([]);
-  const [availableModels, setAvailableModels] = useState<{ ollama: string[]; lmstudio: string[] }>({ ollama: [], lmstudio: [] });
-  const [isDetecting, setIsDetecting] = useState(false);
-
-
   useEffect(() => {
     logger.info("Application starting up...");
-    fetch('./taxonomy.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Failed to load taxonomy configuration file. Status: ${res.status}`);
+
+    const loadAppSettings = async () => {
+      if (isElectron) {
+        try {
+          const settings = await window.electronAPI.readSettings();
+          logger.info("Application settings loaded from file.");
+          setAppSettings(settings);
+        } catch (e: any) {
+           logger.error("Failed to read settings file.", { error: e.message });
+           setError("Could not read the application settings file.");
         }
+      } else {
+        logger.info("Running in web mode, loading settings from localStorage.");
+        const storedPresets = localStorage.getItem('user-presets');
+        const storedMacros = localStorage.getItem('user-macros');
+        const storedAiSettings = localStorage.getItem('ai-settings');
+        setAppSettings({
+          presets: storedPresets ? JSON.parse(storedPresets) : starterPresets,
+          macros: storedMacros ? JSON.parse(storedMacros) : starterMacros,
+          aiSettings: storedAiSettings ? JSON.parse(storedAiSettings) : {
+            provider: 'ollama',
+            baseUrl: 'http://localhost:11434',
+            model: 'llama3',
+          },
+        });
+      }
+    };
+    
+    const loadTaxonomy = fetch('./taxonomy.json')
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to load taxonomy. Status: ${res.status}`);
         return res.json();
       })
       .then(data => {
-        logger.info("Taxonomy configuration loaded successfully.");
+        logger.info("Taxonomy loaded successfully.");
         setTaxonomy(data.taxonomy);
       })
       .catch(e => {
@@ -70,11 +84,24 @@ const App: React.FC = () => {
         const errorMessage = "Could not load the core taxonomy configuration. The application cannot start.";
         logger.error(errorMessage, { error: e.message });
         setError(errorMessage);
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
+
+    Promise.all([loadAppSettings(), loadTaxonomy]).finally(() => {
+        setIsLoading(false);
+    });
   }, []);
+
+  useEffect(() => {
+    if (!appSettings) return;
+
+    if (isElectron) {
+      window.electronAPI.writeSettings(appSettings);
+    } else {
+      localStorage.setItem('user-presets', JSON.stringify(appSettings.presets));
+      localStorage.setItem('user-macros', JSON.stringify(appSettings.macros));
+      localStorage.setItem('ai-settings', JSON.stringify(appSettings.aiSettings));
+    }
+  }, [appSettings]);
   
   const { taxonomyMap, allTags, initialCategories } = useMemo(() => {
     if (!taxonomy) {
@@ -95,10 +122,12 @@ const App: React.FC = () => {
   useEffect(() => {
       if(initialCategories.length > 0 && categories.length === 0) {
           setCategories(initialCategories);
-          setActiveCategoryId(initialCategories[0].id);
+          if (!activeCategoryId) {
+            setActiveCategoryId(initialCategories[0].id);
+          }
           logger.debug('Initial categories set.');
       }
-  }, [initialCategories, categories]);
+  }, [initialCategories, categories, activeCategoryId]);
 
 
   useEffect(() => {
@@ -117,82 +146,24 @@ const App: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  const detectServicesAndFetchModels = useCallback(async () => {
-    logger.info("Detecting local LLM services...");
-    setIsDetecting(true);
-    const newDetected: ('ollama' | 'lmstudio')[] = [];
-    const newModels: { ollama: string[]; lmstudio: string[] } = { ollama: [], lmstudio: [] };
-
-    // Detect Ollama
-    try {
-        const ollamaRes = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
-        if (ollamaRes.ok) {
-            const data = await ollamaRes.json();
-            newDetected.push('ollama');
-            if (data.models) {
-                newModels.ollama = data.models.map((m: any) => m.name).sort();
-                logger.info('Detected Ollama service.', { models: newModels.ollama });
-            }
-        }
-    } catch (e) { logger.debug('Ollama service not found or timed out.'); }
-
-    // Detect LM Studio
-    try {
-        const lmStudioRes = await fetch('http://127.0.0.1:1234/v1/models', { signal: AbortSignal.timeout(2000) });
-        if (lmStudioRes.ok) {
-            const data = await lmStudioRes.json();
-            newDetected.push('lmstudio');
-            if (data.data) {
-                newModels.lmstudio = data.data.map((m: any) => m.id).sort();
-                logger.info('Detected LM Studio service.', { models: newModels.lmstudio });
-            }
-        }
-    } catch (e) { logger.debug('LM Studio service not found or timed out.'); }
-
-    if (newDetected.length === 0) {
-        logger.warn('No local LLM services detected.');
-    }
-
-    setDetectedProviders(newDetected);
-    setAvailableModels(newModels);
-    setIsDetecting(false);
-
-    // Auto-switch provider using a functional update to prevent re-triggering the effect.
-    setAiSettings(currentSettings => {
-        if (newDetected.length > 0 && !newDetected.includes(currentSettings.provider)) {
-            const newProvider = newDetected[0];
-            const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
-            const newModel = newModels[newProvider][0] || '';
-            logger.info(`AI provider auto-switched to '${newProvider}' as the previous one was not detected.`);
-            return { provider: newProvider, baseUrl: newBaseUrl, model: newModel };
-        }
-        return currentSettings; // No change needed
-    });
-  }, [setAiSettings]);
-
-  useEffect(() => {
-    if (isSettingsModalOpen) {
-        detectServicesAndFetchModels();
-    }
-  }, [isSettingsModalOpen, detectServicesAndFetchModels]);
-
-  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean): Promise<any> => {
-    if (!aiSettings.baseUrl || !aiSettings.model) {
+  
+  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
+    if (!appSettings?.aiSettings.baseUrl || !appSettings?.aiSettings.model) {
       const errorMsg = "AI settings are not configured. Please configure them in the settings menu.";
       logger.error(errorMsg);
       throw new Error(errorMsg);
     }
 
+    const { provider, baseUrl, model } = appSettings.aiSettings;
     let endpoint = '';
     let body: any = {};
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-    if (aiSettings.provider === 'ollama') {
-      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/api/chat`;
+    if (provider === 'ollama') {
+      endpoint = `${baseUrl.replace(/\/$/, '')}/api/chat`;
       body = {
-        model: aiSettings.model,
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -201,9 +172,9 @@ const App: React.FC = () => {
         stream: false,
       };
     } else { // lmstudio (openai-compatible)
-      endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/chat/completions`;
+      endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
       body = {
-        model: aiSettings.model,
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -212,7 +183,7 @@ const App: React.FC = () => {
       };
     }
     
-    logger.info(`Calling LLM at ${endpoint}`, { provider: aiSettings.provider });
+    logger.info(`Calling LLM at ${endpoint}`, { provider });
     logger.debug('LLM request body:', body);
 
     try {
@@ -222,7 +193,6 @@ const App: React.FC = () => {
         body: JSON.stringify(body),
         signal: controller.signal
       });
-
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -235,51 +205,29 @@ const App: React.FC = () => {
       const data = await response.json();
       logger.debug('LLM response data:', data);
 
-
-      let contentString: string;
-      if (aiSettings.provider === 'ollama') {
-        contentString = data.message.content;
-      } else {
-        contentString = data.choices[0].message.content;
-      }
-      
+      let contentString: string = provider === 'ollama' ? data.message.content : data.choices[0].message.content;
       let textToParse = contentString.trim();
       
-      // First, attempt to extract JSON from within markdown fences, which is a common pattern.
       const markdownMatch = textToParse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (markdownMatch && markdownMatch[1]) {
         textToParse = markdownMatch[1].trim();
       }
 
-      // Find the start of the first JSON object '{' or array '['.
       const firstBrace = textToParse.indexOf('{');
       const firstBracket = textToParse.indexOf('[');
-      
       let startIndex = -1;
-      if (firstBrace === -1) {
-          startIndex = firstBracket;
-      } else if (firstBracket === -1) {
-          startIndex = firstBrace;
-      } else {
-          startIndex = Math.min(firstBrace, firstBracket);
-      }
+      if (firstBrace === -1) startIndex = firstBracket;
+      else if (firstBracket === -1) startIndex = firstBrace;
+      else startIndex = Math.min(firstBrace, firstBracket);
 
-      if (startIndex === -1) {
-        logger.error('No JSON object or array found in AI response.', { response: textToParse });
-        throw new Error('AI response did not contain a valid JSON object or array.');
-      }
+      if (startIndex === -1) throw new Error('AI response did not contain a valid JSON object or array.');
       
-      // Find the end of the last JSON object '}' or array ']'.
       const lastBrace = textToParse.lastIndexOf('}');
       const lastBracket = textToParse.lastIndexOf(']');
       const endIndex = Math.max(lastBrace, lastBracket);
 
-      if (endIndex === -1) {
-        logger.error('Malformed JSON in AI response (no closing brace/bracket).', { response: textToParse });
-        throw new Error('AI response has a malformed JSON object (no closing brace/bracket).');
-      }
+      if (endIndex === -1) throw new Error('AI response has a malformed JSON object (no closing brace/bracket).');
       
-      // Extract the substring that is likely to be the JSON payload.
       const jsonSubstring = textToParse.substring(startIndex, endIndex + 1);
 
       try {
@@ -287,11 +235,7 @@ const App: React.FC = () => {
         logger.info('Successfully received and parsed LLM response.');
         return parsedJson;
       } catch (error: any) {
-        logger.error('Failed to parse extracted JSON from AI response', { 
-          errorMessage: error.message, 
-          extractedJson: jsonSubstring,
-          originalResponse: contentString 
-        });
+        logger.error('Failed to parse extracted JSON from AI response', { errorMessage: error.message, extractedJson: jsonSubstring });
         throw new Error(`Error: ${error.message}. The AI returned the following invalid JSON: ${jsonSubstring.substring(0, 100)}...`);
       }
 
@@ -301,7 +245,7 @@ const App: React.FC = () => {
         logger.error("Error calling LLM:", { message: errorMessage });
         throw new Error(errorMessage);
     }
-}, [aiSettings]);
+  }, [appSettings]);
 
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
@@ -313,22 +257,11 @@ const App: React.FC = () => {
     const isCurrentlySelected = !!selectedTags[tag.id];
 
     if (!isCurrentlySelected) {
-      let conflict: Tag | null = null;
-      if (tag.conflictsWith) {
-        for (const conflictId of tag.conflictsWith) {
-          if (selectedTags[conflictId]) {
-            conflict = selectedTags[conflictId];
-            break;
-          }
-        }
-      }
-
+      const conflict = tag.conflictsWith?.find(id => selectedTags[id]);
       if (conflict) {
-        logger.warn('Tag conflict detected.', { newTag: tag.label, existingTag: conflict.label });
-        setConflictState({
-          newlySelectedTag: tag,
-          conflictingTag: conflict,
-        });
+        const conflictingTag = selectedTags[conflict];
+        logger.warn('Tag conflict detected.', { newTag: tag.label, existingTag: conflictingTag.label });
+        setConflictState({ newlySelectedTag: tag, conflictingTag });
         return; 
       }
     }
@@ -350,7 +283,6 @@ const App: React.FC = () => {
 
   const handleResolveConflict = (keepNew: boolean) => {
     if (!conflictState) return;
-
     logger.info('Resolving tag conflict.', { keptNew: keepNew, newTag: conflictState.newlySelectedTag.label, oldTag: conflictState.conflictingTag.label });
     if (keepNew) {
       const { newlySelectedTag, conflictingTag } = conflictState;
@@ -358,9 +290,7 @@ const App: React.FC = () => {
         const newSelected = { ...prev };
         delete newSelected[conflictingTag.id];
         const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
-        if (categoryId) {
-          newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
-        }
+        if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
         return newSelected;
       });
     }
@@ -370,38 +300,26 @@ const App: React.FC = () => {
   const handleTextCategoryChange = (categoryId: string, value: string) => {
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
-
-  const loadTagsFromList = useCallback((tagIds: string[], replace = true) => {
-      logger.info('Loading tags from list.', { count: tagIds.length, replace });
-      const newSelectedTags: Record<string, SelectedTag> = replace ? {} : {...selectedTags};
-      tagIds.forEach(tagId => {
-          const fullTag = taxonomyMap.get(tagId);
-          if (fullTag) {
-              newSelectedTags[tagId] = { ...fullTag };
-          } else {
-              logger.warn('Attempted to load a non-existent tag ID from list.', { tagId });
-          }
-      });
-      setSelectedTags(newSelectedTags);
-  }, [taxonomyMap, selectedTags]);
-
-
+  
   const handleApplyMacro = useCallback((macro: Macro) => {
     logger.info(`Applying macro: ${macro.name}`);
-    loadTagsFromList(macro.tags);
+    const newSelectedTags: Record<string, SelectedTag> = {};
+    macro.tags.forEach(tagId => {
+        const fullTag = taxonomyMap.get(tagId);
+        if (fullTag) newSelectedTags[tagId] = { ...fullTag };
+        else logger.warn('Tag from macro not found.', { tagId });
+    });
+    setSelectedTags(newSelectedTags);
     setTextCategoryValues({});
-  }, [loadTagsFromList]);
+  }, [taxonomyMap]);
 
   const handleLoadPreset = useCallback((preset: Preset) => {
     logger.info(`Loading preset: ${preset.name}`);
     const newSelectedTags: Record<string, SelectedTag> = {};
     Object.entries(preset.selectedTags).forEach(([tagId, data]) => {
       const fullTag = taxonomyMap.get(tagId);
-      if (fullTag) {
-        newSelectedTags[tagId] = { ...fullTag, ...data };
-      } else {
-        logger.warn('Tag from preset not found in taxonomy.', { tagId, presetName: preset.name });
-      }
+      if (fullTag) newSelectedTags[tagId] = { ...fullTag, ...data };
+      else logger.warn('Tag from preset not found.', { tagId });
     });
 
     setSelectedTags(newSelectedTags);
@@ -416,19 +334,15 @@ const App: React.FC = () => {
 
   const handleSavePreset = () => {
     const name = prompt("Enter a name for your preset:");
-    if (name) {
+    if (name && appSettings) {
       logger.info(`Saving new preset: ${name}`);
       const selectedTagsForPreset: Preset['selectedTags'] = {};
       Object.entries(selectedTags).forEach(([id, tag]) => {
           selectedTagsForPreset[id] = { categoryId: tag.categoryId };
       });
 
-      const newPreset: Preset = {
-        name,
-        selectedTags: selectedTagsForPreset,
-        categoryOrder: categories.map(c => c.id)
-      };
-      setPresets(prev => [...prev, newPreset]);
+      const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id) };
+      setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
     }
   };
   
@@ -439,9 +353,7 @@ const App: React.FC = () => {
         if(category.tags.length > 0 && category.type !== 'text') {
             const randomTag = category.tags[Math.floor(Math.random() * category.tags.length)];
             const fullTag = taxonomyMap.get(randomTag.id);
-            if(fullTag) {
-                 newSelected[randomTag.id] = fullTag;
-            }
+            if(fullTag) newSelected[randomTag.id] = fullTag;
         }
     });
     setSelectedTags(newSelected);
@@ -459,29 +371,18 @@ const App: React.FC = () => {
     setSelectedTags(prev => {
         const newSelected = { ...prev };
         Object.keys(newSelected).forEach(tagId => {
-            if (newSelected[tagId].categoryId === categoryId) {
-                delete newSelected[tagId];
-            }
+            if (newSelected[tagId].categoryId === categoryId) delete newSelected[tagId];
         });
         return newSelected;
     });
   }, []);
 
-  const handleDeconstructPrompt = useCallback(async (prompt: string) => {
-    logger.info('Deconstructing prompt with AI.');
-    const systemPrompt = `You are an expert musicologist AI. Your task is to analyze a user's prompt and map it to a predefined list of tags. You will be given a JSON object of available tags. You must return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a tag that accurately represents the user's prompt. Only select tags from the provided list. Do not hallucinate new tags. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
-    const userPrompt = `User Prompt: "${prompt}". Available Tags: ${JSON.stringify(allTags.map(({id, label, description, synonyms}) => ({id, label, description, synonyms})))}`;
-
-    const result = await callLlm(systemPrompt, userPrompt);
-    if (result && Array.isArray(result.tagIds)) {
-        logger.info('AI prompt deconstruction successful.', { foundTags: result.tagIds.length });
-        loadTagsFromList(result.tagIds, true);
-        return true;
-    }
-    throw new Error("AI returned an invalid response format.");
-  }, [callLlm, allTags, loadTagsFromList]);
+  const categoriesWithSettings = useMemo(() => [
+    ...categories,
+    { id: 'settings', name: 'Settings', tags: [], description: 'Configure application settings' }
+  ], [categories]);
   
-  const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
+  const activeCategory = useMemo(() => categoriesWithSettings.find(c => c.id === activeCategoryId), [categoriesWithSettings, activeCategoryId]);
 
   const selectedTagCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -503,9 +404,7 @@ const App: React.FC = () => {
             for (const conflictId of tagA.conflictsWith) {
                 if (selectedTags[conflictId]) {
                     const tagB = selectedTags[conflictId];
-                    if (tagA.id < tagB.id) {
-                         newConflicts.push({ tagA, tagB });
-                    }
+                    if (tagA.id < tagB.id) newConflicts.push({ tagA, tagB });
                 }
             }
         }
@@ -513,14 +412,14 @@ const App: React.FC = () => {
     return newConflicts;
   }, [selectedTags]);
   
-  if (isLoading) {
+  if (isLoading || !appSettings) {
     return (
         <div className="flex items-center justify-center h-full w-full bg-white dark:bg-bunker-950 text-bunker-500">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Loading configuration...
+            Loading...
         </div>
     );
   }
@@ -538,7 +437,7 @@ const App: React.FC = () => {
       <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
           <div className="h-full">
             <CategoryList
-              categories={categories}
+              categories={categoriesWithSettings}
               activeCategoryId={activeCategoryId}
               selectedTagCounts={selectedTagCounts}
               onSelectCategory={setActiveCategoryId}
@@ -546,16 +445,25 @@ const App: React.FC = () => {
             />
           </div>
           <div className="h-full overflow-y-auto">
-            <TagPicker
-              category={activeCategory}
-              selectedTags={selectedTags}
-              onToggleTag={handleToggleTag}
-              textCategoryValues={textCategoryValues}
-              onTextCategoryChange={handleTextCategoryChange}
-              onClearCategoryTags={handleClearCategoryTags}
-              taxonomyMap={taxonomyMap}
-              callLlm={callLlm}
-            />
+            {activeCategoryId === 'settings' ? (
+              <SettingsPage 
+                settings={appSettings}
+                onSettingsChange={setAppSettings}
+                defaultPresets={starterPresets}
+                defaultMacros={starterMacros}
+              />
+            ) : (
+              <TagPicker
+                category={activeCategory}
+                selectedTags={selectedTags}
+                onToggleTag={handleToggleTag}
+                textCategoryValues={textCategoryValues}
+                onTextCategoryChange={handleTextCategoryChange}
+                onClearCategoryTags={handleClearCategoryTags}
+                taxonomyMap={taxonomyMap}
+                callLlm={callLlm}
+              />
+            )}
           </div>
           <div className="h-full">
             <PromptPreview 
@@ -572,8 +480,8 @@ const App: React.FC = () => {
     <div className="h-full w-full flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
       <Header 
         theme={theme} 
-        presets={presets}
-        macros={starterMacros}
+        presets={appSettings.presets}
+        macros={appSettings.macros}
         onToggleTheme={toggleTheme}
         onLoadPreset={handleLoadPreset}
         onApplyMacro={handleApplyMacro}
@@ -581,8 +489,7 @@ const App: React.FC = () => {
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onOpenAiAssist={() => setIsDeconstructModalOpen(true)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenSettings={() => setActiveCategoryId('settings')}
         onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
       />
       <main className="flex-grow flex flex-col min-h-0">
@@ -613,29 +520,14 @@ const App: React.FC = () => {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         tags={allTags}
-        presets={presets}
-        macros={starterMacros}
+        presets={appSettings.presets}
+        macros={appSettings.macros}
         onToggleTag={handleToggleTag}
         onLoadPreset={handleLoadPreset}
         onApplyMacro={handleApplyMacro}
         onSavePreset={handleSavePreset}
         onRandomize={handleRandomize}
         onClear={handleClear}
-      />
-       <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        settings={aiSettings}
-        onSave={setAiSettings}
-        detectedProviders={detectedProviders}
-        availableModels={availableModels}
-        isDetecting={isDetecting}
-        onRefresh={detectServicesAndFetchModels}
-      />
-      <DeconstructPromptModal
-        isOpen={isDeconstructModalOpen}
-        onClose={() => setIsDeconstructModalOpen(false)}
-        onDeconstruct={handleDeconstructPrompt}
       />
     </div>
   );

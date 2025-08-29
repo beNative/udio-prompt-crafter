@@ -46,6 +46,12 @@ export interface AiSettings {
   model: string;
 }
 
+export interface AppSettings {
+  aiSettings: AiSettings;
+  presets: Preset[];
+  macros: Macro[];
+}
+
 // New Logging types
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';
 
@@ -61,6 +67,8 @@ export interface IElectronAPI {
   writeLog: (logEntry: LogEntry) => void;
   showItemInFolder: () => void;
   getLogsPath: () => Promise<string>;
+  readSettings: () => Promise<AppSettings>;
+  writeSettings: (settings: AppSettings) => void;
 }
 
 declare global {

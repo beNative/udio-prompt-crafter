@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Preset, Macro } from '../types';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
@@ -15,14 +15,33 @@ interface HeaderProps {
   onRandomize: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
-  onOpenAiAssist: () => void;
   onOpenSettings: () => void;
   onToggleLogPanel: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onOpenAiAssist, onOpenSettings, onToggleLogPanel }) => {
+const useClickOutside = (handler: () => void) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, handler]);
+  return ref;
+};
+
+export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onOpenSettings, onToggleLogPanel }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
   const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
+
+  const presetsDropdownRef = useClickOutside(() => setIsPresetDropdownOpen(false));
+  const macrosDropdownRef = useClickOutside(() => setIsMacroDropdownOpen(false));
+
 
   return (
     <header className="bg-bunker-50 dark:bg-bunker-900 text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200 dark:border-bunker-800 shadow-md shrink-0">
@@ -33,13 +52,10 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
               <Icon name="search" className="w-5 h-5" />
           </button>
         </Tooltip>
-        <button onClick={onOpenAiAssist} className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center" title="AI Prompt Deconstruction">
-          <Icon name="wandSparkles" className="w-5 h-5 mr-2" />
-          <span className="text-sm">AI Assist</span>
-        </button>
-        <div className="relative">
+        
+        <div className="relative" ref={macrosDropdownRef}>
           <button
-            onClick={() => setIsMacroDropdownOpen(!isMacroDropdownOpen)}
+            onClick={() => setIsMacroDropdownOpen(prev => !prev)}
             className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800 text-sm rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 flex items-center"
           >
             <Icon name="wandSparkles" className="w-4 h-4 mr-2" /> Macros <Icon name="chevronDown" className="w-4 h-4 ml-2" />
@@ -65,9 +81,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
             </div>
           )}
         </div>
-         <div className="relative">
+         <div className="relative" ref={presetsDropdownRef}>
           <button
-            onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
+            onClick={() => setIsPresetDropdownOpen(prev => !prev)}
             className="px-4 py-2 bg-bunker-100 dark:bg-bunker-800 text-sm rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 flex items-center"
           >
             Presets <Icon name="chevronDown" className="w-4 h-4 ml-2" />

@@ -2,23 +2,59 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Removed incorrect 'process' import. The 'process' object is a global in Node.js environments and does not need to be imported. The explicit import was causing type errors by shadowing the correctly-typed global variable.
+// Fix: Import the 'process' module to provide correct typings for `process.cwd()` and `process.platform`, resolving TypeScript errors.
+import * as process from 'process';
+import { starterPresets } from '../data/presets';
+import { starterMacros } from '../data/macros';
 
-// --- Start of new logging code ---
 const isDev = !app.isPackaged;
-// In dev, log to project root. In packaged app, log next to executable.
-const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
 
-const getLogFileName = () => {
-    const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    return `udio-prompt-crafter-${date}.log`;
+// --- Settings Management ---
+// Use app.getPath('userData') which is the standard, writable location for app data.
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+
+const defaultSettings = {
+  aiSettings: {
+    provider: 'ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3',
+  },
+  presets: starterPresets,
+  macros: starterMacros,
 };
 
-// We define this here so both handlers can use it. It's updated on each write.
+ipcMain.handle('read-settings', () => {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const rawData = fs.readFileSync(settingsPath, 'utf-8');
+      return JSON.parse(rawData);
+    } else {
+      // File doesn't exist, create it with defaults
+      fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+  } catch (error) {
+    console.error('Failed to read or create settings file:', error);
+    // On error, return defaults to allow the app to run
+    return defaultSettings;
+  }
+});
+
+ipcMain.on('write-settings', (event, settings) => {
+  try {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  } catch (error) {
+    console.error('Failed to write settings file:', error);
+  }
+});
+
+
+// --- Logging ---
+const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
 let currentLogFilePath = path.join(logDir, getLogFileName());
 
 ipcMain.on('write-log', (event, logEntry) => {
-  // Re-evaluate file path in case the date has changed since app start
   currentLogFilePath = path.join(logDir, getLogFileName());
   const contextString = logEntry.context ? ` ${JSON.stringify(logEntry.context, null, 2)}` : '';
   const formattedMessage = `${logEntry.timestamp} [${logEntry.level}] ${logEntry.message}${contextString}\n`;
@@ -29,7 +65,6 @@ ipcMain.on('write-log', (event, logEntry) => {
 });
 
 ipcMain.on('show-item-in-folder', () => {
-    // Ensure the file exists before trying to show it, otherwise create it.
     if (!fs.existsSync(currentLogFilePath)) {
       fs.writeFileSync(currentLogFilePath, `Log file for ${new Date().toISOString()} created.\n`);
     }
@@ -39,7 +74,6 @@ ipcMain.on('show-item-in-folder', () => {
 ipcMain.handle('get-logs-path', () => {
     return path.join(logDir, getLogFileName());
 });
-// --- End of new logging code ---
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -53,21 +87,17 @@ function createWindow() {
     title: "UDIO Prompt Crafter"
   });
 
-  // Hide the default menu bar
   mainWindow.setMenu(null);
-
-  // The path will be 'dist/index.html'
   mainWindow.loadFile(path.join(__dirname, '../index.html'));
 }
 
 app.whenReady().then(() => {
   createWindow();
-
-  app.on('activate', function () {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-app.on('window-all-closed', function () {
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

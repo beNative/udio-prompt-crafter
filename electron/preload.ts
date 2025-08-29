@@ -7,4 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeLog: (logEntry) => ipcRenderer.send('write-log', logEntry),
   showItemInFolder: () => ipcRenderer.send('show-item-in-folder'),
   getLogsPath: () => ipcRenderer.invoke('get-logs-path'),
+  readSettings: () => ipcRenderer.invoke('read-settings'),
+  writeSettings: (settings) => ipcRenderer.send('write-settings', settings),
 });
