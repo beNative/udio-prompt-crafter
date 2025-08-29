@@ -45,3 +45,26 @@ export interface AiSettings {
   baseUrl: string;
   model: string;
 }
+
+// New Logging types
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';
+
+export interface LogEntry {
+  timestamp: string; // ISO string for consistency
+  level: LogLevel;
+  message: string;
+  context?: any;
+}
+
+// New Electron API types
+export interface IElectronAPI {
+  writeLog: (logEntry: LogEntry) => void;
+  showItemInFolder: () => void;
+  getLogsPath: () => Promise<string>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: IElectronAPI;
+  }
+}

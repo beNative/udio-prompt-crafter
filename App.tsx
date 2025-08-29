@@ -12,6 +12,8 @@ import { CommandPalette } from './components/CommandPalette';
 import { ResizablePanels } from './components/ResizablePanels';
 import { SettingsModal } from './components/SettingsModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
+import { logger } from './utils/logger';
+import { LogPanel } from './components/LogPanel';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -40,6 +42,7 @@ const App: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
+  const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
   
   // State for AI service detection
   const [detectedProviders, setDetectedProviders] = useState<('ollama' | 'lmstudio')[]>([]);
@@ -48,6 +51,7 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
+    logger.info("Application starting up...");
     fetch('./taxonomy.json')
       .then(res => {
         if (!res.ok) {
@@ -56,11 +60,14 @@ const App: React.FC = () => {
         return res.json();
       })
       .then(data => {
+        logger.info("Taxonomy configuration loaded successfully.");
         setTaxonomy(data.taxonomy);
       })
       .catch(e => {
         console.error("Failed to load taxonomy.json:", e);
-        setError("Could not load the core taxonomy configuration. The application cannot start.");
+        const errorMessage = "Could not load the core taxonomy configuration. The application cannot start.";
+        logger.error(errorMessage, { error: e.message });
+        setError(errorMessage);
       })
       .finally(() => {
         setIsLoading(false);
@@ -79,6 +86,7 @@ const App: React.FC = () => {
         allT.push(tag);
       });
     });
+    logger.debug('Taxonomy map and tag list created.', { tagCount: allT.length });
     return { taxonomyMap: newTaxonomyMap, allTags: allT, initialCategories: taxonomy };
   }, [taxonomy]);
 
@@ -86,6 +94,7 @@ const App: React.FC = () => {
       if(initialCategories.length > 0 && categories.length === 0) {
           setCategories(initialCategories);
           setActiveCategoryId(initialCategories[0].id);
+          logger.debug('Initial categories set.');
       }
   }, [initialCategories, categories]);
 
@@ -108,6 +117,7 @@ const App: React.FC = () => {
   }, []);
 
   const detectServicesAndFetchModels = useCallback(async () => {
+    logger.info("Detecting local LLM services...");
     setIsDetecting(true);
     const newDetected: ('ollama' | 'lmstudio')[] = [];
     const newModels: { ollama: string[]; lmstudio: string[] } = { ollama: [], lmstudio: [] };
@@ -120,9 +130,10 @@ const App: React.FC = () => {
             newDetected.push('ollama');
             if (data.models) {
                 newModels.ollama = data.models.map((m: any) => m.name).sort();
+                logger.info('Detected Ollama service.', { models: newModels.ollama });
             }
         }
-    } catch (e) { /* Ollama not found or timed out */ }
+    } catch (e) { logger.debug('Ollama service not found or timed out.'); }
 
     // Detect LM Studio
     try {
@@ -132,9 +143,14 @@ const App: React.FC = () => {
             newDetected.push('lmstudio');
             if (data.data) {
                 newModels.lmstudio = data.data.map((m: any) => m.id).sort();
+                logger.info('Detected LM Studio service.', { models: newModels.lmstudio });
             }
         }
-    } catch (e) { /* LM Studio not found or timed out */ }
+    } catch (e) { logger.debug('LM Studio service not found or timed out.'); }
+
+    if (newDetected.length === 0) {
+        logger.warn('No local LLM services detected.');
+    }
 
     setDetectedProviders(newDetected);
     setAvailableModels(newModels);
@@ -145,6 +161,7 @@ const App: React.FC = () => {
         const newProvider = newDetected[0];
         const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
         const newModel = newModels[newProvider][0] || '';
+        logger.info(`AI provider auto-switched to '${newProvider}' as the previous one was not detected.`);
         setAiSettings({ provider: newProvider, baseUrl: newBaseUrl, model: newModel });
     }
   }, [aiSettings.provider, setAiSettings]);
@@ -157,7 +174,9 @@ const App: React.FC = () => {
 
   const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
     if (!aiSettings.baseUrl || !aiSettings.model) {
-      throw new Error("AI settings are not configured. Please configure them in the settings menu.");
+      const errorMsg = "AI settings are not configured. Please configure them in the settings menu.";
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
     let endpoint = '';
@@ -188,6 +207,9 @@ const App: React.FC = () => {
       };
     }
     
+    logger.info(`Calling LLM at ${endpoint}`, { provider: aiSettings.provider });
+    logger.debug('LLM request body:', body);
+
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -200,10 +222,14 @@ const App: React.FC = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`AI API request failed: ${response.status} ${response.statusText}. Response: ${errorText}`);
+        const errorMsg = `AI API request failed: ${response.status} ${response.statusText}. Response: ${errorText}`;
+        logger.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       const data = await response.json();
+      logger.debug('LLM response data:', data);
+
 
       let jsonString: string;
       if (aiSettings.provider === 'ollama') {
@@ -212,19 +238,18 @@ const App: React.FC = () => {
         jsonString = data.choices[0].message.content;
       }
       
-      // The response might be a markdown block, so we need to extract the JSON
       const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
       const cleanJsonString = jsonMatch ? jsonMatch[1] : jsonString;
 
-      return JSON.parse(cleanJsonString);
+      const parsedJson = JSON.parse(cleanJsonString);
+      logger.info('Successfully received and parsed LLM response.');
+      return parsedJson;
 
     } catch (error: any) {
         clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error("AI API request timed out after 30 seconds.");
-        }
-        console.error("Error calling LLM:", error);
-        throw error;
+        const errorMessage = error.name === 'AbortError' ? "AI API request timed out after 30 seconds." : error.message;
+        logger.error("Error calling LLM:", { message: errorMessage });
+        throw new Error(errorMessage);
     }
 }, [aiSettings]);
 
@@ -249,6 +274,7 @@ const App: React.FC = () => {
       }
 
       if (conflict) {
+        logger.warn('Tag conflict detected.', { newTag: tag.label, existingTag: conflict.label });
         setConflictState({
           newlySelectedTag: tag,
           conflictingTag: conflict,
@@ -257,6 +283,7 @@ const App: React.FC = () => {
       }
     }
 
+    logger.debug(`Toggling tag: ${tag.label}`, { selected: !isCurrentlySelected });
     setSelectedTags(prev => {
       const newSelected = { ...prev };
       if (newSelected[tag.id]) {
@@ -274,6 +301,7 @@ const App: React.FC = () => {
   const handleResolveConflict = (keepNew: boolean) => {
     if (!conflictState) return;
 
+    logger.info('Resolving tag conflict.', { keptNew: keepNew, newTag: conflictState.newlySelectedTag.label, oldTag: conflictState.conflictingTag.label });
     if (keepNew) {
       const { newlySelectedTag, conflictingTag } = conflictState;
       setSelectedTags(prev => {
@@ -294,11 +322,14 @@ const App: React.FC = () => {
   };
 
   const loadTagsFromList = useCallback((tagIds: string[], replace = true) => {
+      logger.info('Loading tags from list.', { count: tagIds.length, replace });
       const newSelectedTags: Record<string, SelectedTag> = replace ? {} : {...selectedTags};
       tagIds.forEach(tagId => {
           const fullTag = taxonomyMap.get(tagId);
           if (fullTag) {
               newSelectedTags[tagId] = { ...fullTag };
+          } else {
+              logger.warn('Attempted to load a non-existent tag ID from list.', { tagId });
           }
       });
       setSelectedTags(newSelectedTags);
@@ -306,16 +337,20 @@ const App: React.FC = () => {
 
 
   const handleApplyMacro = useCallback((macro: Macro) => {
+    logger.info(`Applying macro: ${macro.name}`);
     loadTagsFromList(macro.tags);
     setTextCategoryValues({});
   }, [loadTagsFromList]);
 
   const handleLoadPreset = useCallback((preset: Preset) => {
+    logger.info(`Loading preset: ${preset.name}`);
     const newSelectedTags: Record<string, SelectedTag> = {};
     Object.entries(preset.selectedTags).forEach(([tagId, data]) => {
       const fullTag = taxonomyMap.get(tagId);
       if (fullTag) {
         newSelectedTags[tagId] = { ...fullTag, ...data };
+      } else {
+        logger.warn('Tag from preset not found in taxonomy.', { tagId, presetName: preset.name });
       }
     });
 
@@ -332,6 +367,7 @@ const App: React.FC = () => {
   const handleSavePreset = () => {
     const name = prompt("Enter a name for your preset:");
     if (name) {
+      logger.info(`Saving new preset: ${name}`);
       const selectedTagsForPreset: Preset['selectedTags'] = {};
       Object.entries(selectedTags).forEach(([id, tag]) => {
           selectedTagsForPreset[id] = { categoryId: tag.categoryId };
@@ -347,6 +383,7 @@ const App: React.FC = () => {
   };
   
   const handleRandomize = useCallback(() => {
+    logger.info('Randomizing tags.');
     const newSelected: Record<string, SelectedTag> = {};
     categories.forEach(category => {
         if(category.tags.length > 0 && category.type !== 'text') {
@@ -362,11 +399,13 @@ const App: React.FC = () => {
   }, [categories, taxonomyMap]);
 
   const handleClear = () => {
+    logger.info('Clearing all selected tags and text.');
     setSelectedTags({});
     setTextCategoryValues({});
   };
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
+    logger.info(`Clearing tags for category: ${categoryId}`);
     setSelectedTags(prev => {
         const newSelected = { ...prev };
         Object.keys(newSelected).forEach(tagId => {
@@ -379,11 +418,13 @@ const App: React.FC = () => {
   }, []);
 
   const handleDeconstructPrompt = useCallback(async (prompt: string) => {
+    logger.info('Deconstructing prompt with AI.');
     const systemPrompt = `You are an expert musicologist AI. Your task is to analyze a user's prompt and map it to a predefined list of tags. You will be given a JSON object of available tags. You must return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a tag that accurately represents the user's prompt. Only select tags from the provided list. Do not hallucinate new tags.`;
     const userPrompt = `User Prompt: "${prompt}". Available Tags: ${JSON.stringify(allTags.map(({id, label, description, synonyms}) => ({id, label, description, synonyms})))}`;
 
     const result = await callLlm(systemPrompt, userPrompt);
     if (result && Array.isArray(result.tagIds)) {
+        logger.info('AI prompt deconstruction successful.', { foundTags: result.tagIds.length });
         loadTagsFromList(result.tagIds, true);
         return true;
     }
@@ -459,39 +500,47 @@ const App: React.FC = () => {
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenAiAssist={() => setIsDeconstructModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
       />
-      <main className="flex-grow flex min-h-0">
-        <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
-            <div className="h-full">
-              <CategoryList
-                categories={categories}
-                activeCategoryId={activeCategoryId}
-                selectedTagCounts={selectedTagCounts}
-                onSelectCategory={setActiveCategoryId}
-                onCategoryOrderChange={handleCategoryOrderChange}
-              />
-            </div>
-            <div className="h-full overflow-y-auto">
-              <TagPicker
-                category={activeCategory}
-                selectedTags={selectedTags}
-                onToggleTag={handleToggleTag}
-                textCategoryValues={textCategoryValues}
-                onTextCategoryChange={handleTextCategoryChange}
-                onClearCategoryTags={handleClearCategoryTags}
-                taxonomyMap={taxonomyMap}
-                callLlm={callLlm}
-              />
-            </div>
-            <div className="h-full">
-              <PromptPreview 
-                orderedCategories={categories}
-                selectedTags={selectedTags}
-                textCategoryValues={textCategoryValues}
-                conflicts={conflicts}
-              />
-            </div>
-        </ResizablePanels>
+      <main className="flex-grow flex flex-col min-h-0">
+        <div className="flex-grow min-h-0">
+          <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
+              <div className="h-full">
+                <CategoryList
+                  categories={categories}
+                  activeCategoryId={activeCategoryId}
+                  selectedTagCounts={selectedTagCounts}
+                  onSelectCategory={setActiveCategoryId}
+                  onCategoryOrderChange={handleCategoryOrderChange}
+                />
+              </div>
+              <div className="h-full overflow-y-auto">
+                <TagPicker
+                  category={activeCategory}
+                  selectedTags={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  textCategoryValues={textCategoryValues}
+                  onTextCategoryChange={handleTextCategoryChange}
+                  onClearCategoryTags={handleClearCategoryTags}
+                  taxonomyMap={taxonomyMap}
+                  callLlm={callLlm}
+                />
+              </div>
+              <div className="h-full">
+                <PromptPreview 
+                  orderedCategories={categories}
+                  selectedTags={selectedTags}
+                  textCategoryValues={textCategoryValues}
+                  conflicts={conflicts}
+                />
+              </div>
+          </ResizablePanels>
+        </div>
+        {isLogPanelOpen && (
+          <div className="flex-shrink-0 h-72 border-t-2 border-bunker-200 dark:border-bunker-800">
+             <LogPanel onClose={() => setIsLogPanelOpen(false)} />
+          </div>
+        )}
       </main>
        {conflictState && (
         <ConflictResolutionModal

@@ -17,9 +17,10 @@ interface HeaderProps {
   onOpenCommandPalette: () => void;
   onOpenAiAssist: () => void;
   onOpenSettings: () => void;
+  onToggleLogPanel: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onOpenAiAssist, onOpenSettings }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggleTheme, onLoadPreset, onApplyMacro, onSavePreset, onRandomize, onClear, onOpenCommandPalette, onOpenAiAssist, onOpenSettings, onToggleLogPanel }) => {
   const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
   const [isMacroDropdownOpen, setIsMacroDropdownOpen] = useState(false);
 
@@ -102,6 +103,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, onToggle
         </button>
          <button onClick={onOpenSettings} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Settings">
           <Icon name="cog" className="w-5 h-5" />
+        </button>
+        <button onClick={onToggleLogPanel} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Toggle Logs">
+          <Icon name="terminal" className="w-5 h-5" />
         </button>
         <button onClick={onToggleTheme} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700">
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-5 h-5" />
