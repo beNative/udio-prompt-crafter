@@ -48,14 +48,14 @@ These buttons provide quick access to powerful features.
 
 ## Settings Page
 
-Click the "Settings" tab in the header to access the configuration page.
+Click the "Settings" tab in the header to access the configuration page. The page is organized into cards for clarity.
 
--   **AI Configuration:**
+-   **AI Configuration Card:**
     -   **Provider:** The app automatically scans for running Ollama or LM Studio services. You can select which one to use for AI features.
     -   **API Base URL:** The address of the AI service. Defaults are provided.
     -   **Model Name:** A dropdown list of models available from your selected provider.
--   **Presets and Macros JSON:**
-    -   Here you can directly edit the JSON data for your custom presets and macros. This allows for advanced editing, re-ordering, and sharing.
+-   **Presets & Macros Card:**
+    -   Here you can directly edit the JSON data for your custom presets and macros in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets and macros at any time.
 
 ## Info Page

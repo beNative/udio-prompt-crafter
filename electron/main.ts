@@ -2,7 +2,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Removed a misleading comment and explicitly imported `process` to fix type errors.
+// Fix: Import `process` module to provide correct typings for standard Node.js process properties like `cwd` and `platform`.
 import * as process from 'process';
 import { starterPresets } from '../data/presets';
 import { starterMacros } from '../data/macros';

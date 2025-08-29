@@ -49,6 +49,38 @@
       .dark .json-number { color: #B5CEA8; }
       .dark .json-boolean { color: #4EC9B0; }
       .dark .json-null { color: #4EC9B0; }
+      
+      /* Styles for JSON Editor component */
+      .json-editor-container {
+        position: relative;
+        font-family: Menlo, Monaco, 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .json-editor-textarea, .json-editor-pre {
+        margin: 0;
+        padding: 10px;
+        border: 1px solid transparent;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        -webkit-overflow-scrolling: touch;
+        overflow: auto;
+      }
+      .json-editor-textarea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        color: inherit;
+        background-color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+       .json-editor-textarea:focus {
+        outline: none;
+      }
     </style>
   <script type="importmap">
 {
