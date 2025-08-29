@@ -13,7 +13,7 @@ interface TagPickerProps {
   onTextCategoryChange: (categoryId: string, value: string) => void;
   onClearCategoryTags: (categoryId: string) => void;
   taxonomyMap: Map<string, Tag & { categoryId: string }>;
-  callLlm: (systemPrompt: string, userPrompt: string) => Promise<any>;
+  callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
 }
 
 export const TagPicker: React.FC<TagPickerProps> = ({ 

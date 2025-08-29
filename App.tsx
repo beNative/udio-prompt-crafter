@@ -172,7 +172,7 @@ const App: React.FC = () => {
     }
   }, [isSettingsModalOpen, detectServicesAndFetchModels]);
 
-  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
+  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean): Promise<any> => {
     if (!aiSettings.baseUrl || !aiSettings.model) {
       const errorMsg = "AI settings are not configured. Please configure them in the settings menu.";
       logger.error(errorMsg);
@@ -239,11 +239,29 @@ const App: React.FC = () => {
       }
       
       const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
-      const cleanJsonString = jsonMatch ? jsonMatch[1] : jsonString;
+      const cleanJsonString = jsonMatch ? jsonMatch[1].trim() : jsonString.trim();
 
-      const parsedJson = JSON.parse(cleanJsonString);
-      logger.info('Successfully received and parsed LLM response.');
-      return parsedJson;
+      try {
+        const parsedJson = JSON.parse(cleanJsonString);
+        logger.info('Successfully received and parsed LLM response.');
+        return parsedJson;
+      } catch (error: any) {
+          if (!isResponseTextFreeform && error instanceof SyntaxError) {
+              logger.warn('Initial JSON parsing failed, attempting to fix single quotes.', { error: error.message });
+              try {
+                  // Attempt to fix Python-style single quotes which are invalid in JSON
+                  const fixedJsonString = cleanJsonString.replace(/'/g, '"');
+                  const reparsedJson = JSON.parse(fixedJsonString);
+                  logger.info('Successfully parsed JSON after fixing quotes.');
+                  return reparsedJson;
+              } catch (reparseError: any) {
+                  logger.error('Failed to parse JSON even after fixing quotes.', { error: reparseError.message, originalJson: cleanJsonString });
+                  // Fall through to throw original error to give user feedback
+              }
+          }
+          logger.error('Failed to parse JSON response from AI', { error: error.message, response: cleanJsonString });
+          throw new Error(`Error: ${error.message}. The AI returned the following invalid JSON: ${cleanJsonString.substring(0, 100)}...`);
+      }
 
     } catch (error: any) {
         clearTimeout(timeoutId);

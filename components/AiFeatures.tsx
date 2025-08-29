@@ -7,7 +7,7 @@ interface AiFeaturesProps {
     category: Category;
     selectedTags: Record<string, SelectedTag>;
     taxonomyMap: Map<string, Tag & { categoryId: string }>;
-    callLlm: (systemPrompt: string, userPrompt: string) => Promise<any>;
+    callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
     onToggleTag: (tag: Tag) => void;
     onSetLyricText: (text: string) => void;
 }
@@ -72,7 +72,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
         const userPrompt = `Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`;
 
         try {
-            const result = await callLlm(systemPrompt, userPrompt);
+            const result = await callLlm(systemPrompt, userPrompt, true);
             if (result && Array.isArray(result.themes)) {
                 setLyricIdeas(result.themes);
             } else {
