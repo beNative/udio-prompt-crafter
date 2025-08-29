@@ -2,8 +2,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Explicitly import 'process' to provide correct types for process.cwd() and process.platform, resolving type errors.
-import * as process from 'process';
+// Fix: Removed incorrect 'process' import. The 'process' object is a global in Node.js environments and does not need to be imported. The explicit import was causing type errors by shadowing the correctly-typed global variable.
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;

@@ -158,15 +158,18 @@ const App: React.FC = () => {
     setAvailableModels(newModels);
     setIsDetecting(false);
 
-    // Auto-switch provider if the currently saved one isn't detected
-    if (newDetected.length > 0 && !newDetected.includes(aiSettings.provider)) {
-        const newProvider = newDetected[0];
-        const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
-        const newModel = newModels[newProvider][0] || '';
-        logger.info(`AI provider auto-switched to '${newProvider}' as the previous one was not detected.`);
-        setAiSettings({ provider: newProvider, baseUrl: newBaseUrl, model: newModel });
-    }
-  }, [aiSettings.provider, setAiSettings]);
+    // Auto-switch provider using a functional update to prevent re-triggering the effect.
+    setAiSettings(currentSettings => {
+        if (newDetected.length > 0 && !newDetected.includes(currentSettings.provider)) {
+            const newProvider = newDetected[0];
+            const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://127.0.0.1:1234/v1';
+            const newModel = newModels[newProvider][0] || '';
+            logger.info(`AI provider auto-switched to '${newProvider}' as the previous one was not detected.`);
+            return { provider: newProvider, baseUrl: newBaseUrl, model: newModel };
+        }
+        return currentSettings; // No change needed
+    });
+  }, [setAiSettings]);
 
   useEffect(() => {
     if (isSettingsModalOpen) {
@@ -233,40 +236,63 @@ const App: React.FC = () => {
       logger.debug('LLM response data:', data);
 
 
-      let jsonString: string;
+      let contentString: string;
       if (aiSettings.provider === 'ollama') {
-        jsonString = data.message.content;
+        contentString = data.message.content;
       } else {
-        jsonString = data.choices[0].message.content;
+        contentString = data.choices[0].message.content;
       }
       
-      let cleanJsonString = jsonString.trim();
-      // Handle models that wrap the JSON in markdown fences
-      const markdownMatch = cleanJsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (markdownMatch) {
-        cleanJsonString = markdownMatch[1].trim();
+      let textToParse = contentString.trim();
+      
+      // First, attempt to extract JSON from within markdown fences, which is a common pattern.
+      const markdownMatch = textToParse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (markdownMatch && markdownMatch[1]) {
+        textToParse = markdownMatch[1].trim();
       }
 
+      // Find the start of the first JSON object '{' or array '['.
+      const firstBrace = textToParse.indexOf('{');
+      const firstBracket = textToParse.indexOf('[');
+      
+      let startIndex = -1;
+      if (firstBrace === -1) {
+          startIndex = firstBracket;
+      } else if (firstBracket === -1) {
+          startIndex = firstBrace;
+      } else {
+          startIndex = Math.min(firstBrace, firstBracket);
+      }
+
+      if (startIndex === -1) {
+        logger.error('No JSON object or array found in AI response.', { response: textToParse });
+        throw new Error('AI response did not contain a valid JSON object or array.');
+      }
+      
+      // Find the end of the last JSON object '}' or array ']'.
+      const lastBrace = textToParse.lastIndexOf('}');
+      const lastBracket = textToParse.lastIndexOf(']');
+      const endIndex = Math.max(lastBrace, lastBracket);
+
+      if (endIndex === -1) {
+        logger.error('Malformed JSON in AI response (no closing brace/bracket).', { response: textToParse });
+        throw new Error('AI response has a malformed JSON object (no closing brace/bracket).');
+      }
+      
+      // Extract the substring that is likely to be the JSON payload.
+      const jsonSubstring = textToParse.substring(startIndex, endIndex + 1);
+
       try {
-        const parsedJson = JSON.parse(cleanJsonString);
+        const parsedJson = JSON.parse(jsonSubstring);
         logger.info('Successfully received and parsed LLM response.');
         return parsedJson;
       } catch (error: any) {
-          if (!isResponseTextFreeform && error instanceof SyntaxError) {
-              logger.warn('Initial JSON parsing failed, attempting to fix single quotes.', { error: error.message });
-              try {
-                  // Attempt to fix Python-style single quotes which are invalid in JSON
-                  const fixedJsonString = cleanJsonString.replace(/'/g, '"');
-                  const reparsedJson = JSON.parse(fixedJsonString);
-                  logger.info('Successfully parsed JSON after fixing quotes.');
-                  return reparsedJson;
-              } catch (reparseError: any) {
-                  logger.error('Failed to parse JSON even after fixing quotes.', { error: reparseError.message, originalJson: cleanJsonString });
-                  // Fall through to throw original error to give user feedback
-              }
-          }
-          logger.error('Failed to parse JSON response from AI', { error: error.message, response: cleanJsonString });
-          throw new Error(`Error: ${error.message}. The AI returned the following invalid JSON: ${cleanJsonString.substring(0, 100)}...`);
+        logger.error('Failed to parse extracted JSON from AI response', { 
+          errorMessage: error.message, 
+          extractedJson: jsonSubstring,
+          originalResponse: contentString 
+        });
+        throw new Error(`Error: ${error.message}. The AI returned the following invalid JSON: ${jsonSubstring.substring(0, 100)}...`);
       }
 
     } catch (error: any) {
