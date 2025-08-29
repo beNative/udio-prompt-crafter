@@ -30,6 +30,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({ appVersion, tagCount, conf
     <footer className="flex-shrink-0 bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm border-t border-bunker-200/80 dark:border-bunker-800/80 px-4 py-1.5 flex items-center justify-between text-xs text-bunker-600 dark:text-bunker-400">
       <div className="flex items-center space-x-4">
         <span className="font-semibold text-bunker-700 dark:text-bunker-300">UDIO Prompt Crafter {appVersion && `v${appVersion}`}</span>
+        <div className="h-4 border-l border-bunker-200 dark:border-bunker-700"></div>
+        <span>Designed by Tim Sinaeve</span>
       </div>
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-1.5" title="Selected Tags">
