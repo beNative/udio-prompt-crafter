@@ -240,8 +240,12 @@ const App: React.FC = () => {
         jsonString = data.choices[0].message.content;
       }
       
-      const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
-      const cleanJsonString = jsonMatch ? jsonMatch[1].trim() : jsonString.trim();
+      let cleanJsonString = jsonString.trim();
+      // Handle models that wrap the JSON in markdown fences
+      const markdownMatch = cleanJsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (markdownMatch) {
+        cleanJsonString = markdownMatch[1].trim();
+      }
 
       try {
         const parsedJson = JSON.parse(cleanJsonString);
@@ -439,7 +443,7 @@ const App: React.FC = () => {
 
   const handleDeconstructPrompt = useCallback(async (prompt: string) => {
     logger.info('Deconstructing prompt with AI.');
-    const systemPrompt = `You are an expert musicologist AI. Your task is to analyze a user's prompt and map it to a predefined list of tags. You will be given a JSON object of available tags. You must return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a tag that accurately represents the user's prompt. Only select tags from the provided list. Do not hallucinate new tags.`;
+    const systemPrompt = `You are an expert musicologist AI. Your task is to analyze a user's prompt and map it to a predefined list of tags. You will be given a JSON object of available tags. You must return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a tag that accurately represents the user's prompt. Only select tags from the provided list. Do not hallucinate new tags. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
     const userPrompt = `User Prompt: "${prompt}". Available Tags: ${JSON.stringify(allTags.map(({id, label, description, synonyms}) => ({id, label, description, synonyms})))}`;
 
     const result = await callLlm(systemPrompt, userPrompt);

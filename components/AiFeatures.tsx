@@ -40,7 +40,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
             return;
         }
 
-        const systemPrompt = `You are an expert music recommender AI. Your task is to suggest complementary music style tags. The user will provide a list of currently selected tags for a category. You will be given a JSON object of all available tags in that category. You must suggest up to 5 new tags that would creatively expand on the user's selection. Return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a suggested tag. Only suggest tags from the provided list that are not already selected.`;
+        const systemPrompt = `You are an expert music recommender AI. Your task is to suggest complementary music style tags. The user will provide a list of currently selected tags for a category. You will be given a JSON object of all available tags in that category. You must suggest up to 5 new tags that would creatively expand on the user's selection. Return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a suggested tag. Only suggest tags from the provided list that are not already selected. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
         
         const userPrompt = `Selected Tags: ${JSON.stringify(selectedInCategory.map(t => ({id: t.id, label: t.label})))}. Available Tags for suggestion: ${JSON.stringify(category.tags.map(({id, label, description}) => ({id, label, description})))}.`;
         
@@ -68,11 +68,11 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
 
         const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes(t.categoryId));
 
-        const systemPrompt = `You are a creative songwriter AI. Your task is to generate lyrical theme ideas. The user will provide a list of music style tags. You must generate 3 short, distinct lyrical themes (e.g., 'a story about a lost robot in a neon city', 'the feeling of a fading summer memory'). Return a JSON object with a single key 'themes' which is an array of strings.`;
+        const systemPrompt = `You are a creative songwriter AI. Your task is to generate lyrical theme ideas. The user will provide a list of music style tags. You must generate 3 short, distinct lyrical themes (e.g., 'a story about a lost robot in a neon city', 'the feeling of a fading summer memory'). Return a JSON object with a single key 'themes' which is an array of strings. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
         const userPrompt = `Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`;
 
         try {
-            const result = await callLlm(systemPrompt, userPrompt, true);
+            const result = await callLlm(systemPrompt, userPrompt);
             if (result && Array.isArray(result.themes)) {
                 setLyricIdeas(result.themes);
             } else {
@@ -84,7 +84,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
             setIsLoadingLyrics(false);
         }
 
-    }, [selectedTags, callLlm]);
+    }, [selectedTags, callLlm, onSetLyricText]);
     
     const handleLyricIdeaClick = (idea: string) => {
         onSetLyricText(idea);

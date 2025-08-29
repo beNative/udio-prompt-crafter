@@ -2,8 +2,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: The 'process' module does not have named exports for 'platform' and 'cwd'. Changed to import the default 'process' object.
-import process from 'process';
+// Fix: Removed incorrect import of 'process'. The 'process' object is globally available in Node.js and does not need to be imported. This resolves type errors for 'process.cwd()' and 'process.platform'.
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;
