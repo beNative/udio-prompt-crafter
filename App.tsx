@@ -177,7 +177,9 @@ const App: React.FC = () => {
     } else { // lmstudio (openai-compatible)
       endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/chat/completions`;
       body = {
-        model: aiSettings.model,
+        // The 'model' parameter is intentionally omitted for LM Studio.
+        // It uses the model currently loaded in its UI, and sending a model
+        // can cause errors with some versions and model types.
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },

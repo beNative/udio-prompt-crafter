@@ -135,7 +135,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <option key={modelName} value={modelName}>{modelName}</option>
                     ))}
                 </select>
-                 <p className="mt-2 text-xs text-bunker-500 dark:text-bunker-400">Select an available model from the detected provider.</p>
+                {currentSettings.provider === 'lmstudio' ? (
+                     <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+                        Note: For LM Studio, you must load the desired model in the LM Studio application. This selection is for reference only.
+                     </p>
+                ) : (
+                     <p className="mt-2 text-xs text-bunker-500 dark:text-bunker-400">Select an available model from the detected provider.</p>
+                )}
             </div>
         </div>
 
