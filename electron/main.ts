@@ -2,12 +2,12 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Removed incorrect import of 'process'. The 'process' object is globally available in Node.js and does not need to be imported. This resolves type errors for 'process.cwd()' and 'process.platform'.
+// Fix: Explicitly import 'process' to provide correct types for process.cwd() and process.platform, resolving type errors.
+import * as process from 'process';
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;
 // In dev, log to project root. In packaged app, log next to executable.
-// Fix: Use `process.cwd()` to get the current working directory, as `cwd` is no longer directly imported.
 const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
 
 const getLogFileName = () => {
@@ -54,6 +54,9 @@ function createWindow() {
     title: "UDIO Prompt Crafter"
   });
 
+  // Hide the default menu bar
+  mainWindow.setMenu(null);
+
   // The path will be 'dist/index.html'
   mainWindow.loadFile(path.join(__dirname, '../index.html'));
 }
@@ -67,6 +70,5 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', function () {
-  // Fix: Use `process.platform` to get the OS platform, as `platform` is no longer directly imported.
   if (process.platform !== 'darwin') app.quit();
 });
