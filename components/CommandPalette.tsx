@@ -129,8 +129,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 p-4 pt-[15vh]" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="bg-white dark:bg-bunker-900 rounded-lg shadow-2xl w-full max-w-2xl transform transition-all" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-[15vh]" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="bg-white dark:bg-bunker-900/95 border border-bunker-200 dark:border-bunker-700 rounded-lg shadow-2xl w-full max-w-2xl transform transition-all opacity-0 animate-fade-in-scale" onClick={e => e.stopPropagation()}>
         <div className="relative">
            <Icon name="search" className="absolute top-3.5 left-4 w-5 h-5 text-bunker-400" />
            <input
@@ -145,19 +145,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <ul ref={resultsRef} className="max-h-[50vh] overflow-y-auto p-2">
             {filteredCommands.length > 0 ? filteredCommands.map((command, index) => (
                 <li key={command.type === 'tag' ? command.data.id : command.data.id}
-                    className={`flex items-center space-x-3 p-2 rounded-md cursor-pointer ${index === activeIndex ? 'bg-blue-600 text-white' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'}`}
+                    className={`flex items-center space-x-3 p-2.5 rounded-md cursor-pointer transition-colors ${index === activeIndex ? 'bg-blue-600 text-white' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'}`}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => handleExecute(command)}
                 >
                     {command.type === 'action' ? (
                         <>
                            <Icon name={command.data.icon} className={`w-5 h-5 ${index === activeIndex ? 'text-white' : 'text-bunker-500'}`} />
-                           <span>{command.data.name}</span>
+                           <span className="font-medium">{command.data.name}</span>
                         </>
                     ) : (
                         <>
-                           <span className={`w-5 h-5 text-center font-bold ${index === activeIndex ? 'text-blue-200' : 'text-bunker-400'}`}>#</span>
-                           <span className={`${index === activeIndex ? 'text-white' : 'text-bunker-800 dark:text-bunker-200'}`}>{command.data.label}</span>
+                           <Icon name="tag" className={`w-5 h-5 ${index === activeIndex ? 'text-blue-200' : 'text-bunker-400'}`} />
+                           <span className={`font-medium ${index === activeIndex ? 'text-white' : 'text-bunker-800 dark:text-bunker-200'}`}>{command.data.label}</span>
                            <span className={`text-xs ml-auto truncate ${index === activeIndex ? 'text-blue-200' : 'text-bunker-400'}`}>{command.data.description}</span>
                         </>
                     )}

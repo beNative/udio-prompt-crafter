@@ -23,6 +23,20 @@ interface ConflictState {
 
 const isElectron = !!window.electronAPI;
 
+// Inject keyframes for animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fade-in-scale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fade-in-scale {
+    animation: fade-in-scale 0.2s ease-out forwards;
+  }
+`;
+document.head.appendChild(style);
+
+
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
@@ -558,7 +572,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
+    <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
       <Header 
         theme={theme} 
         presets={appSettings.presets}

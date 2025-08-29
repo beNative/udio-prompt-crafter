@@ -96,16 +96,16 @@ export const TagPicker: React.FC<TagPickerProps> = ({
   }
 
   return (
-    <div className="p-6 flex flex-col">
+    <div className="p-6 flex flex-col h-full">
       <div className="flex justify-between items-start mb-4">
         <div>
             <h2 className="text-2xl font-bold text-bunker-900 dark:text-white">{category.name}</h2>
-            {category.description && <p className="text-bunker-500 dark:text-bunker-400 mt-1 text-sm">{category.description}</p>}
+            {category.description && <p className="text-bunker-500 dark:text-bunker-400 mt-1 text-sm max-w-prose">{category.description}</p>}
         </div>
         {hasSelectedTagsInCategory && category.type !== 'text' && (
           <button
             onClick={() => onClearCategoryTags(category.id)}
-            className="flex-shrink-0 ml-4 flex items-center space-x-2 text-sm px-3 py-1 rounded-md bg-bunker-100 hover:bg-red-100 hover:text-red-600 dark:bg-bunker-800 dark:text-bunker-400 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors"
+            className="flex-shrink-0 ml-4 flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-red-100 hover:text-red-600 dark:bg-bunker-800/80 dark:text-bunker-300 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors"
             title={`Clear all selected tags in ${category.name}`}
           >
             <Icon name="x" className="w-4 h-4" />
@@ -118,19 +118,22 @@ export const TagPicker: React.FC<TagPickerProps> = ({
          <textarea
             value={textCategoryValues[category.id] || ''}
             onChange={e => onTextCategoryChange(category.id, e.target.value)}
-            className="w-full h-96 p-3 bg-bunker-100 dark:bg-bunker-900 border border-bunker-300 dark:border-bunker-700 rounded-md text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full flex-grow p-3 bg-white dark:bg-bunker-900/50 border border-bunker-200 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             placeholder={`Enter ${category.name.toLowerCase()} here...`}
         />
       ) : (
         <>
-            <input
-                type="text"
-                placeholder={`Search in ${category.name}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 mb-6 bg-bunker-100 dark:bg-bunker-900 border border-bunker-300 dark:border-bunker-700 rounded-md text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="pr-2">
+            <div className="relative mb-6">
+                <Icon name="search" className="absolute top-1/2 -translate-y-1/2 left-3 w-5 h-5 text-bunker-400" />
+                <input
+                    type="text"
+                    placeholder={`Search in ${category.name}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full p-2 pl-10 bg-bunker-100 dark:bg-bunker-900/80 border border-bunker-300 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+            <div className="pr-2 flex-grow">
                 {searchTerm ? (
                 <div className="flex flex-wrap gap-3">
                     {filteredTags.map((tag) => {
@@ -144,6 +147,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                         />
                         );
                     })}
+                     {filteredTags.length === 0 && <p className="text-bunker-400 text-sm">No tags found for "{searchTerm}".</p>}
                 </div>
                 ) : (
                     <TagTreeView
@@ -156,7 +160,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         </>
       )}
       
-      <div className="mt-8 pt-4 border-t border-bunker-200 dark:border-bunker-700">
+      <div className="mt-8 pt-6 border-t border-bunker-200 dark:border-bunker-700">
         <AiFeatures 
             category={category}
             selectedTags={selectedTags}
@@ -168,8 +172,8 @@ export const TagPicker: React.FC<TagPickerProps> = ({
       </div>
 
       {suggestions.length > 0 && (
-        <div className="mt-8 pt-4 border-t border-bunker-200 dark:border-bunker-700">
-            <h3 className="text-base font-semibold mb-4 text-bunker-600 dark:text-bunker-300">Suggestions</h3>
+        <div className="mt-8 pt-6 border-t border-bunker-200 dark:border-bunker-700">
+            <h3 className="text-base font-semibold mb-4 text-bunker-600 dark:text-bunker-300">Suggestions based on your selections</h3>
             <div className="flex flex-wrap gap-3">
             {suggestions.map((tag) => (
                 <TagChip

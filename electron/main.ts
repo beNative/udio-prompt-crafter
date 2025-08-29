@@ -2,9 +2,13 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 // Note: 'process' is a global in Node.js environments and does not need to be imported.
 // The explicit import was removed to prevent shadowing the correctly-typed global variable.
 import { starterPresets } from '../data/presets';
+
+// Fix: Define `__dirname` in an ES module context, which is not available by default.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isDev = !app.isPackaged;
 
@@ -113,7 +117,7 @@ function createWindow() {
   });
 
   mainWindow.setMenu(null);
-  mainWindow.loadFile(path.join(__dirname, '../index.html'));
+  mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
 }
 
 app.whenReady().then(() => {

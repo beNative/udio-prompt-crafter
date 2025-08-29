@@ -22,8 +22,8 @@ const LoadingSpinner: React.FC = () => (
 );
 
 const SettingsCard: React.FC<{ title: string; children: React.ReactNode; }> = ({ title, children }) => (
-    <div className="bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800 shadow-sm">
-        <div className="p-4 border-b border-bunker-200 dark:border-bunker-800">
+    <div className="bg-white/50 dark:bg-bunker-900/50 backdrop-blur-sm rounded-xl border border-bunker-200/80 dark:border-bunker-800/80 shadow-sm">
+        <div className="p-4 border-b border-bunker-200/80 dark:border-bunker-800/80">
             <h3 className="text-lg font-semibold">{title}</h3>
         </div>
         <div className="p-4 space-y-6">
@@ -88,11 +88,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="p-6 bg-bunker-50 dark:bg-bunker-950 min-h-full">
+    <div className="p-6 bg-bunker-50 dark:bg-transparent min-h-full">
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h2 className="text-2xl font-bold text-bunker-900 dark:text-white">Settings</h2>
-          <p className="text-bunker-500 dark:text-bunker-400 mt-1 text-sm">Manage application configuration.</p>
+          <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Settings</h2>
+          <p className="text-bunker-500 dark:text-bunker-400 mt-1">Manage application configuration and AI connections.</p>
         </div>
 
         <SettingsCard title="AI Configuration">
@@ -105,7 +105,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </button>
               </div>
               {detectedProviders.length > 0 ? (
-                  <select id="provider" value={settings.aiSettings.provider} onChange={handleProviderChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-bunker-300 dark:border-bunker-700 bg-white dark:bg-bunker-800 text-bunker-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                  <select id="provider" value={settings.aiSettings.provider} onChange={handleProviderChange} className="form-input mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-bunker-800 text-bunker-900 dark:text-white sm:text-sm">
                       {detectedProviders.includes('ollama') && <option value="ollama">Ollama</option>}
                       {detectedProviders.includes('lmstudio') && <option value="lmstudio">LM Studio</option>}
                   </select>
@@ -115,11 +115,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           <div>
               <label htmlFor="baseUrl" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">API Base URL</label>
-              <input type="text" id="baseUrl" value={settings.aiSettings.baseUrl} onChange={e => handleSaveAiSettings({...settings.aiSettings, baseUrl: e.target.value})} className="mt-1 block w-full shadow-sm sm:text-sm border-bunker-300 dark:border-bunker-700 rounded-md bg-bunker-100 dark:bg-bunker-800 text-bunker-900 dark:text-white"/>
+              <input type="text" id="baseUrl" value={settings.aiSettings.baseUrl} onChange={e => handleSaveAiSettings({...settings.aiSettings, baseUrl: e.target.value})} className="form-input"/>
           </div>
           <div>
               <label htmlFor="model" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Model Name</label>
-              <select id="model" value={settings.aiSettings.model} onChange={e => handleSaveAiSettings({...settings.aiSettings, model: e.target.value})} disabled={!settings.aiSettings.provider || (availableModels[settings.aiSettings.provider]?.length ?? 0) === 0} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-bunker-300 dark:border-bunker-700 bg-white dark:bg-bunker-800 text-bunker-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md disabled:opacity-50">
+              <select id="model" value={settings.aiSettings.model} onChange={e => handleSaveAiSettings({...settings.aiSettings, model: e.target.value})} disabled={!settings.aiSettings.provider || (availableModels[settings.aiSettings.provider]?.length ?? 0) === 0} className="form-input mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-bunker-800 text-bunker-900 dark:text-white sm:text-sm disabled:opacity-50">
                   {(availableModels[settings.aiSettings.provider] || []).map(modelName => (<option key={modelName} value={modelName}>{modelName}</option>))}
               </select>
           </div>
@@ -127,7 +127,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         
         <SettingsCard title="Presets">
           <div>
-            <label htmlFor="presets" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Presets JSON</label>
+            <label htmlFor="presets" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300 mb-2">Presets JSON</label>
             <JsonEditor 
                 id="presets"
                 value={presetsText}
@@ -137,9 +137,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             />
             {jsonError.presets && <p className="mt-1 text-xs text-red-500">{jsonError.presets}</p>}
           </div>
-          <div className="flex justify-end space-x-3 pt-4 border-t border-bunker-200 dark:border-bunker-800">
-              <button onClick={() => { setPresetsText(JSON.stringify(defaultPresets, null, 2)); setJsonError({presets: null}); }} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700">Reset to Defaults</button>
-              <button onClick={handleSaveConfigs} disabled={!!jsonError.presets} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">Save Presets</button>
+          <div className="flex justify-end space-x-3 pt-4 border-t border-bunker-200/80 dark:border-bunker-800/80">
+              <button onClick={() => { setPresetsText(JSON.stringify(defaultPresets, null, 2)); setJsonError({presets: null}); }} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">Reset to Defaults</button>
+              <button onClick={handleSaveConfigs} disabled={!!jsonError.presets} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Presets</button>
           </div>
         </SettingsCard>
       </div>

@@ -28,6 +28,7 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     terminal: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />,
     folder: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.75h16.5m-16.5 0a2.25 2.25 0 01-2.25-2.25V6.75c0-1.24 1.01-2.25 2.25-2.25h3.75c.621 0 1.192.258 1.594.69l.836.836c.323.323.744.504 1.18.504h4.492c1.24 0 2.25 1.01 2.25 2.25v2.25a2.25 2.25 0 01-2.25 2.25m-16.5 0h16.5m-16.5 0v6.75a2.25 2.25 0 002.25 2.25h12A2.25 2.25 0 0021 16.5v-6.75" />,
     tag: <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6.75h-1.875a.375.375 0 01-.375-.375V4.5a.375.375 0 01.375-.375h1.875m0 0a2.25 2.25 0 012.25 2.25v7.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25v-7.5a2.25 2.25 0 012.25-2.25h7.5z" />,
+    plus: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />,
   };
 
   return (

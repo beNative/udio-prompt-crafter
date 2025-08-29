@@ -27,7 +27,7 @@ const AiStatusIndicator: React.FC<{ status: AiStatus }> = ({ status }) => {
 
 export const StatusBar: React.FC<StatusBarProps> = ({ appVersion, tagCount, conflictCount, aiStatus }) => {
   return (
-    <footer className="flex-shrink-0 bg-bunker-50 dark:bg-bunker-900 border-t border-bunker-200 dark:border-bunker-800 px-4 py-1.5 flex items-center justify-between text-xs text-bunker-600 dark:text-bunker-400">
+    <footer className="flex-shrink-0 bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm border-t border-bunker-200/80 dark:border-bunker-800/80 px-4 py-1.5 flex items-center justify-between text-xs text-bunker-600 dark:text-bunker-400">
       <div className="flex items-center space-x-4">
         <span className="font-semibold text-bunker-700 dark:text-bunker-300">UDIO Prompt Crafter {appVersion && `v${appVersion}`}</span>
       </div>
@@ -36,7 +36,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ appVersion, tagCount, conf
           <Icon name="tag" className="w-4 h-4" />
           <span>{tagCount}</span>
         </div>
-        <div className={`flex items-center space-x-1.5 ${conflictCount > 0 ? 'text-red-500 dark:text-red-500' : ''}`} title="Tag Conflicts">
+        <div className={`flex items-center space-x-1.5 transition-colors ${conflictCount > 0 ? 'text-red-500 dark:text-red-400' : ''}`} title="Tag Conflicts">
           <Icon name="warning" className="w-4 h-4" />
           <span>{conflictCount}</span>
         </div>

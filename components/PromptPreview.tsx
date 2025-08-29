@@ -23,10 +23,10 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 bg-bunker-200 dark:bg-bunker-700 rounded-md hover:bg-bunker-300 dark:hover:bg-bunker-600 transition-colors"
+      className="absolute top-3 right-3 p-1.5 bg-bunker-200/50 dark:bg-bunker-700/50 rounded-lg hover:bg-bunker-300 dark:hover:bg-bunker-600 transition-colors"
       title="Copy to clipboard"
     >
-      {copied ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-300" />}
+      {copied ? <Icon name="check" className="w-5 h-5 text-green-500" /> : <Icon name="copy" className="w-5 h-5 text-bunker-500 dark:text-bunker-300" />}
     </button>
   );
 };
@@ -50,7 +50,7 @@ const JsonSyntaxHighlighter: React.FC<{ jsonString: string }> = ({ jsonString })
   };
 
   return (
-    <pre className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 font-mono text-sm border border-bunker-200 dark:border-bunker-800 overflow-auto">
+    <pre className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 font-mono text-sm border border-bunker-200 dark:border-bunker-800 overflow-auto">
       <code dangerouslySetInnerHTML={highlight(jsonString)} />
     </pre>
   );
@@ -74,7 +74,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
         .map(cat => textCategoryValues[cat.id]);
 
     const allPromptParts = [...normalizedLabels, ...textInputs];
-    const promptString = allPromptParts.join('; ');
+    const promptString = allPromptParts.join(', ');
     
     setPrompt(promptString);
 
@@ -88,22 +88,22 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
   }, [selectedTags, orderedCategories, textCategoryValues]);
 
   return (
-    <div className="p-4 bg-bunker-50 dark:bg-bunker-900 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
+    <div className="p-4 bg-bunker-50/50 dark:bg-bunker-900/50 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
       <div className="flex-grow flex flex-col min-h-0">
-        <h2 className="text-lg font-semibold mb-4 text-bunker-900 dark:text-white">Live Preview</h2>
+        <h2 className="text-lg font-semibold mb-4 px-2 text-bunker-900 dark:text-white">Live Preview</h2>
         
         {conflicts.length > 0 && (
-          <div className="bg-red-900/50 border border-red-500 text-red-300 p-3 rounded-md mb-4 shrink-0">
-              <h3 className="font-bold flex items-center"><Icon name="warning" className="w-5 h-5 mr-2" /> Conflicts Detected</h3>
-              <ul className="text-sm mt-2 list-disc list-inside">
-                  {conflicts.map((c) => <li key={`${c.tagA.id}-${c.tagB.id}`}>"{c.tagA.label}" conflicts with "{c.tagB.label}"</li>)}
+          <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4 shrink-0">
+              <h3 className="font-bold flex items-center"><Icon name="warning" className="w-5 h-5 mr-2 text-red-500" /> Conflicts Detected</h3>
+              <ul className="text-sm mt-2 list-disc list-inside ml-2">
+                  {conflicts.map((c) => <li key={`${c.tagA.id}-${c.tagB.id}`}>"<span className="font-semibold">{c.tagA.label}</span>" conflicts with "<span className="font-semibold">{c.tagB.label}</span>"</li>)}
               </ul>
           </div>
         )}
         
-        <div className="flex border-b border-bunker-200 dark:border-bunker-700 mb-4 shrink-0">
-          <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm ${activeTab === 'prompt' ? 'text-bunker-900 dark:text-white border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400'}`}>Prompt String</button>
-          <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm ${activeTab === 'json' ? 'text-bunker-900 dark:text-white border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400'}`}>JSON Output</button>
+        <div className="flex border-b border-bunker-200 dark:border-bunker-800 mb-4 shrink-0">
+          <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'prompt' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>Prompt String</button>
+          <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'json' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>JSON Output</button>
         </div>
         
         <div className="flex-grow relative min-h-0">
@@ -112,7 +112,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
               <textarea
                 readOnly
                 value={prompt}
-                className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
+                className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
                 placeholder="Your generated prompt will appear here..."
               />
               <CopyButton textToCopy={prompt} />

@@ -15,7 +15,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
 
   const flushList = () => {
     if (inList) {
-      elements.push(<ul key={`ul-${elements.length}`} className="list-disc list-inside space-y-1 my-4 pl-4">{listItems}</ul>);
+      elements.push(<ul key={`ul-${elements.length}`} className="list-none space-y-2 my-4 pl-2">{listItems}</ul>);
       listItems = [];
       inList = false;
     }
@@ -24,7 +24,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
   const flushCodeBlock = () => {
     if (inCodeBlock) {
       elements.push(
-        <pre key={`pre-${elements.length}`} className="bg-bunker-100 dark:bg-bunker-900 p-4 rounded-md my-4 overflow-x-auto">
+        <pre key={`pre-${elements.length}`} className="bg-bunker-100 dark:bg-bunker-950 border border-bunker-200 dark:border-bunker-800 p-4 rounded-lg my-4 overflow-x-auto">
           <code className="font-mono text-sm text-bunker-800 dark:text-bunker-200">
             {codeBlockContent.join('\n')}
           </code>
@@ -46,7 +46,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
         return <em key={index}>{part.slice(1, -1)}</em>;
       }
       if (part.startsWith('`') && part.endsWith('`')) {
-        return <code key={index} className="bg-bunker-200 dark:bg-bunker-700 rounded px-1 py-0.5 font-mono text-sm">{part.slice(1, -1)}</code>;
+        return <code key={index} className="bg-bunker-200 dark:bg-bunker-700/60 text-bunker-800 dark:text-bunker-200 rounded px-1.5 py-1 font-mono text-sm">{part.slice(1, -1)}</code>;
       }
       return part;
     });
@@ -54,7 +54,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
 
   lines.forEach((line, index) => {
     // Code blocks ```
-    if (line.trim() === '```') {
+    if (line.trim().startsWith('```')) {
       if (inCodeBlock) {
         flushCodeBlock();
       } else {
@@ -71,26 +71,26 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
     // Headings
     if (line.startsWith('# ')) {
       flushList();
-      elements.push(<h1 key={index} className="text-3xl font-bold mt-6 mb-3 border-b border-bunker-200 dark:border-bunker-700 pb-2">{parseInline(line.substring(2))}</h1>);
+      elements.push(<h1 key={index} className="text-4xl font-extrabold mt-8 mb-4 border-b border-bunker-200 dark:border-bunker-700 pb-2">{parseInline(line.substring(2))}</h1>);
     } else if (line.startsWith('## ')) {
       flushList();
-      elements.push(<h2 key={index} className="text-2xl font-bold mt-5 mb-2">{parseInline(line.substring(3))}</h2>);
+      elements.push(<h2 key={index} className="text-2xl font-bold mt-6 mb-3 border-b border-bunker-200 dark:border-bunker-700 pb-2">{parseInline(line.substring(3))}</h2>);
     } else if (line.startsWith('### ')) {
       flushList();
-      elements.push(<h3 key={index} className="text-xl font-bold mt-4 mb-1">{parseInline(line.substring(4))}</h3>);
+      elements.push(<h3 key={index} className="text-xl font-semibold mt-4 mb-2">{parseInline(line.substring(4))}</h3>);
     } 
     // List items
     else if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
       if (!inList) {
         inList = true;
       }
-      listItems.push(<li key={index}>{parseInline(line.trim().substring(2))}</li>);
+      listItems.push(<li key={index} className="flex items-start"><span className="text-blue-500 mr-3 mt-1">▸</span><span>{parseInline(line.trim().substring(2))}</span></li>);
     }
     // Paragraphs
     else {
       flushList();
       if (line.trim() !== '') {
-        elements.push(<p key={index} className="my-3 leading-relaxed">{parseInline(line)}</p>);
+        elements.push(<p key={index} className="my-4 leading-relaxed text-bunker-600 dark:text-bunker-300">{parseInline(line)}</p>);
       }
     }
   });

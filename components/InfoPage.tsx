@@ -45,15 +45,15 @@ export const InfoPage: React.FC = () => {
     loadContent();
   }, [activeDoc]);
   
-  const navButtonStyles = "px-4 py-2 text-sm font-medium rounded-md transition-colors";
-  const activeNavStyles = "bg-blue-600 text-white";
+  const navButtonStyles = "px-4 py-2 text-sm font-medium rounded-lg transition-colors";
+  const activeNavStyles = "bg-blue-600 text-white shadow-sm";
   const inactiveNavStyles = "text-bunker-600 dark:text-bunker-300 hover:bg-bunker-100 dark:hover:bg-bunker-800";
 
   return (
-    <div className="flex h-full">
-      <nav className="w-64 border-r border-bunker-200 dark:border-bunker-800 p-4 shrink-0">
-        <h2 className="text-lg font-semibold mb-4 text-bunker-900 dark:text-white">Information</h2>
-        <ul className="space-y-2">
+    <div className="flex h-full bg-white dark:bg-bunker-900">
+      <nav className="w-64 border-r border-bunker-200 dark:border-bunker-800 p-4 shrink-0 bg-bunker-50/50 dark:bg-bunker-900/50">
+        <h2 className="text-lg font-semibold mb-4 text-bunker-900 dark:text-white px-2">Information</h2>
+        <ul className="space-y-1">
           {DOCS.map(doc => (
             <li key={doc.id}>
               <button
@@ -66,7 +66,7 @@ export const InfoPage: React.FC = () => {
           ))}
         </ul>
       </nav>
-      <main className="flex-grow p-6 overflow-y-auto">
+      <main className="flex-grow p-8 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-bunker-500">
              <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

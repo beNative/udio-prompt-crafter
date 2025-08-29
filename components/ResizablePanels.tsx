@@ -10,11 +10,11 @@ interface ResizablePanelsProps {
 
 const ResizeHandle: React.FC<{ onMouseDown: (e: React.MouseEvent) => void }> = ({ onMouseDown }) => (
   <div
-    className="w-2 bg-bunker-100 dark:bg-bunker-800 cursor-col-resize hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200 flex-shrink-0 group"
+    className="w-1.5 bg-transparent cursor-col-resize hover:bg-blue-600/50 dark:hover:bg-blue-500/50 transition-colors duration-200 flex-shrink-0 group"
     onMouseDown={onMouseDown}
   >
     <div className="w-full h-full flex items-center justify-center">
-        <div className="w-0.5 h-8 bg-bunker-300 dark:bg-bunker-600 rounded-full group-hover:bg-white/50" />
+        <div className="w-0.5 h-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
     </div>
   </div>
 );
@@ -50,7 +50,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children, size
     
     // Total width calculation needs to account for handles
     const handleCount = Children.count(children) - 1;
-    const handlesWidth = handleCount * 8; // w-2 is 8px
+    const handlesWidth = handleCount * 6; // w-1.5 is 6px
     const containerWidth = containerRef.current.offsetWidth - handlesWidth;
     
     const deltaX = e.clientX - startX;
@@ -110,7 +110,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children, size
     <div ref={containerRef} className={`flex w-full h-full ${className}`}>
       {panels.map((panel, index) => (
         <React.Fragment key={index}>
-          <div style={{ flexBasis: `${sizes[index]}%` }} className="flex-shrink-0 h-full min-w-0 overflow-hidden">
+          <div style={{ flexBasis: `${sizes[index]}%` }} className="flex-shrink-0 h-full min-w-0 overflow-hidden bg-white dark:bg-bunker-900">
             {panel}
           </div>
           {index < panels.length - 1 && (

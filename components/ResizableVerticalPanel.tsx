@@ -10,11 +10,11 @@ interface ResizableVerticalPanelProps {
 
 const ResizeHandle: React.FC<{ onMouseDown: (e: React.MouseEvent) => void }> = ({ onMouseDown }) => (
   <div
-    className="h-2 bg-bunker-100 dark:bg-bunker-800 cursor-row-resize hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200 flex-shrink-0 group"
+    className="h-1.5 bg-transparent cursor-row-resize hover:bg-blue-600/50 dark:hover:bg-blue-500/50 transition-colors duration-200 flex-shrink-0 group"
     onMouseDown={onMouseDown}
   >
     <div className="w-full h-full flex items-center justify-center">
-        <div className="h-0.5 w-8 bg-bunker-300 dark:bg-bunker-600 rounded-full group-hover:bg-white/50" />
+        <div className="h-0.5 w-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
     </div>
   </div>
 );

@@ -13,10 +13,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text }) => {
   const hideTooltip = () => setVisible(false);
 
   return (
-    <div className="relative flex items-center" onMouseEnter={showTooltip} onMouseLeave={hideTooltip}>
+    <div className="relative flex items-center" onMouseEnter={showTooltip} onMouseLeave={hideTooltip} onFocus={showTooltip} onBlur={hideTooltip}>
       {children}
       {visible && text && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs p-2 bg-bunker-800 text-white text-xs rounded-md shadow-lg z-10 transition-opacity duration-200">
+        <div 
+          role="tooltip"
+          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs p-2.5 bg-bunker-800/95 dark:bg-bunker-900/95 backdrop-blur-sm text-white text-xs rounded-lg shadow-lg z-20 transition-opacity duration-200"
+        >
           {text}
         </div>
       )}
