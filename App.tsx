@@ -40,6 +40,12 @@ const App: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
+  
+  // State for AI service detection
+  const [detectedProviders, setDetectedProviders] = useState<('ollama' | 'lmstudio')[]>([]);
+  const [availableModels, setAvailableModels] = useState<{ ollama: string[]; lmstudio: string[] }>({ ollama: [], lmstudio: [] });
+  const [isDetecting, setIsDetecting] = useState(false);
+
 
   useEffect(() => {
     fetch('./taxonomy.json')
@@ -101,6 +107,54 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const detectServicesAndFetchModels = useCallback(async () => {
+    setIsDetecting(true);
+    const newDetected: ('ollama' | 'lmstudio')[] = [];
+    const newModels: { ollama: string[]; lmstudio: string[] } = { ollama: [], lmstudio: [] };
+
+    // Detect Ollama
+    try {
+        const ollamaRes = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
+        if (ollamaRes.ok) {
+            const data = await ollamaRes.json();
+            newDetected.push('ollama');
+            if (data.models) {
+                newModels.ollama = data.models.map((m: any) => m.name).sort();
+            }
+        }
+    } catch (e) { /* Ollama not found or timed out */ }
+
+    // Detect LM Studio
+    try {
+        const lmStudioRes = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(2000) });
+        if (lmStudioRes.ok) {
+            const data = await lmStudioRes.json();
+            newDetected.push('lmstudio');
+            if (data.data) {
+                newModels.lmstudio = data.data.map((m: any) => m.id).sort();
+            }
+        }
+    } catch (e) { /* LM Studio not found or timed out */ }
+
+    setDetectedProviders(newDetected);
+    setAvailableModels(newModels);
+    setIsDetecting(false);
+
+    // Auto-switch provider if the currently saved one isn't detected
+    if (newDetected.length > 0 && !newDetected.includes(aiSettings.provider)) {
+        const newProvider = newDetected[0];
+        const newBaseUrl = newProvider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234';
+        const newModel = newModels[newProvider][0] || '';
+        setAiSettings({ provider: newProvider, baseUrl: newBaseUrl, model: newModel });
+    }
+  }, [aiSettings.provider, setAiSettings]);
+
+  useEffect(() => {
+    if (isSettingsModalOpen) {
+        detectServicesAndFetchModels();
+    }
+  }, [isSettingsModalOpen, detectServicesAndFetchModels]);
+
   const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
     if (!aiSettings.baseUrl || !aiSettings.model) {
       throw new Error("AI settings are not configured. Please configure them in the settings menu.");
@@ -120,7 +174,7 @@ const App: React.FC = () => {
         format: 'json',
         stream: false,
       };
-    } else { // openai-compatible
+    } else { // lmstudio (openai-compatible)
       endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
       body = {
         model: aiSettings.model,
@@ -462,6 +516,10 @@ const App: React.FC = () => {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={aiSettings}
         onSave={setAiSettings}
+        detectedProviders={detectedProviders}
+        availableModels={availableModels}
+        isDetecting={isDetecting}
+        onRefresh={detectServicesAndFetchModels}
       />
       <DeconstructPromptModal
         isOpen={isDeconstructModalOpen}

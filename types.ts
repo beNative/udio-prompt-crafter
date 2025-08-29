@@ -41,7 +41,7 @@ export interface Macro {
 }
 
 export interface AiSettings {
-  provider: 'ollama' | 'openai-compatible';
+  provider: 'ollama' | 'lmstudio';
   baseUrl: string;
   model: string;
 }
