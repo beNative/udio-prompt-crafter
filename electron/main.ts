@@ -1,12 +1,8 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const path = require('path');
-const fs = require('fs');
-
-// Fix: Explicitly import `platform` from the `process` module. This resolves a
-// TypeScript error where `process.platform` was not found on the global type.
-// Fix: Import `cwd` from `process` to resolve issue with incomplete global `process` type.
-const { platform, cwd } = require('process');
-
+// Fix: Replaced CommonJS `require` statements with ES6 `import` to resolve "Cannot find name 'require'" errors and align with modern TypeScript practices.
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import * as path from 'path';
+import * as fs from 'fs';
+import { platform, cwd } from 'process';
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;

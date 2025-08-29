@@ -184,7 +184,7 @@ const App: React.FC = () => {
     let endpoint = '';
     let body: any = {};
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
 
     if (aiSettings.provider === 'ollama') {
       endpoint = `${aiSettings.baseUrl.replace(/\/$/, '')}/api/chat`;
@@ -267,7 +267,7 @@ const App: React.FC = () => {
 
     } catch (error: any) {
         clearTimeout(timeoutId);
-        const errorMessage = error.name === 'AbortError' ? "AI API request timed out after 30 seconds." : error.message;
+        const errorMessage = error.name === 'AbortError' ? "AI API request timed out after 90 seconds." : error.message;
         logger.error("Error calling LLM:", { message: errorMessage });
         throw new Error(errorMessage);
     }
@@ -485,7 +485,7 @@ const App: React.FC = () => {
   
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center h-screen w-screen bg-white dark:bg-bunker-950 text-bunker-500">
+        <div className="flex items-center justify-center h-full w-full bg-white dark:bg-bunker-950 text-bunker-500">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -497,7 +497,7 @@ const App: React.FC = () => {
 
   if (error) {
     return (
-        <div className="flex flex-col items-center justify-center h-screen w-screen bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4">
+        <div className="flex flex-col items-center justify-center h-full w-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4">
             <h1 className="text-2xl font-bold mb-2">Application Error</h1>
             <p className="text-center">{error}</p>
         </div>
@@ -539,7 +539,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="h-screen w-screen flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
+    <div className="h-full w-full flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
       <Header 
         theme={theme} 
         presets={presets}
