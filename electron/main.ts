@@ -2,8 +2,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Import the 'process' module to provide correct typings for `process.cwd()` and `process.platform`, resolving TypeScript errors.
-import * as process from 'process';
+// Fix: Removed `import * as process from 'process'`. The global `process` object is available in the Node.js environment and provides the correct types for `cwd` and `platform`. The import was shadowing the global object with an incorrect type.
 import { starterPresets } from '../data/presets';
 import { starterMacros } from '../data/macros';
 

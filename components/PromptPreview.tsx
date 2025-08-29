@@ -31,6 +31,31 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
   );
 };
 
+const JsonSyntaxHighlighter: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+  const highlight = (json: string) => {
+    if (!json) return { __html: '' };
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const highlighted = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+    return { __html: highlighted };
+  };
+
+  return (
+    <pre className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 font-mono text-sm border border-bunker-200 dark:border-bunker-800 overflow-auto">
+      <code dangerouslySetInnerHTML={highlight(jsonString)} />
+    </pre>
+  );
+};
+
 export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts }) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
@@ -94,11 +119,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
             </div>
           ) : (
             <div className="relative h-full">
-              <textarea
-                readOnly
-                value={jsonOutput}
-                className="w-full h-full p-3 bg-white dark:bg-bunker-950 rounded-md text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
-              />
+              <JsonSyntaxHighlighter jsonString={jsonOutput} />
               <CopyButton textToCopy={jsonOutput} />
             </div>
           )}

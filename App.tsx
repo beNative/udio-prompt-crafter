@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'crafter' | 'settings'>('crafter');
   
   useEffect(() => {
     logger.info("Application starting up...");
@@ -377,12 +379,7 @@ const App: React.FC = () => {
     });
   }, []);
 
-  const categoriesWithSettings = useMemo(() => [
-    ...categories,
-    { id: 'settings', name: 'Settings', tags: [], description: 'Configure application settings' }
-  ], [categories]);
-  
-  const activeCategory = useMemo(() => categoriesWithSettings.find(c => c.id === activeCategoryId), [categoriesWithSettings, activeCategoryId]);
+  const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
   const selectedTagCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -433,11 +430,11 @@ const App: React.FC = () => {
     );
   }
 
-  const mainContent = (
+  const crafterView = (
       <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
           <div className="h-full">
             <CategoryList
-              categories={categoriesWithSettings}
+              categories={categories}
               activeCategoryId={activeCategoryId}
               selectedTagCounts={selectedTagCounts}
               onSelectCategory={setActiveCategoryId}
@@ -445,25 +442,16 @@ const App: React.FC = () => {
             />
           </div>
           <div className="h-full overflow-y-auto">
-            {activeCategoryId === 'settings' ? (
-              <SettingsPage 
-                settings={appSettings}
-                onSettingsChange={setAppSettings}
-                defaultPresets={starterPresets}
-                defaultMacros={starterMacros}
-              />
-            ) : (
-              <TagPicker
-                category={activeCategory}
-                selectedTags={selectedTags}
-                onToggleTag={handleToggleTag}
-                textCategoryValues={textCategoryValues}
-                onTextCategoryChange={handleTextCategoryChange}
-                onClearCategoryTags={handleClearCategoryTags}
-                taxonomyMap={taxonomyMap}
-                callLlm={callLlm}
-              />
-            )}
+            <TagPicker
+              category={activeCategory}
+              selectedTags={selectedTags}
+              onToggleTag={handleToggleTag}
+              textCategoryValues={textCategoryValues}
+              onTextCategoryChange={handleTextCategoryChange}
+              onClearCategoryTags={handleClearCategoryTags}
+              taxonomyMap={taxonomyMap}
+              callLlm={callLlm}
+            />
           </div>
           <div className="h-full">
             <PromptPreview 
@@ -482,6 +470,8 @@ const App: React.FC = () => {
         theme={theme} 
         presets={appSettings.presets}
         macros={appSettings.macros}
+        activeView={activeView}
+        onSetView={setActiveView}
         onToggleTheme={toggleTheme}
         onLoadPreset={handleLoadPreset}
         onApplyMacro={handleApplyMacro}
@@ -489,24 +479,34 @@ const App: React.FC = () => {
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onOpenSettings={() => setActiveCategoryId('settings')}
         onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
       />
       <main className="flex-grow flex flex-col min-h-0">
-        {isLogPanelOpen ? (
-          <ResizableVerticalPanel
-            height={logPanelHeight}
-            onResize={setLogPanelHeight}
-            minHeight={80}
-          >
-            <div className="h-full min-h-0">
-              {mainContent}
+        {activeView === 'crafter' ? (
+          isLogPanelOpen ? (
+            <ResizableVerticalPanel
+              height={logPanelHeight}
+              onResize={setLogPanelHeight}
+              minHeight={80}
+            >
+              <div className="h-full min-h-0">
+                {crafterView}
+              </div>
+              <LogPanel onClose={() => setIsLogPanelOpen(false)} />
+            </ResizableVerticalPanel>
+          ) : (
+            <div className="flex-grow min-h-0">
+              {crafterView}
             </div>
-            <LogPanel onClose={() => setIsLogPanelOpen(false)} />
-          </ResizableVerticalPanel>
+          )
         ) : (
-          <div className="flex-grow min-h-0">
-            {mainContent}
+          <div className="h-full overflow-y-auto">
+            <SettingsPage 
+              settings={appSettings}
+              onSettingsChange={setAppSettings}
+              defaultPresets={starterPresets}
+              defaultMacros={starterMacros}
+            />
           </div>
         )}
       </main>
