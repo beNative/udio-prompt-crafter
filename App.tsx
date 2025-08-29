@@ -14,6 +14,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { logger } from './utils/logger';
 import { LogPanel } from './components/LogPanel';
+import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [presets, setPresets] = useLocalStorage<Preset[]>('user-presets', starterPresets);
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
+  const [logPanelHeight, setLogPanelHeight] = useLocalStorage('log-panel-height', 288);
   const [aiSettings, setAiSettings] = useLocalStorage<AiSettings>('ai-settings', {
     provider: 'ollama',
     baseUrl: 'http://localhost:11434',
@@ -502,6 +504,39 @@ const App: React.FC = () => {
     );
   }
 
+  const mainContent = (
+      <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
+          <div className="h-full">
+            <CategoryList
+              categories={categories}
+              activeCategoryId={activeCategoryId}
+              selectedTagCounts={selectedTagCounts}
+              onSelectCategory={setActiveCategoryId}
+              onCategoryOrderChange={handleCategoryOrderChange}
+            />
+          </div>
+          <div className="h-full overflow-y-auto">
+            <TagPicker
+              category={activeCategory}
+              selectedTags={selectedTags}
+              onToggleTag={handleToggleTag}
+              textCategoryValues={textCategoryValues}
+              onTextCategoryChange={handleTextCategoryChange}
+              onClearCategoryTags={handleClearCategoryTags}
+              taxonomyMap={taxonomyMap}
+              callLlm={callLlm}
+            />
+          </div>
+          <div className="h-full">
+            <PromptPreview 
+              orderedCategories={categories}
+              selectedTags={selectedTags}
+              textCategoryValues={textCategoryValues}
+              conflicts={conflicts}
+            />
+          </div>
+      </ResizablePanels>
+  );
 
   return (
     <div className="h-screen w-screen flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
@@ -521,42 +556,20 @@ const App: React.FC = () => {
         onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
       />
       <main className="flex-grow flex flex-col min-h-0">
-        <div className="flex-grow min-h-0">
-          <ResizablePanels sizes={panelSizes} onResize={setPanelSizes} minSize={15}>
-              <div className="h-full">
-                <CategoryList
-                  categories={categories}
-                  activeCategoryId={activeCategoryId}
-                  selectedTagCounts={selectedTagCounts}
-                  onSelectCategory={setActiveCategoryId}
-                  onCategoryOrderChange={handleCategoryOrderChange}
-                />
-              </div>
-              <div className="h-full overflow-y-auto">
-                <TagPicker
-                  category={activeCategory}
-                  selectedTags={selectedTags}
-                  onToggleTag={handleToggleTag}
-                  textCategoryValues={textCategoryValues}
-                  onTextCategoryChange={handleTextCategoryChange}
-                  onClearCategoryTags={handleClearCategoryTags}
-                  taxonomyMap={taxonomyMap}
-                  callLlm={callLlm}
-                />
-              </div>
-              <div className="h-full">
-                <PromptPreview 
-                  orderedCategories={categories}
-                  selectedTags={selectedTags}
-                  textCategoryValues={textCategoryValues}
-                  conflicts={conflicts}
-                />
-              </div>
-          </ResizablePanels>
-        </div>
-        {isLogPanelOpen && (
-          <div className="flex-shrink-0 h-72 border-t-2 border-bunker-200 dark:border-bunker-800">
-             <LogPanel onClose={() => setIsLogPanelOpen(false)} />
+        {isLogPanelOpen ? (
+          <ResizableVerticalPanel
+            height={logPanelHeight}
+            onResize={setLogPanelHeight}
+            minHeight={80}
+          >
+            <div className="h-full min-h-0">
+              {mainContent}
+            </div>
+            <LogPanel onClose={() => setIsLogPanelOpen(false)} />
+          </ResizableVerticalPanel>
+        ) : (
+          <div className="flex-grow min-h-0">
+            {mainContent}
           </div>
         )}
       </main>
