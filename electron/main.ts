@@ -3,6 +3,8 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { platform, cwd } from 'process';
+// Fix: Add necessary imports to recreate __dirname in an ES module environment.
+import { fileURLToPath } from 'url';
 
 // --- Start of new logging code ---
 const isDev = !app.isPackaged;
@@ -41,6 +43,9 @@ ipcMain.handle('get-logs-path', () => {
 });
 // --- End of new logging code ---
 
+// Fix: Recreate __dirname for ES modules in Electron, as it's not available by default. This resolves the "Cannot find name '__dirname'" error.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
