@@ -318,7 +318,7 @@
       "id": "references",
       "name": "References",
       "type": "text",
-      "description": "Add artist or track references (e.g., \"Lady Gaga\", \"by Pierre Siffre\"). Note: This is a user-editable field and does not guarantee style matching.",
+      "description": "Add artist or track references (e.g., 'Lady Gaga', 'by Pierre Siffre'). Note: This is a user-editable field and does not guarantee style matching.",
       "tags": []
     }
   ]

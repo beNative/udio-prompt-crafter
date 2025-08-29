@@ -225,6 +225,18 @@ const App: React.FC = () => {
     setSelectedTags({});
     setTextCategoryValues({});
   };
+
+  const handleClearCategoryTags = useCallback((categoryId: string) => {
+    setSelectedTags(prev => {
+        const newSelected = { ...prev };
+        Object.keys(newSelected).forEach(tagId => {
+            if (newSelected[tagId].categoryId === categoryId) {
+                delete newSelected[tagId];
+            }
+        });
+        return newSelected;
+    });
+  }, []);
   
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -312,6 +324,7 @@ const App: React.FC = () => {
                 onToggleTag={handleToggleTag}
                 textCategoryValues={textCategoryValues}
                 onTextCategoryChange={handleTextCategoryChange}
+                onClearCategoryTags={handleClearCategoryTags}
                 taxonomyMap={taxonomyMap}
               />
             </div>

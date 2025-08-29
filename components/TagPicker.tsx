@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
 import { TagTreeView, TreeNodeData } from './TagTreeView';
+import { Icon } from './icons';
 
 interface TagPickerProps {
   category: Category | undefined;
@@ -9,6 +10,7 @@ interface TagPickerProps {
   onToggleTag: (tag: Tag) => void;
   textCategoryValues: Record<string, string>;
   onTextCategoryChange: (categoryId: string, value: string) => void;
+  onClearCategoryTags: (categoryId: string) => void;
   taxonomyMap: Map<string, Tag & { categoryId: string }>;
 }
 
@@ -18,6 +20,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
     onToggleTag, 
     textCategoryValues,
     onTextCategoryChange,
+    onClearCategoryTags,
     taxonomyMap,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +35,11 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         tag.synonyms?.some((s) => s.toLowerCase().includes(lowerCaseSearch))
     );
   }, [category, searchTerm]);
+
+  const hasSelectedTagsInCategory = useMemo(() => {
+    if (!category || category.type === 'text') return false;
+    return Object.values(selectedTags).some(tag => tag.categoryId === category.id);
+  }, [selectedTags, category]);
 
   const tagTree = useMemo((): TreeNodeData[] => {
     if (!category || category.type === 'text' || !category.tags) return [];
@@ -104,7 +112,19 @@ export const TagPicker: React.FC<TagPickerProps> = ({
 
   return (
     <div className="p-6 flex flex-col">
-      <h2 className="text-2xl font-bold mb-4 text-bunker-900 dark:text-white">{category.name}</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-bunker-900 dark:text-white">{category.name}</h2>
+        {hasSelectedTagsInCategory && (
+          <button
+            onClick={() => onClearCategoryTags(category.id)}
+            className="flex items-center space-x-2 text-sm px-3 py-1 rounded-md bg-bunker-100 hover:bg-red-100 hover:text-red-600 dark:bg-bunker-800 dark:text-bunker-400 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors"
+            title={`Clear all selected tags in ${category.name}`}
+          >
+            <Icon name="x" className="w-4 h-4" />
+            <span>Clear</span>
+          </button>
+        )}
+      </div>
       <input
         type="text"
         placeholder={`Search in ${category.name}...`}
