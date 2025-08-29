@@ -7,81 +7,22 @@ This guide explains how to package and run this application as a standalone desk
 You'll need `esbuild`, `electron`, and `electron-builder`. Install them as development dependencies:
 
 ```bash
-npm install --save-dev esbuild electron electron-builder
-```
-or
-```bash
-yarn add --dev esbuild electron electron-builder
+npm install
 ```
 
 ## 2. Configure `package.json`
 
-Add the following sections to your `package.json` file.
+The `package.json` file is already configured with the necessary scripts and settings.
 
-**A. Add the `main` entry point:**
+-   **`main`**: The entry point `dist/electron/main.js` tells Electron where to find the main process script after building.
+-   **`scripts`**:
+    -   `npm run build`: Bundles the application into the `dist` folder.
+    -   `npm run start-electron`: Builds the app and launches it in a development window.
+    -   `npm run package`: Creates an installer for your current operating system.
+    -   `npm run package-win`: Creates a Windows installer (`.exe`).
+-   **`build`**: This section configures `electron-builder`.
 
-This tells Electron where to find the main process script after building.
-
-```json
-{
-  "name": "udio-prompt-crafter",
-  "version": "1.0.0",
-  "main": "dist/electron/main.js",
-  ...
-}
-```
-
-**B. Add build scripts:**
-
-These scripts will bundle the application and package it.
-
-```json
-{
-  ...
-  "scripts": {
-    "build": "node esbuild.config.js",
-    "package": "npm run build && electron-builder",
-    "start-electron": "npm run build && electron ."
-  },
-  ...
-}
-```
-
-**C. Add `electron-builder` configuration:**
-
-This configures how the final application is built for different operating systems.
-
-```json
-{
-  ...
-  "build": {
-    "appId": "com.example.udiopromptcrafter",
-    "productName": "UDIO Prompt Crafter",
-    "files": [
-      "dist/**/*"
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "assets/icon.png"
-    }
-  },
-  ...
-}
-```
-
-*Note: You will need to create an `assets` directory with the appropriate icons (`icon.ico`, `icon.icns`, `icon.png`) for this configuration to work.*
-
+*Note: For custom application icons, you can create an `assets` directory with `icon.ico` (Windows), `icon.icns` (Mac), and `icon.png` (Linux), then add an `icon` property to the respective OS settings in the `build` section of `package.json`.*
 
 ## 3. How to Run
 
@@ -97,8 +38,8 @@ This configures how the final application is built for different operating syste
     ```
     This will build the app and launch it with Electron.
 
-3.  **Package for distribution:**
+3.  **Package for Windows:**
     ```bash
-    npm run package
+    npm run package-win
     ```
-    This will create an installer/executable for your current operating system in a `release` folder.
+    This will create a Windows installer in a `release` folder.

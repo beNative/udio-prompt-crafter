@@ -15,11 +15,8 @@ async function build() {
     // Copy public assets
     fs.copyFileSync(path.join('public', 'taxonomy.json'), path.join(distDir, 'taxonomy.json'));
 
-    // Modify and copy index.html
-    let indexHtml = fs.readFileSync('index.html', 'utf-8');
-    indexHtml = indexHtml.replace('/index.tsx', './bundle.js');
-    indexHtml = indexHtml.replace('<link rel="icon" type="image/svg+xml" href="/vite.svg" />', '');
-    fs.writeFileSync(path.join(distDir, 'index.html'), indexHtml);
+    // Copy index.html
+    fs.copyFileSync('index.html', path.join(distDir, 'index.html'));
 
     // Build React App
     await esbuild.build({

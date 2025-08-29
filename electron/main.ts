@@ -1,7 +1,9 @@
-// Fix: Use require instead of import to ensure TypeScript treats this as a CommonJS module,
-// which provides access to Node.js globals like __dirname and process.
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+
+// Fix: Explicitly import `platform` from the `process` module. This resolves a
+// TypeScript error where `process.platform` was not found on the global type.
+const { platform } = require('process');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -28,5 +30,5 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
+  if (platform !== 'darwin') app.quit();
 });

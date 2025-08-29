@@ -1,20 +1,41 @@
 {
   "name": "udio-prompt-crafter",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "A powerful GUI to help musicians craft high-quality UDIO prompts by choosing from curated style tags. Features a live prompt preview, JSON output, preset management, and quality assistance.",
+  "main": "dist/electron/main.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "build": "node esbuild.config.js",
+    "package": "npm run build && electron-builder",
+    "package-win": "npm run build && electron-builder --win",
+    "start-electron": "npm run build && electron ."
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "esbuild": "^0.20.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.3"
+  },
+  "build": {
+    "appId": "com.example.udiopromptcrafter",
+    "productName": "UDIO Prompt Crafter",
+    "files": [
+      "dist/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
