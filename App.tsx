@@ -184,7 +184,6 @@ const App: React.FC = () => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        response_format: { type: 'json_object' },
         stream: false,
       };
     }
