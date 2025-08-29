@@ -42,7 +42,7 @@ const App: React.FC = () => {
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/taxonomy.json')
+    fetch('./taxonomy.json')
       .then(res => {
         if (!res.ok) {
           throw new Error(`Failed to load taxonomy configuration file. Status: ${res.status}`);
