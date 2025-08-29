@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
 import { starterMacros } from './data/macros';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AiSettings, AppSettings } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Macro, Taxonomy, AppSettings } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -15,6 +14,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { logger } from './utils/logger';
 import { LogPanel } from './components/LogPanel';
 import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
+import { InfoPage } from './components/InfoPage';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -40,7 +40,7 @@ const App: React.FC = () => {
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'crafter' | 'settings'>('crafter');
+  const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info'>('crafter');
   
   useEffect(() => {
     logger.info("Application starting up...");
@@ -463,6 +463,46 @@ const App: React.FC = () => {
           </div>
       </ResizablePanels>
   );
+  
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'settings':
+        return (
+          <div className="h-full overflow-y-auto">
+            <SettingsPage 
+              settings={appSettings}
+              onSettingsChange={setAppSettings}
+              defaultPresets={starterPresets}
+              defaultMacros={starterMacros}
+            />
+          </div>
+        );
+      case 'info':
+        return (
+          <div className="h-full overflow-y-auto">
+              <InfoPage />
+          </div>
+        );
+      case 'crafter':
+      default:
+        return isLogPanelOpen ? (
+          <ResizableVerticalPanel
+            height={logPanelHeight}
+            onResize={setLogPanelHeight}
+            minHeight={80}
+          >
+            <div className="h-full min-h-0">
+              {crafterView}
+            </div>
+            <LogPanel onClose={() => setIsLogPanelOpen(false)} />
+          </ResizableVerticalPanel>
+        ) : (
+          <div className="flex-grow min-h-0">
+            {crafterView}
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="h-full w-full flex flex-col font-sans bg-white dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200 transition-colors duration-300">
@@ -482,33 +522,7 @@ const App: React.FC = () => {
         onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
       />
       <main className="flex-grow flex flex-col min-h-0">
-        {activeView === 'crafter' ? (
-          isLogPanelOpen ? (
-            <ResizableVerticalPanel
-              height={logPanelHeight}
-              onResize={setLogPanelHeight}
-              minHeight={80}
-            >
-              <div className="h-full min-h-0">
-                {crafterView}
-              </div>
-              <LogPanel onClose={() => setIsLogPanelOpen(false)} />
-            </ResizableVerticalPanel>
-          ) : (
-            <div className="flex-grow min-h-0">
-              {crafterView}
-            </div>
-          )
-        ) : (
-          <div className="h-full overflow-y-auto">
-            <SettingsPage 
-              settings={appSettings}
-              onSettingsChange={setAppSettings}
-              defaultPresets={starterPresets}
-              defaultMacros={starterMacros}
-            />
-          </div>
-        )}
+        {renderActiveView()}
       </main>
        {conflictState && (
         <ConflictResolutionModal

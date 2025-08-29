@@ -14,6 +14,14 @@ async function build() {
 
     // Copy public assets
     fs.copyFileSync(path.join('public', 'taxonomy.json'), path.join(distDir, 'taxonomy.json'));
+    
+    // Copy documentation
+    fs.mkdirSync(path.join(distDir, 'docs'), { recursive: true });
+    fs.readdirSync('docs').forEach(file => {
+        if (file.endsWith('.md')) {
+            fs.copyFileSync(path.join('docs', file), path.join(distDir, 'docs', file));
+        }
+    });
 
     // Copy index.html
     fs.copyFileSync('index.html', path.join(distDir, 'index.html'));

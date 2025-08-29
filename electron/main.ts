@@ -2,7 +2,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Removed `import * as process from 'process'`. The global `process` object is available in the Node.js environment and provides the correct types for `cwd` and `platform`. The import was shadowing the global object with an incorrect type.
+// Fix: Removed a misleading comment and explicitly imported `process` to fix type errors.
+import * as process from 'process';
 import { starterPresets } from '../data/presets';
 import { starterMacros } from '../data/macros';
 
@@ -47,6 +48,26 @@ ipcMain.on('write-settings', (event, settings) => {
   }
 });
 
+// --- Documentation ---
+ipcMain.handle('read-markdown-file', (event, filename) => {
+  try {
+    // For packaged app, docs are in resources/docs. For dev, they are in dist/docs.
+    const docsPath = isDev 
+        ? path.join(__dirname, '..', 'docs') 
+        // Fix: Cast process to any to access Electron-specific `resourcesPath` property.
+        : path.join((process as any).resourcesPath, 'docs');
+    const filePath = path.join(docsPath, filename);
+    if (fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath, 'utf-8');
+    } else {
+       console.error(`Markdown file not found: ${filePath}`);
+       return `Error: Could not find documentation file '${filename}'.`;
+    }
+  } catch (error: any) {
+    console.error(`Failed to read markdown file ${filename}:`, error);
+    return `Error: Could not read documentation file. ${error.message}`;
+  }
+});
 
 // --- Logging ---
 const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));

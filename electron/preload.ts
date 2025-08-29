@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLogsPath: () => ipcRenderer.invoke('get-logs-path'),
   readSettings: () => ipcRenderer.invoke('read-settings'),
   writeSettings: (settings) => ipcRenderer.send('write-settings', settings),
+  readMarkdownFile: (filename: string) => ipcRenderer.invoke('read-markdown-file', filename),
 });

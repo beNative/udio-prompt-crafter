@@ -27,6 +27,12 @@
     "files": [
       "dist/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "dist/docs",
+        "to": "docs"
+      }
+    ],
     "directories": {
       "output": "release"
     },

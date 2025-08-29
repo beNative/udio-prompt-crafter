@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { Preset, Macro } from '../types';
 import { Icon } from './icons';
@@ -8,8 +7,8 @@ interface HeaderProps {
   theme: 'light' | 'dark';
   presets: Preset[];
   macros: Macro[];
-  activeView: 'crafter' | 'settings';
-  onSetView: (view: 'crafter' | 'settings') => void;
+  activeView: 'crafter' | 'settings' | 'info';
+  onSetView: (view: 'crafter' | 'settings' | 'info') => void;
   onToggleTheme: () => void;
   onLoadPreset: (preset: Preset) => void;
   onApplyMacro: (macro: Macro) => void;
@@ -57,6 +56,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, presets, macros, activeVi
               </button>
               <button onClick={() => onSetView('settings')} className={`${tabButtonStyles} ${activeView === 'settings' ? activeTabStyles : inactiveTabStyles}`}>
                   Settings
+              </button>
+               <button onClick={() => onSetView('info')} className={`${tabButtonStyles} ${activeView === 'info' ? activeTabStyles : inactiveTabStyles}`}>
+                  Info
               </button>
           </nav>
       </div>

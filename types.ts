@@ -69,6 +69,7 @@ export interface IElectronAPI {
   getLogsPath: () => Promise<string>;
   readSettings: () => Promise<AppSettings>;
   writeSettings: (settings: AppSettings) => void;
+  readMarkdownFile: (filename: string) => Promise<string>;
 }
 
 declare global {
