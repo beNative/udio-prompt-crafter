@@ -56,30 +56,55 @@
         font-family: Menlo, Monaco, 'Courier New', monospace;
         font-size: 13px;
         line-height: 1.5;
+        color: #101828; /* Caret color for light mode */
       }
-      .json-editor-textarea, .json-editor-pre {
-        margin: 0;
+      .dark .json-editor-container {
+        color: #e6e9ec; /* Caret color for dark mode */
+      }
+
+      .json-editor-textarea,
+      .json-editor-pre,
+      .json-editor-pre > code {
+        /* Critical: Ensure all font and spacing properties match exactly */
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
         padding: 10px;
-        border: 1px solid transparent;
+        margin: 0;
+        border: none;
+        box-sizing: border-box; /* Crucial for alignment */
         white-space: pre-wrap;
         word-wrap: break-word;
-        overflow-wrap: break-word;
-        -webkit-overflow-scrolling: touch;
-        overflow: auto;
       }
-      .json-editor-textarea {
+
+      .json-editor-textarea,
+      .json-editor-pre {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        resize: none;
-        color: inherit;
-        background-color: transparent;
-        -webkit-text-fill-color: transparent;
+        overflow: auto; /* Ensure both scroll identically */
       }
-       .json-editor-textarea:focus {
+
+      .json-editor-textarea {
+        z-index: 1; /* Textarea on top for interaction */
+        resize: none;
+        background-color: transparent;
+        /* Make text transparent, but keep the caret visible */
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        caret-color: currentColor; /* Use the container's text color for the caret */
+      }
+
+      .json-editor-textarea:focus {
         outline: none;
+      }
+
+      .json-editor-pre {
+        z-index: 0; /* Highlighted code behind */
+        pointer-events: none; /* Cannot interact with the pre element */
       }
     </style>
   <script type="importmap">

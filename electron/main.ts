@@ -2,8 +2,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Import `process` module to provide correct typings for standard Node.js process properties like `cwd` and `platform`.
-import * as process from 'process';
+// Note: 'process' is a global in Node.js environments and does not need to be imported.
+// The explicit import was removed to prevent shadowing the correctly-typed global variable.
 import { starterPresets } from '../data/presets';
 import { starterMacros } from '../data/macros';
 
@@ -70,7 +70,9 @@ ipcMain.handle('read-markdown-file', (event, filename) => {
 });
 
 // --- Logging ---
-const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+// Fix: Cast `process` to `any` to access the `cwd` method, resolving a type error
+// where the global `process` object type is incomplete.
+const logDir = isDev ? (process as any).cwd() : path.dirname(app.getPath('exe'));
 const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
 let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -119,5 +121,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // Fix: Cast `process` to `any` to access the `platform` property, resolving a type error
+  // where the global `process` object type is incomplete.
+  if ((process as any).platform !== 'darwin') app.quit();
 });
