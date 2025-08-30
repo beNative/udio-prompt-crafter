@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { Category, Tag, SelectedTag, AiSettings } from '../types';
+import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
 import { TagTreeView, TreeNodeData } from './TagTreeView';
 import { Icon } from './icons';
@@ -160,16 +160,16 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         </>
       )}
       
-      <div className="mt-8 pt-6 border-t border-bunker-200 dark:border-bunker-700">
-        <AiFeatures 
-            category={category}
-            selectedTags={selectedTags}
-            taxonomyMap={taxonomyMap}
-            callLlm={callLlm}
-            onToggleTag={onToggleTag}
-            onSetLyricText={(text) => onTextCategoryChange(category.id, text)}
-        />
-      </div>
+      {category.id === 'lyrics' && (
+        <div className="mt-8 pt-6 border-t border-bunker-200 dark:border-bunker-700">
+            <AiFeatures 
+                category={category}
+                selectedTags={selectedTags}
+                callLlm={callLlm}
+                onSetLyricText={(text) => onTextCategoryChange(category.id, text)}
+            />
+        </div>
+      )}
 
       {suggestions.length > 0 && (
         <div className="mt-8 pt-6 border-t border-bunker-200 dark:border-bunker-700">
