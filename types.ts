@@ -77,6 +77,10 @@ export interface IElectronAPI {
   readMarkdownFile: (filename: string) => Promise<string>;
   getAppVersion: () => Promise<string>;
   readDebugLog: () => Promise<string>;
+  readDefaultTaxonomy: () => Promise<{ taxonomy: Taxonomy }>;
+  readCustomTaxonomy: () => Promise<Taxonomy | null>;
+  writeCustomTaxonomy: (taxonomy: Taxonomy) => void;
+  resetCustomTaxonomy: () => void;
 }
 
 declare global {

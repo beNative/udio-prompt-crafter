@@ -121,6 +121,49 @@ const App: React.FC = () => {
     });
   }, [setAppSettings]);
 
+  const handleClear = useCallback(() => {
+    logger.info('Clearing all selected tags and text.');
+    setSelectedTags({});
+    setTextCategoryValues({});
+  }, []);
+
+  const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
+    logger.info(reset ? "Resetting taxonomy to default." : "Saving custom taxonomy.");
+    let finalTaxonomy: Taxonomy;
+
+    if (isElectron) {
+      if (reset) {
+        await window.electronAPI.resetCustomTaxonomy();
+        const defaultTaxonomyData = await window.electronAPI.readDefaultTaxonomy();
+        finalTaxonomy = defaultTaxonomyData.taxonomy;
+      } else {
+        await window.electronAPI.writeCustomTaxonomy(newTaxonomy);
+        finalTaxonomy = newTaxonomy;
+      }
+    } else {
+      if (reset) {
+        localStorage.removeItem('custom-taxonomy');
+        const res = await fetch('./taxonomy.json');
+        const data = await res.json();
+        finalTaxonomy = data.taxonomy;
+      } else {
+        localStorage.setItem('custom-taxonomy', JSON.stringify(newTaxonomy));
+        finalTaxonomy = newTaxonomy;
+      }
+    }
+    
+    setTaxonomy(finalTaxonomy);
+    setCategories(finalTaxonomy);
+    if (finalTaxonomy.length > 0) {
+      setActiveCategoryId(finalTaxonomy[0].id);
+    } else {
+      setActiveCategoryId('');
+    }
+    handleClear();
+    alert("Taxonomy has been updated. The application state has been reset.");
+
+  }, [handleClear]);
+
   useEffect(() => {
     logger.info("Application starting up...");
 
@@ -158,23 +201,41 @@ const App: React.FC = () => {
       }
     };
     
-    const loadTaxonomy = fetch('./taxonomy.json')
-      .then(res => {
-        if (!res.ok) throw new Error(`Failed to load taxonomy. Status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        logger.info("Taxonomy loaded successfully.");
-        setTaxonomy(data.taxonomy);
-      })
-      .catch(e => {
-        console.error("Failed to load taxonomy.json:", e);
-        const errorMessage = "Could not load the core taxonomy configuration. The application cannot start.";
-        logger.error(errorMessage, { error: e.message });
-        setError(errorMessage);
-      });
+    const loadTaxonomy = async () => {
+        try {
+            let loadedTaxonomy: Taxonomy | null = null;
+            if (isElectron) {
+                loadedTaxonomy = await window.electronAPI.readCustomTaxonomy();
+                if (!loadedTaxonomy) {
+                    const defaultTaxonomyData = await window.electronAPI.readDefaultTaxonomy();
+                    loadedTaxonomy = defaultTaxonomyData.taxonomy;
+                }
+            } else {
+                const storedTaxonomy = localStorage.getItem('custom-taxonomy');
+                if (storedTaxonomy) {
+                    loadedTaxonomy = JSON.parse(storedTaxonomy);
+                } else {
+                    const res = await fetch('./taxonomy.json');
+                    if (!res.ok) throw new Error(`Failed to load taxonomy. Status: ${res.status}`);
+                    const data = await res.json();
+                    loadedTaxonomy = data.taxonomy;
+                }
+            }
+            if (loadedTaxonomy) {
+                logger.info("Taxonomy loaded successfully.");
+                setTaxonomy(loadedTaxonomy);
+            } else {
+                throw new Error("Taxonomy data is null or invalid.");
+            }
+        } catch (e: any) {
+            console.error("Failed to load taxonomy:", e);
+            const errorMessage = "Could not load the core taxonomy configuration. The application cannot start.";
+            logger.error(errorMessage, { error: e.message });
+            setError(errorMessage);
+        }
+    };
 
-    Promise.all([loadAppSettings(), loadTaxonomy]).then(() => {
+    Promise.all([loadAppSettings(), loadTaxonomy()]).then(() => {
         detectServicesAndFetchModels();
     }).finally(() => {
         setIsLoading(false);
@@ -195,9 +256,9 @@ const App: React.FC = () => {
     }
   }, [appSettings]);
   
-  const { taxonomyMap, allTags, initialCategories } = useMemo(() => {
+  const { taxonomyMap, allTags } = useMemo(() => {
     if (!taxonomy) {
-      return { taxonomyMap: new Map(), allTags: [], initialCategories: [] };
+      return { taxonomyMap: new Map(), allTags: [] };
     }
     const newTaxonomyMap = new Map<string, Tag & { categoryId: string }>();
     const allT: Tag[] = [];
@@ -208,18 +269,18 @@ const App: React.FC = () => {
       });
     });
     logger.debug('Taxonomy map and tag list created.', { tagCount: allT.length });
-    return { taxonomyMap: newTaxonomyMap, allTags: allT, initialCategories: taxonomy };
+    return { taxonomyMap: newTaxonomyMap, allTags: allT };
   }, [taxonomy]);
 
   useEffect(() => {
-      if(initialCategories.length > 0 && categories.length === 0) {
-          setCategories(initialCategories);
-          if (!activeCategoryId) {
-            setActiveCategoryId(initialCategories[0].id);
+      if(taxonomy && categories.length === 0) {
+          setCategories(taxonomy);
+          if (!activeCategoryId && taxonomy.length > 0) {
+            setActiveCategoryId(taxonomy[0].id);
           }
           logger.debug('Initial categories set.');
       }
-  }, [initialCategories, categories, activeCategoryId]);
+  }, [taxonomy, categories, activeCategoryId]);
 
 
   useEffect(() => {
@@ -495,12 +556,6 @@ const App: React.FC = () => {
     setTextCategoryValues({});
   }, [categories, taxonomyMap]);
 
-  const handleClear = () => {
-    logger.info('Clearing all selected tags and text.');
-    setSelectedTags({});
-    setTextCategoryValues({});
-  };
-
   const handleClearCategoryTags = useCallback((categoryId: string) => {
     logger.info(`Clearing tags for category: ${categoryId}`);
     setSelectedTags(prev => {
@@ -584,7 +639,7 @@ const App: React.FC = () => {
     return newConflicts;
   }, [selectedTags]);
   
-  if (isLoading || !appSettings) {
+  if (isLoading || !appSettings || !taxonomy) {
     return (
         <div className="flex items-center justify-center h-full w-full bg-white dark:bg-bunker-950 text-bunker-500">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -651,6 +706,8 @@ const App: React.FC = () => {
             <SettingsPage 
               settings={appSettings}
               onSettingsChange={setAppSettings}
+              taxonomy={taxonomy}
+              onTaxonomyChange={handleTaxonomyChange}
               defaultPresets={starterPresets}
               detectedProviders={detectedProviders}
               availableModels={availableModels}

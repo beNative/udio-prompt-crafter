@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import type { AppSettings, Preset, AiStatus } from '../types';
+import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
 import { logger } from '../utils/logger';
 import { JsonEditor } from './JsonEditor';
 import { DebugLogModal } from './DebugLogModal';
+import { TaxonomyEditor } from './TaxonomyEditor';
 
 interface SettingsPageProps {
   settings: AppSettings;
   onSettingsChange: React.Dispatch<React.SetStateAction<AppSettings | null>>;
+  taxonomy: Taxonomy;
+  onTaxonomyChange: (newTaxonomy: Taxonomy, reset?: boolean) => Promise<void>;
   defaultPresets: Preset[];
   detectedProviders: ('ollama' | 'lmstudio')[];
   availableModels: { ollama: string[]; lmstudio: string[] };
@@ -39,6 +42,8 @@ const SettingsCard: React.FC<{ title: string; children: React.ReactNode; }> = ({
 export const SettingsPage: React.FC<SettingsPageProps> = ({ 
     settings, 
     onSettingsChange, 
+    taxonomy,
+    onTaxonomyChange,
     defaultPresets,
     detectedProviders,
     availableModels,
@@ -142,10 +147,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </select>
           </div>
         </SettingsCard>
+
+        <TaxonomyEditor
+            taxonomy={taxonomy}
+            onSave={onTaxonomyChange}
+        />
         
         <SettingsCard title="Presets">
           <div>
             <label htmlFor="presets" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300 mb-2">Presets JSON</label>
+            <p className="text-sm text-bunker-500 dark:text-bunker-400 mb-4">
+              For advanced users, presets can be edited directly here. For a user-friendly experience, use the "Manage Presets" button in the header.
+            </p>
             <JsonEditor 
                 id="presets"
                 value={presetsText}

@@ -37,6 +37,7 @@ logToFile(`isDev = ${isDev}`);
 
 // --- Settings Management (Synchronous Part) ---
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+const customTaxonomyPath = path.join(app.getPath('userData'), 'taxonomy.json');
 const defaultSettings = {
   aiSettings: {
     provider: 'ollama',
@@ -165,6 +166,49 @@ try {
         logToFile(`[ERROR] Failed to write settings file: ${error}`);
         console.error('Failed to write settings file:', error);
       }
+    });
+
+    // --- Taxonomy Management ---
+    ipcMain.handle('read-default-taxonomy', () => {
+        try {
+            const defaultTaxonomyPath = path.join(__dirname, '..', 'taxonomy.json');
+            const rawData = fs.readFileSync(defaultTaxonomyPath, 'utf-8');
+            return JSON.parse(rawData);
+        } catch (error) {
+            logToFile(`[ERROR] Failed to read default taxonomy: ${error}`);
+            return null;
+        }
+    });
+
+    ipcMain.handle('read-custom-taxonomy', () => {
+        try {
+            if (fs.existsSync(customTaxonomyPath)) {
+                const rawData = fs.readFileSync(customTaxonomyPath, 'utf-8');
+                return JSON.parse(rawData);
+            }
+            return null;
+        } catch (error) {
+            logToFile(`[ERROR] Failed to read custom taxonomy: ${error}`);
+            return null;
+        }
+    });
+
+    ipcMain.on('write-custom-taxonomy', (event, taxonomy) => {
+        try {
+            fs.writeFileSync(customTaxonomyPath, JSON.stringify(taxonomy, null, 2));
+        } catch (error) {
+            logToFile(`[ERROR] Failed to write custom taxonomy: ${error}`);
+        }
+    });
+
+    ipcMain.on('reset-custom-taxonomy', () => {
+        try {
+            if (fs.existsSync(customTaxonomyPath)) {
+                fs.unlinkSync(customTaxonomyPath);
+            }
+        } catch (error) {
+            logToFile(`[ERROR] Failed to reset custom taxonomy: ${error}`);
+        }
     });
 
     // --- Documentation ---
