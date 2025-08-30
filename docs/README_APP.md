@@ -9,14 +9,15 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 ## Key Features
 
 -   **Expanded Taxonomy:** Browse a massively expanded, curated library of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
--   **Live Prompt Preview:** See your prompt string update in real-time. A resizable panel also allows you to view and copy both the tag-based prompt and a new AI-generated descriptive prompt.
+-   **Live Prompt Preview:** See your prompt string update in real-time. A resizable panel allows you to view and copy your prompt, generate an AI-powered prose description, and brainstorm AI-generated song titles.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
 -   **AI-Powered Assistance:**
     -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
+    -   **AI Song Title Generation:** Brainstorm creative song title ideas based on your prompt.
     -   **AI Prompt Deconstruction:** Paste in an existing prompt, and the AI will analyze it and select the matching tags for you.
     -   **AI-Powered Songwriting:** Generate creative lyrical theme ideas based on keywords and then expand them into full song lyrics with verses and choruses.
     -   **Tag Suggestions:** Get recommendations for complementary tags.
--   **In-App Taxonomy Editor:** Advanced users can now fully customize the application's tag library by creating, editing, and deleting categories and tags directly from the Settings page.
+-   **Streamlined Taxonomy Editor:** A fully redesigned, inline editor on the Settings page allows for stable and intuitive management of your custom tag library. The buggy modal has been completely replaced.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").

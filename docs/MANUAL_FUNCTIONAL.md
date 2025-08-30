@@ -33,8 +33,10 @@ This is where you choose the building blocks of your prompt.
 This panel shows you the output of your selections in real-time.
 
 -   **Prompt String Tab:** This is the main view for your output.
-    -   **Top Panel:** Shows the final, comma-separated prompt string generated from your tags.
-    -   **Bottom Panel:** Features the "Generate AI Description" button. Clicking this uses an AI to convert your tag list into a descriptive, paragraph-style prompt. The generated text appears here.
+    -   **Top Panel (Prompt String):** Shows the final, comma-separated prompt string generated from your tags. You can copy this directly.
+    -   **Bottom Panel (AI Features):** This panel contains AI-powered tools to enhance your creativity.
+        -   **Generate Description:** Converts your tag list into a descriptive, paragraph-style prompt. The generated text appears in this panel.
+        -   **Generate Titles:** Analyzes your prompt to brainstorm five creative song titles. The list of titles will appear in this panel, each with a copy button.
     -   **Resizable Splitter:** You can click and drag the splitter between the two panels to resize them to your preference. Your chosen layout is saved automatically.
 -   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, and category order. This is useful for saving, sharing, or for use in other tools.
 -   **Conflict Warnings:** If you select tags that are logically incompatible (e.g., "Slow Tempo" and "High Tempo"), a warning box will appear at the top of this panel listing the conflicts.
@@ -57,16 +59,17 @@ These buttons provide quick access to powerful features.
 
 Click the "Settings" tab in the header to access the configuration page. The page is organized into cards for clarity.
 
--   **AI Configuration Card:**
+-   **AI Configuration Tab:**
     -   **Provider:** The app automatically scans for running Ollama or LM Studio services. You can select which one to use for AI features.
     -   **API Base URL:** The address of the AI service. Defaults are provided.
     -   **Model Name:** A dropdown list of models available from your selected provider.
--   **Taxonomy Editor Card:**
+-   **Taxonomy Tab:**
     -   This is an advanced feature allowing full customization of the application's tag library.
-    -   You can add, edit, or delete categories from the left-hand list.
-    -   Selecting a category allows you to add, edit, or delete tags within it on the right.
-    -   Changes must be saved, which will reload the taxonomy and reset the main crafter view. You can also discard changes or reset to the application's default taxonomy.
--   **Presets Card:**
+    -   **Categories List (Left):** Add, edit, delete, and reorder your categories. Click a category to manage its tags.
+    -   **Tags List (Right):** When a category is selected, this area shows all of its tags. You can drag and drop tags to reorder them or create parent-child relationships (for suggestions). Click "Add Tag" or the pencil icon on an existing tag to open the inline editor.
+    -   **Inline Tag Editor:** When adding or editing a tag, a panel appears directly on the page. Here you can edit the tag's label, ID, description, color, and manage its "Suggests" and "Conflicts With" relationships using a powerful search-and-select combobox.
+    -   **Saving:** Changes are not applied until you click the "Save Taxonomy" button at the top. You can also discard all your changes or reset the entire taxonomy to the application's default. *Warning: Saving or resetting will reload the app's data and clear your current prompt.*
+-   **Presets Tab:**
     -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets at any time.
 

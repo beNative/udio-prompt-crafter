@@ -1,5 +1,18 @@
 # Version Log
 
+## v1.4.0 - The Stability & Workflow Update
+
+This release is a major overhaul focused on improving core stability, workflow efficiency, and the user experience, directly addressing user feedback on persistent bugs and usability issues.
+
+### Major Changes
+
+-   **Complete Tag Editor Refactor:** The buggy and cumbersome tag editing modal has been entirely replaced with a modern, stable, inline editor directly within the "Taxonomy" settings page. Managing tag relationships is now handled through an intuitive combobox with search and "chip"-style display, eliminating all previous layout and usability issues.
+-   **AI Song Title Generation:** A new AI feature has been added to the Live Preview panel. The "Generate Titles" button uses your current tags and prompt content to brainstorm five creative song title ideas, each with a convenient copy-to-clipboard button.
+-   **Improved Robustness & Debugging:**
+    -   The core function for communicating with local AI models has been rewritten for better reliability, including proper request timeouts, more robust JSON parsing, and enhanced error logging.
+    -   For the desktop app, a high-priority startup logging system (`debug.log`) has been implemented to help diagnose "white screen" errors and other critical launch failures.
+-   **UI/UX Enhancements:** The Settings page and Taxonomy Editor have been refactored to utilize the full available height and width of the application window, providing a much better experience for managing large tag libraries on bigger screens.
+
 ## v1.3.0 - The Architect's Toolkit Update
 
 This release adds powerful new features for advanced users, including AI-powered prompt reverse-engineering and an integrated taxonomy editor.
