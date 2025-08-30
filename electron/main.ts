@@ -24,8 +24,8 @@ const logToFile = (message: string) => {
 logToFile('Main process started.');
 
 // Catch unhandled errors in the main process.
-// Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
-global.process.on('uncaughtException', (error, origin) => {
+// Fix: Use the global `process` object directly. In a Node.js environment, it is available globally.
+process.on('uncaughtException', (error, origin) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
   // It's generally recommended to quit after an uncaught exception.
@@ -171,12 +171,10 @@ try {
     // --- Documentation ---
     ipcMain.handle('read-markdown-file', (event, filename) => {
       try {
-        // Fix: Cast `process` to `any` to access the Electron-specific `resourcesPath` property.
-        // The standard Node.js `process` type from the import does not include this.
-        // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
+        // Fix: Use the global `process` object directly to access the Electron-specific `resourcesPath` property.
         const docsPath = isDev 
             ? path.join(__dirname, '..', 'docs') 
-            : path.join((global.process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
+            : path.join((process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
             
         const filePath = path.join(docsPath, filename);
         if (fs.existsSync(filePath)) {
@@ -197,8 +195,8 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
-    const logDir = isDev ? global.process.cwd() : path.dirname(app.getPath('exe'));
+    // Fix: Use the global `process` object directly.
+    const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -243,6 +241,6 @@ try {
 
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
-  // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
-  if (global.process.platform !== 'darwin') app.quit();
+  // Fix: Use the global `process` object directly.
+  if (process.platform !== 'darwin') app.quit();
 });
