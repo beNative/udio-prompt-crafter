@@ -19,6 +19,7 @@ const defaultSettings = {
     model: 'llama3',
   },
   presets: starterPresets,
+  promptPanelRatio: 50,
 };
 
 ipcMain.handle('read-settings', () => {

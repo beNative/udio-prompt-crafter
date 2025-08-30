@@ -45,6 +45,7 @@ export type AiStatus = 'checking' | 'connected' | 'disconnected';
 export interface AppSettings {
   aiSettings: AiSettings;
   presets: Preset[];
+  promptPanelRatio?: number;
 }
 
 // New Logging types

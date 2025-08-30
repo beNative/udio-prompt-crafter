@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { SelectedTag, Conflict } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
@@ -10,6 +10,8 @@ interface PromptPreviewProps {
   textCategoryValues: Record<string, string>;
   conflicts: Conflict[];
   callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
+  promptPanelRatio: number;
+  onPromptPanelResize: (ratio: number) => void;
 }
 
 const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
@@ -58,7 +60,7 @@ const JsonSyntaxHighlighter: React.FC<{ jsonString: string }> = ({ jsonString })
   );
 };
 
-export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts, callLlm }) => {
+export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts, callLlm, promptPanelRatio, onPromptPanelResize }) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [activeTab, setActiveTab] = useState('prompt');
@@ -66,6 +68,49 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
   const [aiDescription, setAiDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  
+  const [topPanelHeight, setTopPanelHeight] = useState(promptPanelRatio);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const minPanelHeight = 20; // min height in percent
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      onPromptPanelResize(topPanelHeight);
+    }
+  }, [isDragging, topPanelHeight, onPromptPanelResize]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newHeight = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+    
+    const clampedHeight = Math.max(minPanelHeight, Math.min(100 - minPanelHeight, newHeight));
+    setTopPanelHeight(clampedHeight);
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
 
   useEffect(() => {
     const sortedTags = orderedCategories.flatMap(category => 
@@ -92,7 +137,6 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
     };
     setJsonOutput(JSON.stringify(json, null, 2));
 
-    // Reset AI description when underlying prompt changes
     setAiDescription('');
     setGenerationError(null);
   }, [selectedTags, orderedCategories, textCategoryValues]);
@@ -118,6 +162,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
       setIsGenerating(false);
     }
   };
+  
+  const splitterHeight = 6; // h-1.5 in px
 
   return (
     <div className="p-4 bg-bunker-50/50 dark:bg-bunker-900/50 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
@@ -140,57 +186,65 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
         
         <div className="flex-grow relative min-h-0">
           {activeTab === 'prompt' ? (
-            <div className="relative h-full flex flex-col">
-              {/* Prompt String Area */}
-              <div className="flex-grow relative min-h-0">
-                  <textarea
-                      readOnly
-                      value={prompt}
-                      className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
-                      placeholder="Your generated prompt will appear here..."
-                  />
-                  <CopyButton textToCopy={prompt} />
+            <div ref={containerRef} className="relative h-full flex flex-col">
+              {/* Top Panel: Prompt String */}
+              <div className="relative min-h-0" style={{ height: `calc(${topPanelHeight}% - ${splitterHeight/2}px)`}}>
+                <textarea
+                  readOnly
+                  value={prompt}
+                  className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-mono text-sm border border-bunker-200 dark:border-bunker-800"
+                  placeholder="Your generated prompt will appear here..."
+                />
+                <CopyButton textToCopy={prompt} />
               </div>
+              
+              {/* Splitter Handle */}
+              <div
+                onMouseDown={handleMouseDown}
+                className="w-full h-1.5 bg-transparent cursor-row-resize hover:bg-blue-600/50 dark:hover:bg-blue-500/50 transition-colors duration-200 flex-shrink-0 group flex items-center justify-center my-1"
+                title="Resize panels"
+              >
+                  <div className="h-0.5 w-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
+              </div>
+              
+              {/* Bottom Panel: AI Description */}
+              <div className="relative min-h-0 flex flex-col" style={{ height: `calc(${100 - topPanelHeight}% - ${splitterHeight/2}px)` }}>
+                <div className="flex-grow min-h-0 overflow-y-auto">
+                    {generationError && (
+                        <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-2 text-sm">
+                            <strong>Error:</strong> {generationError}
+                        </div>
+                    )}
+                    {aiDescription && !isGenerating && (
+                        <div className="relative mb-2 h-full">
+                            <textarea
+                                readOnly
+                                value={aiDescription}
+                                className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-sans text-sm border border-bunker-200 dark:border-bunker-800"
+                                placeholder="Your generated description will appear here..."
+                            />
+                            <CopyButton textToCopy={aiDescription} />
+                        </div>
+                    )}
+                    {isGenerating && (
+                        <div className="flex items-center justify-center h-full mb-2 p-4 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                            <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="text-bunker-500">Generating...</span>
+                        </div>
+                    )}
+                 </div>
 
-              {/* AI Description Area */}
-              <div className="flex-shrink-0 pt-4 mt-4 border-t border-bunker-200 dark:border-bunker-700">
-                  {generationError && (
-                      <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-2 text-sm">
-                          <strong>Error:</strong> {generationError}
-                      </div>
-                  )}
-
-                  {aiDescription && !isGenerating && (
-                      <div className="relative mb-2">
-                          <textarea
-                              readOnly
-                              value={aiDescription}
-                              rows={4}
-                              className="w-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-y font-sans text-sm border border-bunker-200 dark:border-bunker-800"
-                              placeholder="Your generated description will appear here..."
-                          />
-                          <CopyButton textToCopy={aiDescription} />
-                      </div>
-                  )}
-                  
-                  {isGenerating && (
-                      <div className="flex items-center justify-center h-[116px] mb-2 p-4 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
-                          <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span className="text-bunker-500">Generating...</span>
-                      </div>
-                  )}
-
-                  <button 
-                      onClick={handleGenerateDescription} 
-                      disabled={isGenerating || !prompt}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
+                 <button 
+                    onClick={handleGenerateDescription} 
+                    disabled={isGenerating || !prompt}
+                    className="w-full flex-shrink-0 mt-2 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
                   >
-                      <Icon name="wandSparkles" className="w-5 h-5" />
-                      <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate AI Description'}</span>
-                  </button>
+                    <Icon name="wandSparkles" className="w-5 h-5" />
+                    <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate AI Description'}</span>
+                </button>
               </div>
             </div>
           ) : activeTab === 'json' ? (

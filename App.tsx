@@ -142,6 +142,7 @@ const App: React.FC = () => {
         logger.info("Running in web mode, loading settings from localStorage.");
         const storedPresets = localStorage.getItem('user-presets');
         const storedAiSettings = localStorage.getItem('ai-settings');
+        const storedPromptRatio = localStorage.getItem('prompt-panel-ratio');
         setAppSettings({
           presets: storedPresets ? JSON.parse(storedPresets) : starterPresets,
           aiSettings: storedAiSettings ? JSON.parse(storedAiSettings) : {
@@ -149,6 +150,7 @@ const App: React.FC = () => {
             baseUrl: 'http://localhost:11434',
             model: 'llama3',
           },
+          promptPanelRatio: storedPromptRatio ? JSON.parse(storedPromptRatio) : 50,
         });
       }
     };
@@ -184,6 +186,9 @@ const App: React.FC = () => {
     } else {
       localStorage.setItem('user-presets', JSON.stringify(appSettings.presets));
       localStorage.setItem('ai-settings', JSON.stringify(appSettings.aiSettings));
+      if (appSettings.promptPanelRatio) {
+        localStorage.setItem('prompt-panel-ratio', JSON.stringify(appSettings.promptPanelRatio));
+      }
     }
   }, [appSettings]);
   
@@ -503,6 +508,10 @@ const App: React.FC = () => {
         return newSelected;
     });
   }, []);
+  
+  const handlePromptPanelResize = (ratio: number) => {
+    setAppSettings(prev => prev ? ({ ...prev, promptPanelRatio: ratio }) : null);
+  };
 
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -585,6 +594,8 @@ const App: React.FC = () => {
               textCategoryValues={textCategoryValues}
               conflicts={conflicts}
               callLlm={callLlm}
+              promptPanelRatio={appSettings.promptPanelRatio ?? 50}
+              onPromptPanelResize={handlePromptPanelResize}
             />
           </div>
       </ResizablePanels>
