@@ -44,9 +44,9 @@ export const MultiSelectTransferList: React.FC<MultiSelectTransferListProps> = (
   );
 
   return (
-    <div>
+    <div className="flex flex-col flex-grow min-h-64">
       <label className="block text-sm font-medium text-bunker-700 dark:text-bunker-300 mb-2">{title}</label>
-      <div className="grid grid-cols-2 gap-3 h-64">
+      <div className="grid grid-cols-2 gap-3 flex-grow min-h-0">
         {/* Available Items Column */}
         <div className="flex flex-col border border-bunker-300 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-800/50">
           <div className="relative p-2 border-b border-bunker-200 dark:border-bunker-700">

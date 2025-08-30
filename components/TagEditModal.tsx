@@ -163,7 +163,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({ isOpen, onClose, onS
                 </div>
             </div>
             {/* Right Column: Relationships */}
-            <div className="space-y-6 mt-4 md:mt-0">
+            <div className="flex flex-col space-y-6 mt-4 md:mt-0 min-h-0">
                 <MultiSelectTransferList
                     title="Suggests"
                     allItems={allTags}
