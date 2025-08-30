@@ -1,5 +1,14 @@
 # Version Log
 
+## v1.3.0 - The Architect's Toolkit Update
+
+This release adds powerful new features for advanced users, including AI-powered prompt reverse-engineering and an integrated taxonomy editor.
+
+### Features Added
+
+-   **AI Prompt Deconstruction:** A new AI-powered tool (accessible via the "magic wand" icon in the header) that can analyze a descriptive prompt (e.g., from another source) and automatically select the corresponding tags in the crafter.
+-   **In-App Taxonomy Editor:** A comprehensive editor has been added to the Settings page. Users can now create, edit, and delete categories and tags directly within the application to fully customize their prompting experience.
+
 ## v1.2.0 - The Songwriter's Assistant Update
 
 This release introduces a major enhancement to the AI features, turning the crafter into a powerful songwriting partner.

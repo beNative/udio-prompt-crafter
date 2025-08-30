@@ -47,6 +47,7 @@ These buttons provide quick access to powerful features.
 -   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter.
 -   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets.
 -   **Save as Preset:** Save your current selections and category order as a new preset.
+-   **Deconstruct Prompt with AI:** (Magic wand icon) Opens a modal where you can paste a descriptive, text-based prompt. The AI will analyze it and attempt to select all the matching tags from the taxonomy, replacing your current selection. This is a powerful way to reverse-engineer prompts you find elsewhere.
 -   **Randomize:** Selects one random tag from each tag-based category. A great way to find inspiration!
 -   **Clear All:** Deselects all tags and clears all text inputs.
 -   **Toggle Logs:** Opens or closes the log panel at the bottom of the screen.
@@ -60,6 +61,11 @@ Click the "Settings" tab in the header to access the configuration page. The pag
     -   **Provider:** The app automatically scans for running Ollama or LM Studio services. You can select which one to use for AI features.
     -   **API Base URL:** The address of the AI service. Defaults are provided.
     -   **Model Name:** A dropdown list of models available from your selected provider.
+-   **Taxonomy Editor Card:**
+    -   This is an advanced feature allowing full customization of the application's tag library.
+    -   You can add, edit, or delete categories from the left-hand list.
+    -   Selecting a category allows you to add, edit, or delete tags within it on the right.
+    -   Changes must be saved, which will reload the taxonomy and reset the main crafter view. You can also discard changes or reset to the application's default taxonomy.
 -   **Presets Card:**
     -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets at any time.

@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenSavePresetModal: () => void;
   onOpenPresetManagerModal: () => void;
   onOpenHistoryModal: () => void;
+  onOpenDeconstructModal: () => void;
   onRandomize: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
@@ -38,6 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
     onOpenSavePresetModal, 
     onOpenPresetManagerModal, 
     onOpenHistoryModal,
+    onOpenDeconstructModal,
     onRandomize, 
     onClear, 
     onOpenCommandPalette, 
@@ -77,6 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <HeaderButton onClick={onOpenHistoryModal} title="Prompt History" icon="history" />
                 <HeaderButton onClick={onOpenPresetManagerModal} title="Manage Presets" icon="list-bullet" />
                 <HeaderButton onClick={onOpenSavePresetModal} title="Save Current as Preset..." icon="save" />
+                <HeaderButton onClick={onOpenDeconstructModal} title="Deconstruct Prompt with AI" icon="wandSparkles" />
                 <HeaderButton onClick={onRandomize} title="Randomize" icon="sparkles" />
                 <Tooltip text="Clear All">
                     <button onClick={onClear} className="px-3 py-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-colors" title="Clear All">

@@ -1,8 +1,14 @@
-/// <reference types="node" />
+// Fix: Removed the triple-slash directive that was causing a "Cannot find type definition file" error.
+// This is often due to a misconfigured tsconfig.json or missing @types/node, which cannot be fixed here.
+// Declaring __dirname manually below solves the related "Cannot find name" errors.
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { starterPresets } from '../data/presets';
+
+// Fix: Declare __dirname to resolve TypeScript "Cannot find name '__dirname'" errors.
+// In an Electron main process (a Node.js environment), __dirname is a global variable available at runtime.
+declare const __dirname: string;
 
 // --- START: Early Debug Logging ---
 const debugLogPath = path.join(app.getPath('userData'), 'debug.log');

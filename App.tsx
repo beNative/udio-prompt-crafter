@@ -19,6 +19,7 @@ import { StatusBar } from './components/StatusBar';
 import { SavePresetModal } from './components/SavePresetModal';
 import { PresetManagerModal } from './components/PresetManagerModal';
 import { PromptHistoryModal } from './components/PromptHistoryModal';
+import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -64,6 +65,7 @@ const App: React.FC = () => {
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
   const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
 
   // State for global features like status bar
   const [appVersion, setAppVersion] = useState('');
@@ -609,6 +611,57 @@ const App: React.FC = () => {
       setHistory([]);
   };
 
+  const handleDeconstruct = useCallback(async (prompt: string): Promise<boolean> => {
+    logger.info("Deconstructing prompt with AI...", { prompt });
+
+    const systemPrompt = `You are an expert at analyzing music descriptions and mapping them to a predefined taxonomy of tags. Your task is to identify which tags from the provided list best represent the user's prompt.
+
+- You will be given the user's prompt and a complete list of available tags.
+- Each tag in the list has a unique 'id' and a descriptive 'label'.
+- Your response MUST be a valid JSON object.
+- The JSON object must have a single key: "tag_ids".
+- The value of "tag_ids" must be an array of strings, where each string is the 'id' of a matched tag from the provided list.
+- Only include IDs of tags that are explicitly mentioned or strongly implied in the prompt. Do not infer tags that are not present.
+- Do not include any text, explanations, or markdown formatting outside of the JSON object itself.
+
+Example: If the prompt is "a dreamy synthwave track" and the tag list contains { id: 'g_synthwave', label: 'Synthwave' } and { id: 'm_dreamy', label: 'Dreamy' }, your response should be:
+{
+  "tag_ids": ["g_synthwave", "m_dreamy"]
+}`;
+
+    const userPrompt = `User Prompt: "${prompt}"
+
+Available Tags:
+${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, description })), null, 2)}`;
+
+    try {
+        const result = await callLlm(systemPrompt, userPrompt);
+        if (result && Array.isArray(result.tag_ids)) {
+            logger.info("AI deconstruction successful.", { tag_ids: result.tag_ids });
+            const newSelectedTags: Record<string, SelectedTag> = {};
+            result.tag_ids.forEach((tagId: string) => {
+                const fullTag = taxonomyMap.get(tagId);
+                if (fullTag) {
+                    newSelectedTags[tagId] = fullTag;
+                } else {
+                    logger.warn("AI returned a tag ID not found in taxonomy.", { tagId });
+                }
+            });
+            
+            handleClear(); 
+            setSelectedTags(newSelectedTags);
+
+            return true;
+        } else {
+            logger.error("AI returned an invalid response format for deconstruction.", { response: result });
+            throw new Error("The AI returned an invalid response. Please try again.");
+        }
+    } catch (e: any) {
+        logger.error("Error during prompt deconstruction:", { error: e.message });
+        throw e;
+    }
+  }, [allTags, callLlm, taxonomyMap, handleClear]);
+
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
   const selectedTagCounts = useMemo(() => {
@@ -753,6 +806,7 @@ const App: React.FC = () => {
         onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
         onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+        onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -807,6 +861,11 @@ const App: React.FC = () => {
         history={history}
         onLoad={handleLoadFromHistory}
         onClear={handleClearHistory}
+      />
+      <DeconstructPromptModal
+        isOpen={isDeconstructModalOpen}
+        onClose={() => setIsDeconstructModalOpen(false)}
+        onDeconstruct={handleDeconstruct}
       />
     </div>
   );
