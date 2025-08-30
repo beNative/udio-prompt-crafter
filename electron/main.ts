@@ -2,6 +2,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+// Fix: Import `process` to provide correct TypeScript types for standard Node.js properties.
+import process from 'process';
 import { starterPresets } from '../data/presets';
 
 // --- START: Early Debug Logging ---
@@ -22,8 +24,7 @@ const logToFile = (message: string) => {
 logToFile('Main process started.');
 
 // Catch unhandled errors in the main process.
-// Fix: Use bracket notation to access 'on' method, avoiding a potential TypeScript type error where 'process' is incorrectly typed.
-process['on']('uncaughtException', (error, origin) => {
+process.on('uncaughtException', (error, origin) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
   // It's generally recommended to quit after an uncaught exception.
@@ -34,11 +35,12 @@ process['on']('uncaughtException', (error, origin) => {
 const isDev = !app.isPackaged;
 logToFile(`isDev = ${isDev}`);
 
-function createWindow(appRoot: string) {
+function createWindow() {
   logToFile('createWindow() called.');
-  const preloadPath = isDev
-    ? path.join(appRoot, 'dist', 'electron', 'preload.js')
-    : path.join(appRoot, 'electron', 'preload.js');
+  
+  // __dirname in dev: .../dist/electron
+  // __dirname in prod: .../app.asar/electron
+  const preloadPath = path.join(__dirname, 'preload.js');
   
   logToFile(`Resolved preload path: ${preloadPath}`);
   if (!fs.existsSync(preloadPath)) {
@@ -63,9 +65,8 @@ function createWindow(appRoot: string) {
 
   mainWindow.setMenu(null);
 
-  const indexPath = isDev
-    ? path.join(appRoot, 'dist', 'index.html')
-    : path.join(appRoot, 'index.html');
+  // index.html will be one level up from the /electron directory.
+  const indexPath = path.join(__dirname, '../index.html');
 
   logToFile(`Resolved index.html path: ${indexPath}`);
   if (!fs.existsSync(indexPath)) {
@@ -88,8 +89,6 @@ function createWindow(appRoot: string) {
 try {
   app.whenReady().then(() => {
     logToFile('App is ready.');
-    const appRoot = app.getAppPath();
-    logToFile(`App root path: ${appRoot}`);
     
     logToFile('Setting up IPC handlers...');
 
@@ -145,10 +144,12 @@ try {
     // --- Documentation ---
     ipcMain.handle('read-markdown-file', (event, filename) => {
       try {
+        // Fix: Cast `process` to `any` to access the Electron-specific `resourcesPath` property.
+        // The standard Node.js `process` type from the import does not include this.
         const docsPath = isDev 
-            ? path.join(appRoot, 'dist', 'docs') 
-            // Fix: Use `process.resourcesPath` as `global.process` is not available on `globalThis`.
-            : path.join(process.resourcesPath, 'docs');
+            ? path.join(__dirname, '..', 'docs') 
+            : path.join((process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
+            
         const filePath = path.join(docsPath, filename);
         if (fs.existsSync(filePath)) {
           return fs.readFileSync(filePath, 'utf-8');
@@ -168,7 +169,6 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    // Fix: Use `process.cwd()` as `global.process` is not available on `globalThis`.
     const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
@@ -196,12 +196,12 @@ try {
     ipcMain.handle('get-logs-path', () => path.join(logDir, getLogFileName()));
 
     // --- Create the window ---
-    createWindow(appRoot);
+    createWindow();
 
     app.on('activate', () => {
       logToFile('App activate event triggered.');
       if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow(appRoot);
+        createWindow();
       }
     });
   }).catch(err => {
@@ -214,6 +214,5 @@ try {
 
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
-  // Fix: Use `process.platform` as `global.process` is not available on `globalThis`.
   if (process.platform !== 'darwin') app.quit();
 });
