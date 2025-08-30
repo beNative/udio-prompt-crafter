@@ -131,40 +131,43 @@ const App: React.FC = () => {
 
   const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
     logger.info(reset ? "Resetting taxonomy to default." : "Saving custom taxonomy.");
-    let finalTaxonomy: Taxonomy;
+    
+    let taxonomyToSaveAndSet: Taxonomy;
 
-    if (isElectron) {
-      if (reset) {
-        await window.electronAPI.resetCustomTaxonomy();
-        const defaultTaxonomyData = await window.electronAPI.readDefaultTaxonomy();
-        finalTaxonomy = defaultTaxonomyData.taxonomy;
-      } else {
-        await window.electronAPI.writeCustomTaxonomy(newTaxonomy);
-        finalTaxonomy = newTaxonomy;
-      }
+    if (reset) {
+        if (isElectron) {
+            await window.electronAPI.resetCustomTaxonomy();
+            const defaultData = await window.electronAPI.readDefaultTaxonomy();
+            taxonomyToSaveAndSet = defaultData.taxonomy;
+        } else {
+            localStorage.removeItem('custom-taxonomy');
+            const res = await fetch('./taxonomy.json');
+            const data = await res.json();
+            taxonomyToSaveAndSet = data.taxonomy;
+        }
     } else {
-      if (reset) {
-        localStorage.removeItem('custom-taxonomy');
-        const res = await fetch('./taxonomy.json');
-        const data = await res.json();
-        finalTaxonomy = data.taxonomy;
-      } else {
-        localStorage.setItem('custom-taxonomy', JSON.stringify(newTaxonomy));
-        finalTaxonomy = newTaxonomy;
-      }
+        taxonomyToSaveAndSet = newTaxonomy;
+        if (isElectron) {
+            await window.electronAPI.writeCustomTaxonomy(taxonomyToSaveAndSet);
+        } else {
+            localStorage.setItem('custom-taxonomy', JSON.stringify(taxonomyToSaveAndSet));
+        }
     }
     
-    setTaxonomy(finalTaxonomy);
-    setCategories(finalTaxonomy);
-    if (finalTaxonomy.length > 0) {
-      setActiveCategoryId(finalTaxonomy[0].id);
-    } else {
+    setTaxonomy(taxonomyToSaveAndSet);
+    setCategories(taxonomyToSaveAndSet);
+    
+    // If the currently selected category was deleted, select the first one.
+    if (taxonomyToSaveAndSet.length > 0 && !taxonomyToSaveAndSet.some(c => c.id === activeCategoryId)) {
+      setActiveCategoryId(taxonomyToSaveAndSet[0].id);
+    } else if (taxonomyToSaveAndSet.length === 0) {
       setActiveCategoryId('');
     }
+    
     handleClear();
-    alert("Taxonomy has been updated. The application state has been reset.");
+    logger.info("Taxonomy has been updated. The application state has been reset.");
 
-  }, [handleClear]);
+  }, [activeCategoryId, handleClear]);
 
   useEffect(() => {
     logger.info("Application starting up...");
@@ -226,6 +229,10 @@ const App: React.FC = () => {
             if (loadedTaxonomy) {
                 logger.info("Taxonomy loaded successfully.");
                 setTaxonomy(loadedTaxonomy);
+                setCategories(loadedTaxonomy);
+                if (loadedTaxonomy.length > 0) {
+                  setActiveCategoryId(loadedTaxonomy[0].id);
+                }
             } else {
                 throw new Error("Taxonomy data is null or invalid.");
             }
@@ -273,17 +280,6 @@ const App: React.FC = () => {
     logger.debug('Taxonomy map and tag list created.', { tagCount: allT.length });
     return { taxonomyMap: newTaxonomyMap, allTags: allT };
   }, [taxonomy]);
-
-  useEffect(() => {
-      if(taxonomy && categories.length === 0) {
-          setCategories(taxonomy);
-          if (!activeCategoryId && taxonomy.length > 0) {
-            setActiveCategoryId(taxonomy[0].id);
-          }
-          logger.debug('Initial categories set.');
-      }
-  }, [taxonomy, categories, activeCategoryId]);
-
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
