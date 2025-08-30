@@ -6,12 +6,11 @@ import * as fs from 'fs';
 // The explicit import was removed to prevent shadowing the correctly-typed global variable.
 import { starterPresets } from '../data/presets';
 
-// Note: `__dirname` is a global provided by the CommonJS environment that Electron's main process runs in.
-// Although the source uses ES module syntax (`import`), esbuild bundles it into a CommonJS file,
-// making `__dirname` available at runtime without needing to be defined.
-// The previous attempt to define it using `import.meta.url` caused a crash in the packaged app.
-
+// Note: We are calculating paths manually to avoid using `__dirname`, which is not available in ES modules
+// and can be unreliable when bundled. `app.getAppPath()` provides a consistent base path for both
+// development and packaged applications.
 const isDev = !app.isPackaged;
+const appRoot = app.getAppPath();
 
 // --- Settings Management ---
 // Use app.getPath('userData') which is the standard, writable location for app data.
@@ -56,8 +55,9 @@ ipcMain.on('write-settings', (event, settings) => {
 ipcMain.handle('read-markdown-file', (event, filename) => {
   try {
     // For packaged app, docs are in resources/docs. For dev, they are in dist/docs.
+    // FIX: Replaced __dirname with a reliable pathing solution using app.getAppPath().
     const docsPath = isDev 
-        ? path.join(__dirname, '..', 'docs') 
+        ? path.join(appRoot, 'dist', 'docs') 
         // Fix: Cast process to any to access Electron-specific `resourcesPath` property.
         : path.join((process as any).resourcesPath, 'docs');
     const filePath = path.join(docsPath, filename);
@@ -107,11 +107,16 @@ ipcMain.handle('get-logs-path', () => {
 });
 
 function createWindow() {
+  // FIX: Replaced __dirname with a reliable pathing solution using app.getAppPath().
+  const preloadPath = isDev
+    ? path.join(appRoot, 'dist', 'electron', 'preload.js')
+    : path.join(appRoot, 'electron', 'preload.js');
+
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -119,7 +124,12 @@ function createWindow() {
   });
 
   mainWindow.setMenu(null);
-  mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
+  
+  // FIX: Replaced __dirname with a reliable pathing solution using app.getAppPath().
+  const indexPath = isDev
+    ? path.join(appRoot, 'dist', 'index.html')
+    : path.join(appRoot, 'index.html');
+  mainWindow.loadFile(indexPath);
 }
 
 app.whenReady().then(() => {
