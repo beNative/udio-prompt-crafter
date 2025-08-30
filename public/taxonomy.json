@@ -410,13 +410,26 @@
       "id": "usecase",
       "name": "Use-case",
       "tags": [
-        { "id": "u_chilling", "label": "Music for chilling and falling asleep", "description": "Designed for relaxation and sleep.", "suggests": ["m_chill", "m_relaxing"], "color": "gray" },
-        { "id": "u_studying", "label": "Music for studying", "description": "Background music that aids concentration.", "suggests": ["m_calm"], "color": "gray" },
-        { "id": "u_workout", "label": "Workout music", "description": "High-energy music for exercise.", "suggests": ["m_energetic", "t_high_tempo"], "color": "gray" },
-        { "id": "u_driving", "label": "Driving music", "description": "Music suitable for listening to while driving.", "suggests": ["m_driving"], "color": "gray" },
-        { "id": "u_background", "label": "Background music", "description": "Unobtrusive music that can be played in the background.", "color": "gray" },
-        { "id": "u_dj_set", "label": "DJ set", "description": "Suitable for inclusion in a DJ mix.", "suggests": ["s_djfriendly"], "color": "gray" },
-        { "id": "u_dancefloor", "label": "Dancefloor", "description": "High-energy, designed for dancing in a club.", "suggests": ["m_energetic", "t_high_tempo"], "color": "gray" }
+        { "id": "u_chilling", "label": "Music for chilling and falling asleep", "description": "Designed for relaxation and sleep.", "suggests": ["m_chill", "m_relaxing"], "color": "blue" },
+        { "id": "u_studying", "label": "Music for studying / focus", "description": "Background music that aids concentration and deep work.", "suggests": ["m_calm", "v_instrumental"], "color": "green" },
+        { "id": "u_workout", "label": "Workout music", "description": "High-energy music for exercise.", "suggests": ["m_energetic", "t_high_tempo"], "color": "orange" },
+        { "id": "u_driving", "label": "Driving music", "description": "Music suitable for listening to while driving, can be energetic or chill.", "suggests": ["m_driving"], "color": "teal" },
+        { "id": "u_background", "label": "Background music", "description": "Unobtrusive music that can be played in the background of a space or video.", "color": "gray" },
+        { "id": "u_dj_set", "label": "DJ set", "description": "Suitable for inclusion in a DJ mix, often with clear intros/outros.", "suggests": ["s_djfriendly"], "color": "pink" },
+        { "id": "u_dancefloor", "label": "Dancefloor", "description": "High-energy, designed for dancing in a club.", "suggests": ["m_energetic", "t_high_tempo"], "color": "pink" },
+        { "id": "u_film_score", "label": "Cinematic film score", "description": "Music intended to accompany a film, often orchestral and emotional.", "suggests": ["m_cinematic", "g_orchestral_hybrid"], "color": "indigo" },
+        { "id": "u_video_game", "label": "Video game music", "description": "Music for video games, can be atmospheric, epic, or loopable.", "suggests": ["m_immersive"], "color": "purple" },
+        { "id": "u_trailer", "label": "Trailer music", "description": "Epic, dramatic, and impactful music for movie or game trailers.", "suggests": ["m_epic", "m_dramatic", "s_buildup"], "color": "indigo" },
+        { "id": "u_vlog", "label": "Vlog / YouTube background music", "description": "Upbeat and unobtrusive music suitable for vlogs and online content.", "suggests": ["m_uplifting", "t_upbeat"], "color": "yellow" },
+        { "id": "u_podcast", "label": "Podcast intro/outro music", "description": "Short, catchy, and professional-sounding music for podcast branding.", "suggests": ["hm_catchy_hooks"], "color": "teal" },
+        { "id": "u_jingle", "label": "Jingle / Advertisement music", "description": "Very short, extremely catchy music for commercials.", "suggests": ["hm_melodic_hooks"], "color": "yellow" },
+        { "id": "u_meditation", "label": "Meditation music", "description": "Calm, ambient, and spiritual music for meditation and mindfulness.", "suggests": ["m_spiritual", "g_ambient", "m_serene"], "color": "blue" },
+        { "id": "u_yoga", "label": "Yoga music", "description": "Flowing, peaceful, and gentle music to accompany a yoga session.", "suggests": ["m_peaceful", "g_new_age"], "color": "green" },
+        { "id": "u_spa", "label": "Spa / Wellness music", "description": "Extremely relaxing and soothing music for a spa or wellness center.", "suggests": ["m_soothing", "g_ambient"], "color": "blue" },
+        { "id": "u_party", "label": "Party music", "description": "Energetic, upbeat, and groovy music to create a party atmosphere.", "suggests": ["m_energetic", "t_groovy", "g_dance_pop"], "color": "pink" },
+        { "id": "u_fashion_show", "label": "Fashion show music", "description": "Stylish, driving, and modern music for a runway or fashion event.", "suggests": ["m_driving", "t_fourfloor"], "color": "purple" },
+        { "id": "u_coffee_shop", "label": "Coffee shop ambiance", "description": "Chill, acoustic, or lo-fi music that creates a relaxed, cozy cafe vibe.", "suggests": ["g_lofi_hip_hop", "g_indie_pop", "m_chill"], "color": "orange" },
+        { "id": "u_livestream", "label": "Music for livestreaming", "description": "Royalty-free-style background music that won't distract from stream content.", "suggests": ["v_instrumental"], "color": "gray" }
       ]
     },
     {
