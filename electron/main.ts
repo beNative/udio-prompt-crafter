@@ -2,8 +2,6 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Removed incorrect import of 'process' to use the global Node.js process object.
-// The imported 'process' object was missing properties like .on, .cwd, and .platform.
 import { starterPresets } from '../data/presets';
 
 // --- START: Early Debug Logging ---
@@ -24,7 +22,7 @@ const logToFile = (message: string) => {
 logToFile('Main process started.');
 
 // Catch unhandled errors in the main process.
-// Fix: Use the global `process` object directly. In a Node.js environment, it is available globally.
+// Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
 process.on('uncaughtException', (error, origin) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
@@ -171,7 +169,7 @@ try {
     // --- Documentation ---
     ipcMain.handle('read-markdown-file', (event, filename) => {
       try {
-        // Fix: Use the global `process` object directly to access the Electron-specific `resourcesPath` property.
+        // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
         const docsPath = isDev 
             ? path.join(__dirname, '..', 'docs') 
             : path.join((process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
@@ -195,7 +193,7 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    // Fix: Use the global `process` object directly.
+    // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
     const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
@@ -241,6 +239,6 @@ try {
 
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
-  // Fix: Use the global `process` object directly.
+  // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
   if (process.platform !== 'darwin') app.quit();
 });
