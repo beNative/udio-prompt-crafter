@@ -24,7 +24,8 @@ const logToFile = (message: string) => {
 logToFile('Main process started.');
 
 // Catch unhandled errors in the main process.
-process.on('uncaughtException', (error, origin) => {
+// Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
+global.process.on('uncaughtException', (error, origin) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
   // It's generally recommended to quit after an uncaught exception.
@@ -82,6 +83,8 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    show: false, // Create the window hidden
+    backgroundColor: '#101828', // Match the app's dark background
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
@@ -89,7 +92,13 @@ function createWindow() {
     },
     title: "UDIO Prompt Crafter"
   });
-  logToFile('BrowserWindow created.');
+  logToFile('BrowserWindow created with show:false.');
+
+  // Show the window only when the content is ready to be displayed.
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    logToFile('Window ready-to-show event fired. Showing window.');
+  });
 
   // Conditionally open developer tools based on settings.
   if (currentSettings.openDevToolsOnStart) {
@@ -164,9 +173,10 @@ try {
       try {
         // Fix: Cast `process` to `any` to access the Electron-specific `resourcesPath` property.
         // The standard Node.js `process` type from the import does not include this.
+        // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
         const docsPath = isDev 
             ? path.join(__dirname, '..', 'docs') 
-            : path.join((process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
+            : path.join((global.process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
             
         const filePath = path.join(docsPath, filename);
         if (fs.existsSync(filePath)) {
@@ -187,7 +197,8 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+    // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
+    const logDir = isDev ? global.process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -232,5 +243,6 @@ try {
 
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
-  if (process.platform !== 'darwin') app.quit();
+  // Fix: Use `global.process` to ensure we're using the global Node.js process object and avoid type errors from potential shadowing.
+  if (global.process.platform !== 'darwin') app.quit();
 });
