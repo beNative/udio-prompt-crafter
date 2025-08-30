@@ -2,6 +2,7 @@
   "name": "udio-prompt-crafter",
   "version": "1.3.0",
   "description": "A powerful GUI to help musicians craft high-quality UDIO prompts by choosing from curated style tags. Features a live prompt preview, JSON output, preset management, and quality assistance.",
+  "author": "Tim Sinaeve",
   "main": "dist/electron/main.js",
   "scripts": {
     "build": "node esbuild.config.js",

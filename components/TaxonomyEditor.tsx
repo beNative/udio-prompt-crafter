@@ -180,17 +180,17 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
                 </button>
             </div>
             {/* Tag List */}
-            <div className="w-2/3">
+            <div className="w-2/3 flex flex-col">
                 {selectedCategory ? (
-                    <div>
-                         <div className="flex justify-between items-center mb-2">
+                    <div className="flex flex-col flex-grow min-h-0">
+                         <div className="flex-shrink-0 flex justify-between items-center mb-2">
                              <h4 className="font-semibold">Tags in "{selectedCategory.name}"</h4>
                              <button onClick={handleAddTag} className="flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors">
                                 <Icon name="plus" className="w-4 h-4" />
                                 <span>Add Tag</span>
                             </button>
                          </div>
-                        <div className="space-y-1 p-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 max-h-96 overflow-y-auto">
+                        <div className="flex-grow space-y-1 p-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 overflow-y-auto">
                             {selectedCategory.tags.map(tag => (
                                 <div key={tag.id} className="group flex justify-between items-center p-2 rounded-md hover:bg-bunker-100 dark:hover:bg-bunker-800">
                                     <span>{tag.label}</span>
