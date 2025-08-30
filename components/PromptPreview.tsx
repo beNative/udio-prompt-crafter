@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { SelectedTag, Conflict } from '../types';
 import { Icon } from './icons';
@@ -8,6 +9,7 @@ interface PromptPreviewProps {
   selectedTags: Record<string, SelectedTag>;
   textCategoryValues: Record<string, string>;
   conflicts: Conflict[];
+  callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
 }
 
 const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
@@ -56,10 +58,14 @@ const JsonSyntaxHighlighter: React.FC<{ jsonString: string }> = ({ jsonString })
   );
 };
 
-export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts }) => {
+export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts, callLlm }) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [activeTab, setActiveTab] = useState('prompt');
+
+  const [aiDescription, setAiDescription] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   useEffect(() => {
     const sortedTags = orderedCategories.flatMap(category => 
@@ -85,7 +91,33 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
       category_order: orderedCategories.map(c => c.id),
     };
     setJsonOutput(JSON.stringify(json, null, 2));
+
+    // Reset AI description when underlying prompt changes
+    setAiDescription('');
+    setGenerationError(null);
   }, [selectedTags, orderedCategories, textCategoryValues]);
+  
+  const handleGenerateDescription = async () => {
+    if (!prompt || !callLlm) return;
+    
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    const systemPrompt = `You are an expert prompt engineer for AI music generation. Your task is to take a list of comma-separated musical tags and weave them into a single, cohesive, and descriptive paragraph. The paragraph should be evocative and sound natural, like a human wrote it. Do not use bullet points or lists. The output should be a single block of text. Be creative in how you connect the concepts.`;
+
+    try {
+      const result = await callLlm(systemPrompt, prompt, true);
+      if (typeof result === 'string') {
+        setAiDescription(result.trim());
+      } else {
+        throw new Error("Received an unexpected response format from the AI.");
+      }
+    } catch (e: any) {
+      setGenerationError(e.message || 'An unknown error occurred.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="p-4 bg-bunker-50/50 dark:bg-bunker-900/50 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
@@ -104,6 +136,10 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
         <div className="flex border-b border-bunker-200 dark:border-bunker-800 mb-4 shrink-0">
           <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'prompt' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>Prompt String</button>
           <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'json' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>JSON Output</button>
+          <button onClick={() => setActiveTab('ai')} className={`px-4 py-2 text-sm font-medium transition-colors flex items-center space-x-2 ${activeTab === 'ai' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>
+            <Icon name="wandSparkles" className="w-4 h-4" />
+            <span>AI Description</span>
+          </button>
         </div>
         
         <div className="flex-grow relative min-h-0">
@@ -117,10 +153,48 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
               />
               <CopyButton textToCopy={prompt} />
             </div>
-          ) : (
+          ) : activeTab === 'json' ? (
             <div className="relative h-full">
               <JsonSyntaxHighlighter jsonString={jsonOutput} />
               <CopyButton textToCopy={jsonOutput} />
+            </div>
+          ) : (
+            <div className="relative h-full flex flex-col">
+                {generationError && (
+                    <div className="shrink-0 bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4 text-sm">
+                        <strong>Error:</strong> {generationError}
+                    </div>
+                )}
+                {aiDescription ? (
+                    <div className="relative flex-grow min-h-0">
+                        <textarea
+                            readOnly
+                            value={aiDescription}
+                            className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-sans text-sm border border-bunker-200 dark:border-bunker-800"
+                            placeholder="Your generated description will appear here..."
+                        />
+                        <CopyButton textToCopy={aiDescription} />
+                    </div>
+                ) : (
+                    <div className="flex-grow flex items-center justify-center text-center p-4">
+                        <p className="text-sm text-bunker-500 dark:text-bunker-400">Transform your tag list into a descriptive paragraph with AI.</p>
+                    </div>
+                )}
+                <div className="flex-shrink-0 pt-4 mt-auto">
+                    <button 
+                        onClick={handleGenerateDescription} 
+                        disabled={isGenerating || !prompt}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {isGenerating ? (
+                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : <Icon name="wandSparkles" className="w-5 h-5" />}
+                        <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate Description'}</span>
+                    </button>
+                </div>
             </div>
           )}
         </div>

@@ -231,7 +231,7 @@ const App: React.FC = () => {
     };
   }, []);
   
-  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string): Promise<any> => {
+  const callLlm = useCallback(async (systemPrompt: string, userPrompt: string, isResponseTextFreeform = false): Promise<any> => {
     if (!appSettings?.aiSettings.baseUrl || !appSettings?.aiSettings.model) {
       const errorMsg = "AI settings are not configured. Please configure them in the settings menu.";
       logger.error(errorMsg);
@@ -252,9 +252,11 @@ const App: React.FC = () => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        format: 'json',
         stream: false,
       };
+      if (!isResponseTextFreeform) {
+        body.format = 'json';
+      }
     } else { // lmstudio (openai-compatible)
       endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
       body = {
@@ -289,7 +291,13 @@ const App: React.FC = () => {
       const data = await response.json();
       logger.debug('LLM response data:', data);
 
-      let contentString: string = provider === 'ollama' ? data.message.content : data.choices[0].message.content;
+      const contentString: string = provider === 'ollama' ? data.message.content : data.choices[0].message.content;
+
+      if (isResponseTextFreeform) {
+          logger.info('Successfully received freeform LLM response.');
+          return contentString;
+      }
+      
       let textToParse = contentString.trim();
       
       const markdownMatch = textToParse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -576,6 +584,7 @@ const App: React.FC = () => {
               selectedTags={selectedTags}
               textCategoryValues={textCategoryValues}
               conflicts={conflicts}
+              callLlm={callLlm}
             />
           </div>
       </ResizablePanels>
