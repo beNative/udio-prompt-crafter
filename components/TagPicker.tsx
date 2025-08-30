@@ -114,12 +114,16 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         )}
       </div>
 
-      {category.type === 'text' ? (
+      {category.type === 'text' || category.type === 'helper_input' ? (
          <textarea
             value={textCategoryValues[category.id] || ''}
             onChange={e => onTextCategoryChange(category.id, e.target.value)}
-            className="w-full flex-grow p-3 bg-white dark:bg-bunker-900/50 border border-bunker-200 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            placeholder={`Enter ${category.name.toLowerCase()} here...`}
+            className={`w-full p-3 bg-white dark:bg-bunker-900/50 border border-bunker-200 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${category.type === 'helper_input' ? 'h-24' : 'flex-grow'}`}
+            placeholder={
+                category.type === 'helper_input' 
+                ? "Enter keywords to guide the AI..." 
+                : `Enter ${category.name.toLowerCase()} here...`
+            }
         />
       ) : (
         <>
@@ -166,7 +170,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                 category={category}
                 selectedTags={selectedTags}
                 callLlm={callLlm}
-                onSetLyricText={(text) => onTextCategoryChange(category.id, text)}
+                lyricKeywords={textCategoryValues['lyrics'] || ''}
             />
         </div>
       )}

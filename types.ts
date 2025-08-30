@@ -13,7 +13,7 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
-  type?: 'tags' | 'text';
+  type?: 'tags' | 'text' | 'helper_input';
   tags: Tag[];
 }
 

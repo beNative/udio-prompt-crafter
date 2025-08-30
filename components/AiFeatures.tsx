@@ -6,7 +6,7 @@ interface AiFeaturesProps {
     category: Category;
     selectedTags: Record<string, SelectedTag>;
     callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
-    onSetLyricText: (text: string) => void;
+    lyricKeywords: string;
 }
 
 const LoadingSpinner: React.FC = () => (
@@ -16,7 +16,7 @@ const LoadingSpinner: React.FC = () => (
     </svg>
 );
 
-export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, callLlm }) => {
+export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, callLlm, lyricKeywords }) => {
     const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
     const [lyricError, setLyricError] = useState<string | null>(null);
     const [lyricIdeas, setLyricIdeas] = useState<string[]>([]);
@@ -29,7 +29,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
 
         const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes(t.categoryId));
 
-        const systemPrompt = `You are a creative songwriter AI. Your task is to generate 3 short, distinct lyrical theme ideas in English, based on a list of music style tags provided by the user.
+        const systemPrompt = `You are a creative songwriter AI. Your task is to generate 3 short, distinct lyrical theme ideas in English, based on a list of music style tags and user-provided keywords.
 
 - Your response MUST be a valid JSON object.
 - The JSON object must have a single key: "themes".
@@ -45,7 +45,21 @@ Here is a perfect example of the required response format:
     "a secret whispered on a midnight train"
   ]
 }`;
-        const userPrompt = `Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`;
+        const userPromptParts = [];
+        if (relevantTags.length > 0) {
+            userPromptParts.push(`Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`);
+        }
+        if (lyricKeywords) {
+            userPromptParts.push(`Keywords: "${lyricKeywords}".`);
+        }
+
+        if (userPromptParts.length === 0) {
+            setLyricError("Please provide some keywords or select some genre/mood tags to generate ideas.");
+            setIsLoadingLyrics(false);
+            return;
+        }
+
+        const userPrompt = userPromptParts.join('\n');
 
         try {
             const result = await callLlm(systemPrompt, userPrompt);
@@ -61,7 +75,7 @@ Here is a perfect example of the required response format:
             setIsLoadingLyrics(false);
         }
 
-    }, [selectedTags, callLlm]);
+    }, [selectedTags, callLlm, lyricKeywords]);
     
     const handleCopyLyric = (idea: string, index: number) => {
         navigator.clipboard.writeText(idea).then(() => {
@@ -75,11 +89,17 @@ Here is a perfect example of the required response format:
     if (category.id !== 'lyrics') {
         return null;
     }
+
+    const hasInput = lyricKeywords.trim().length > 0 || Object.values(selectedTags).some(t => ['genre', 'mood'].includes(t.categoryId));
     
     return (
         <div>
             <h3 className="text-base font-semibold mb-4 text-bunker-600 dark:text-bunker-300">AI Lyric Helper</h3>
-            <button onClick={handleGenerateLyrics} disabled={isLoadingLyrics} className="flex items-center space-x-2 text-sm px-3 py-2 rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-900/80 transition-colors disabled:opacity-50">
+            <button 
+                onClick={handleGenerateLyrics} 
+                disabled={isLoadingLyrics || !hasInput}
+                className="flex items-center space-x-2 text-sm px-3 py-2 rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-900/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
                 {isLoadingLyrics ? <LoadingSpinner /> : <Icon name="wandSparkles" className="w-4 h-4" />}
                 <span>Generate Lyric Ideas</span>
             </button>

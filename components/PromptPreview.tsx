@@ -1,11 +1,13 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { SelectedTag, Conflict, Preset } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
 
 interface PromptPreviewProps {
-  orderedCategories: { id: string, name: string, type?: 'tags' | 'text' }[];
+  // Fix: Allow 'helper_input' for category type to match the 'Category' type from types.ts, resolving the type error in App.tsx.
+  orderedCategories: { id: string, name: string, type?: 'tags' | 'text' | 'helper_input' }[];
   selectedTags: Record<string, SelectedTag>;
   textCategoryValues: Record<string, string>;
   conflicts: Conflict[];
@@ -137,7 +139,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     const normalizedLabels = normalizeTagLabels(tagLabels);
 
     const textInputs = orderedCategories
-        .filter(cat => cat.type === 'text' && textCategoryValues[cat.id])
+        // Fix: Include 'helper_input' type categories when gathering text inputs for the prompt string.
+        .filter(cat => (cat.type === 'text' || cat.type === 'helper_input') && textCategoryValues[cat.id])
         .map(cat => textCategoryValues[cat.id]);
 
     const allPromptParts = [...normalizedLabels, ...textInputs];

@@ -421,9 +421,9 @@
     },
     {
       "id": "lyrics",
-      "name": "Lyrics/Theme",
-      "type": "text",
-      "description": "Enter a short concept or theme for the lyrics (e.g., \"english lyrics about secrets\", \"storytelling\", \"empowerment\"). This will be added to your prompt.",
+      "name": "Lyric Helper Keywords",
+      "type": "helper_input",
+      "description": "Enter keywords (e.g., 'love, loss, city at night') to guide the AI Lyric Helper. These keywords will NOT be added to the final prompt string but will be used to generate theme ideas.",
       "tags": []
     },
     {
