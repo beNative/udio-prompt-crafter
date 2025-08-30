@@ -58,6 +58,14 @@ export interface LogEntry {
   context?: any;
 }
 
+export interface HistoryEntry {
+  timestamp: string; // ISO string
+  promptString: string;
+  selectedTags: Preset['selectedTags'];
+  categoryOrder: string[];
+  textCategoryValues: Record<string, string>;
+}
+
 // New Electron API types
 export interface IElectronAPI {
   writeLog: (logEntry: LogEntry) => void;

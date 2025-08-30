@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { SelectedTag, Conflict } from '../types';
+import type { SelectedTag, Conflict, Preset } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
 
@@ -12,6 +12,12 @@ interface PromptPreviewProps {
   callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
   promptPanelRatio: number;
   onPromptPanelResize: (ratio: number) => void;
+  onPromptGenerated: (data: {
+    promptString: string;
+    selectedTags: Preset['selectedTags'];
+    categoryOrder: string[];
+    textCategoryValues: Record<string, string>;
+  }) => void;
 }
 
 const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
@@ -60,7 +66,16 @@ const JsonSyntaxHighlighter: React.FC<{ jsonString: string }> = ({ jsonString })
   );
 };
 
-export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories, selectedTags, textCategoryValues, conflicts, callLlm, promptPanelRatio, onPromptPanelResize }) => {
+export const PromptPreview: React.FC<PromptPreviewProps> = ({ 
+    orderedCategories, 
+    selectedTags, 
+    textCategoryValues, 
+    conflicts, 
+    callLlm, 
+    promptPanelRatio, 
+    onPromptPanelResize,
+    onPromptGenerated,
+}) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [activeTab, setActiveTab] = useState('prompt');
@@ -73,6 +88,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const minPanelHeight = 20; // min height in percent
+  const prevPromptRef = useRef<string>('');
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
@@ -128,6 +144,21 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
     const promptString = allPromptParts.join(', ');
     
     setPrompt(promptString);
+    
+    if (promptString && promptString !== prevPromptRef.current) {
+        const selectedTagsForHistory: Preset['selectedTags'] = {};
+        Object.entries(selectedTags).forEach(([id, tag]) => {
+            selectedTagsForHistory[id] = { categoryId: tag.categoryId };
+        });
+
+        onPromptGenerated({
+            promptString,
+            selectedTags: selectedTagsForHistory,
+            categoryOrder: orderedCategories.map(c => c.id),
+            textCategoryValues,
+        });
+        prevPromptRef.current = promptString;
+    }
 
     const json = {
       prompt: promptString,
@@ -139,7 +170,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({ orderedCategories,
 
     setAiDescription('');
     setGenerationError(null);
-  }, [selectedTags, orderedCategories, textCategoryValues]);
+  }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated]);
   
   const handleGenerateDescription = async () => {
     if (!prompt || !callLlm) return;

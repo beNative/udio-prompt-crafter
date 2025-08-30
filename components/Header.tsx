@@ -11,6 +11,7 @@ interface HeaderProps {
   onToggleTheme: () => void;
   onOpenSavePresetModal: () => void;
   onOpenPresetManagerModal: () => void;
+  onOpenHistoryModal: () => void;
   onRandomize: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
@@ -29,7 +30,19 @@ const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; 
     </Tooltip>
 );
 
-export const Header: React.FC<HeaderProps> = ({ theme, activeView, onSetView, onToggleTheme, onOpenSavePresetModal, onOpenPresetManagerModal, onRandomize, onClear, onOpenCommandPalette, onToggleLogPanel }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+    theme, 
+    activeView, 
+    onSetView, 
+    onToggleTheme, 
+    onOpenSavePresetModal, 
+    onOpenPresetManagerModal, 
+    onOpenHistoryModal,
+    onRandomize, 
+    onClear, 
+    onOpenCommandPalette, 
+    onToggleLogPanel 
+}) => {
   
   const tabButtonStyles = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors";
   const activeTabStyles = "bg-blue-600 text-white shadow-sm";
@@ -61,6 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, activeView, onSetView, on
                   </button>
                 </Tooltip>
                 
+                <HeaderButton onClick={onOpenHistoryModal} title="Prompt History" icon="history" />
                 <HeaderButton onClick={onOpenPresetManagerModal} title="Manage Presets" icon="list-bullet" />
                 <HeaderButton onClick={onOpenSavePresetModal} title="Save Current as Preset..." icon="save" />
                 <HeaderButton onClick={onRandomize} title="Randomize" icon="sparkles" />

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus, HistoryEntry } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -18,6 +18,7 @@ import { InfoPage } from './components/InfoPage';
 import { StatusBar } from './components/StatusBar';
 import { SavePresetModal } from './components/SavePresetModal';
 import { PresetManagerModal } from './components/PresetManagerModal';
+import { PromptHistoryModal } from './components/PromptHistoryModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -44,6 +45,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
   const [logPanelHeight, setLogPanelHeight] = useLocalStorage('log-panel-height', 288);
+  const [history, setHistory] = useLocalStorage<HistoryEntry[]>('prompt-history', []);
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   
   const [taxonomy, setTaxonomy] = useState<Taxonomy | null>(null);
@@ -61,6 +63,7 @@ const App: React.FC = () => {
   
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
   const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   // State for global features like status bar
   const [appVersion, setAppVersion] = useState('');
@@ -513,6 +516,44 @@ const App: React.FC = () => {
     setAppSettings(prev => prev ? ({ ...prev, promptPanelRatio: ratio }) : null);
   };
 
+  const handlePromptGenerated = useCallback((data: Omit<HistoryEntry, 'timestamp'>) => {
+    setHistory(prevHistory => {
+        if (prevHistory[0]?.promptString === data.promptString) {
+            return prevHistory;
+        }
+        const newEntry: HistoryEntry = {
+            ...data,
+            timestamp: new Date().toISOString(),
+        };
+        const newHistory = [newEntry, ...prevHistory].slice(0, 50);
+        return newHistory;
+    });
+  }, [setHistory]);
+
+  const handleLoadFromHistory = useCallback((entry: HistoryEntry) => {
+      logger.info(`Loading prompt from history (timestamp: ${entry.timestamp})`);
+      const newSelectedTags: Record<string, SelectedTag> = {};
+      Object.entries(entry.selectedTags).forEach(([tagId, data]) => {
+          const fullTag = taxonomyMap.get(tagId);
+          if (fullTag) newSelectedTags[tagId] = { ...fullTag, ...data };
+      });
+
+      setSelectedTags(newSelectedTags);
+      setTextCategoryValues(entry.textCategoryValues);
+      setCategories(prevCategories => {
+          const historyCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
+          const ordered = entry.categoryOrder.map(id => historyCategoryMap.get(id)).filter((c): c is Category => !!c);
+          const remaining = prevCategories.filter(c => !entry.categoryOrder.includes(c.id));
+          return [...ordered, ...remaining];
+      });
+      setIsHistoryModalOpen(false);
+  }, [taxonomyMap]);
+
+  const handleClearHistory = () => {
+      logger.info('Clearing prompt history.');
+      setHistory([]);
+  };
+
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
   const selectedTagCounts = useMemo(() => {
@@ -596,6 +637,7 @@ const App: React.FC = () => {
               callLlm={callLlm}
               promptPanelRatio={appSettings.promptPanelRatio ?? 50}
               onPromptPanelResize={handlePromptPanelResize}
+              onPromptGenerated={handlePromptGenerated}
             />
           </div>
       </ResizablePanels>
@@ -653,6 +695,7 @@ const App: React.FC = () => {
         onToggleTheme={toggleTheme}
         onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
         onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
+        onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
         onRandomize={handleRandomize}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -700,6 +743,13 @@ const App: React.FC = () => {
         onUpdatePreset={handleUpdatePreset}
         onDeletePreset={handleDeletePreset}
         onRenamePreset={handleRenamePreset}
+      />
+      <PromptHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        history={history}
+        onLoad={handleLoadFromHistory}
+        onClear={handleClearHistory}
       />
     </div>
   );
