@@ -1,5 +1,16 @@
 # Version Log
 
+## v1.1.0 - The Creative Flow Update
+
+This release focuses on streamlining the prompt creation workflow and expanding the creative toolkit.
+
+### Features Added
+
+-   **AI Prompt Description:** A new AI-powered feature has been added directly below the main prompt string. It can generate an evocative, paragraph-style description from your selected tags, perfect for more nuanced results in UDIO.
+-   **Resizable Prompt Panel:** The prompt string and AI description text areas can now be resized using a vertical splitter. The layout is automatically saved to your settings.
+-   **Prompt History:** The application now automatically saves your last 50 unique prompts. A new "History" button in the header opens a modal where you can view, load, or clear your prompt history.
+-   **Expanded Genre Library:** The "Genre & Crossover" category has been significantly expanded with many new popular music styles and their subgenres, including Rock, Metal, Funk, Soul, R&B, Reggae, Country, and more.
+
 ## v1.0.0 - Initial Release
 
 This is the first public release of the UDIO Prompt Crafter.

@@ -40,7 +40,21 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
             return;
         }
 
-        const systemPrompt = `You are an expert music recommender AI. Your task is to suggest complementary music style tags. The user will provide a list of currently selected tags for a category. You will be given a JSON object of all available tags in that category. You must suggest up to 5 new tags that would creatively expand on the user's selection. Return a JSON object with a single key 'tagIds' which is an array of strings, where each string is the ID of a suggested tag. Only suggest tags from the provided list that are not already selected. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
+        const systemPrompt = `You are an expert music recommender AI. Your task is to suggest complementary music style tags.
+You will be given:
+1. A list of tags the user has already selected.
+2. A list of all available tags in the current category.
+
+Your goal is to suggest up to 5 new tags from the "Available Tags" list that would creatively expand on the user's selection.
+
+Your response MUST be a valid JSON object with a single key, "tagIds", which is an array of strings. Each string in the array must be the "id" of a suggested tag. Do not include tags that are already in the "Selected Tags" list.
+
+Example of a valid response:
+{
+  "tagIds": ["g_deep_house", "g_acid_house"]
+}
+
+Your response must contain ONLY the JSON object, with no other text, comments, or markdown formatting.`;
         
         const userPrompt = `Selected Tags: ${JSON.stringify(selectedInCategory.map(t => ({id: t.id, label: t.label})))}. Available Tags for suggestion: ${JSON.stringify(category.tags.map(({id, label, description}) => ({id, label, description})))}.`;
         
@@ -52,6 +66,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
                     .filter((t): t is Tag => !!t && !selectedTags[t.id]);
                 setSuggestedTags(newTags);
             } else {
+                console.error("AI returned an invalid response format for tag suggestions. Response:", result);
                 throw new Error("AI returned an invalid response format.");
             }
         } catch (e: any) {
@@ -68,7 +83,20 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
 
         const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes(t.categoryId));
 
-        const systemPrompt = `You are a creative songwriter AI. Your task is to generate lyrical theme ideas. The user will provide a list of music style tags. You must generate 3 short, distinct lyrical themes (e.g., 'a story about a lost robot in a neon city', 'the feeling of a fading summer memory'). Return a JSON object with a single key 'themes' which is an array of strings. Your response must be only the JSON object, without any surrounding text or markdown formatting.`;
+        const systemPrompt = `You are a creative songwriter AI. Your task is to generate 3 short, distinct lyrical theme ideas based on a list of music style tags provided by the user.
+
+Your response MUST be a valid JSON object with a single key, "themes", which is an array of strings. Each string should be a lyrical theme.
+
+Example of a valid response:
+{
+  "themes": [
+    "a story about a lost robot in a neon city",
+    "the feeling of a fading summer memory",
+    "a secret whispered on a midnight train"
+  ]
+}
+
+Your response must contain ONLY the JSON object, with no other text, comments, or markdown formatting.`;
         const userPrompt = `Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`;
 
         try {
@@ -76,6 +104,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
             if (result && Array.isArray(result.themes)) {
                 setLyricIdeas(result.themes);
             } else {
+                 console.error("AI returned an invalid response format for lyric generation. Response:", result);
                  throw new Error("AI returned an invalid response format.");
             }
         } catch (e: any) {
@@ -84,7 +113,7 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
             setIsLoadingLyrics(false);
         }
 
-    }, [selectedTags, callLlm, onSetLyricText]);
+    }, [selectedTags, callLlm]);
     
     const handleLyricIdeaClick = (idea: string) => {
         onSetLyricText(idea);

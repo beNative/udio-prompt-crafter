@@ -29,7 +29,10 @@ This is where you choose the building blocks of your prompt.
 
 This panel shows you the output of your selections in real-time.
 
--   **Prompt String Tab:** This shows the final, formatted prompt string. It combines all your selected tags and text inputs, separated by semicolons. You can copy this directly for use in UDIO.
+-   **Prompt String Tab:** This is the main view for your output.
+    -   **Top Panel:** Shows the final, comma-separated prompt string generated from your tags.
+    -   **Bottom Panel:** Features the "Generate AI Description" button. Clicking this uses an AI to convert your tag list into a descriptive, paragraph-style prompt. The generated text appears here.
+    -   **Resizable Splitter:** You can click and drag the splitter between the two panels to resize them to your preference. Your chosen layout is saved automatically.
 -   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, and category order. This is useful for saving, sharing, or for use in other tools.
 -   **Conflict Warnings:** If you select tags that are logically incompatible (e.g., "Slow Tempo" and "High Tempo"), a warning box will appear at the top of this panel listing the conflicts.
 
@@ -38,7 +41,8 @@ This panel shows you the output of your selections in real-time.
 These buttons provide quick access to powerful features.
 
 -   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All" or "Load Preset."
--   **Presets:** Load a previously saved combination of selected tags and category order.
+-   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter.
+-   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets.
 -   **Save as Preset:** Save your current selections and category order as a new preset.
 -   **Randomize:** Selects one random tag from each tag-based category. A great way to find inspiration!
 -   **Clear All:** Deselects all tags and clears all text inputs.

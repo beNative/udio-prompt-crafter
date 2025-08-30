@@ -8,11 +8,15 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 
 ## Key Features
 
--   **Comprehensive Taxonomy:** Browse a curated library of hundreds of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
--   **Live Prompt Preview:** See your prompt string and a structured JSON output update in real-time as you select and deselect tags.
+-   **Expanded Taxonomy:** Browse a massively expanded, curated library of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
+-   **Live Prompt Preview:** See your prompt string update in real-time. A resizable panel also allows you to view and copy both the tag-based prompt and a new AI-generated descriptive prompt.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
--   **Presets:** Save your favorite tag combinations as presets for later use.
--   **AI-Powered Assistance:** Use the AI features to get suggestions for complementary tags or generate lyrical theme ideas based on your current selection.
+-   **AI-Powered Assistance:**
+    -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
+    -   **Tag Suggestions:** Get recommendations for complementary tags.
+    -   **Lyrical Ideas:** Generate creative starting points for lyrics.
+-   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
+-   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").
 -   **Command Palette:** A powerful search tool (`Ctrl+;`) to quickly find and toggle any tag, or execute actions like loading a preset or clearing the board.
 -   **File-Based Settings:** When running the desktop version, all your custom presets and settings are saved to a local file, making them persistent across sessions.
