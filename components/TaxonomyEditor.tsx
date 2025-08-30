@@ -23,11 +23,26 @@ const slugify = (text: string) =>
     .replace(/--+/g, '_');
 
 
+const colorClasses: Record<NonNullable<Tag['color']>, string> = {
+  red:    'bg-red-500',
+  orange: 'bg-orange-500',
+  yellow: 'bg-yellow-500',
+  green:  'bg-green-500',
+  teal:   'bg-teal-500',
+  blue:   'bg-blue-500',
+  indigo: 'bg-indigo-500',
+  purple: 'bg-purple-500',
+  pink:   'bg-pink-500',
+  gray:   'bg-bunker-500',
+};
+
 export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave }) => {
   const [editedTaxonomy, setEditedTaxonomy] = useState<Taxonomy>(() => JSON.parse(JSON.stringify(taxonomy)));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(taxonomy[0]?.id || null);
   const [isDirty, setIsDirty] = useState(false);
   const [modalState, setModalState] = useState<{ type: 'category' | 'tag', data: Category | Tag | null, isNew: boolean } | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{ type: 'category' | 'tag'; id: string } | null>(null);
+
 
   useEffect(() => {
     // When the original taxonomy prop changes (e.g., after a reset), update the editor's state
@@ -35,6 +50,48 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     setSelectedCategoryId(taxonomy[0]?.id || null);
     setIsDirty(false);
   }, [taxonomy]);
+  
+  const handleDragStart = (e: React.DragEvent, type: 'category' | 'tag', id: string) => {
+    setDraggedItem({ type, id });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'category' | 'tag', targetId: string) => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem.type !== type || draggedItem.id === targetId) {
+      setDraggedItem(null);
+      return;
+    }
+    
+    setEditedTaxonomy(produce(draft => {
+        if (type === 'category') {
+            const draggedIndex = draft.findIndex(c => c.id === draggedItem.id);
+            const targetIndex = draft.findIndex(c => c.id === targetId);
+            if (draggedIndex === -1 || targetIndex === -1) return;
+            const [removed] = draft.splice(draggedIndex, 1);
+            draft.splice(targetIndex, 0, removed);
+        } else if (type === 'tag') {
+            const category = draft.find(c => c.id === selectedCategoryId);
+            if (!category) return;
+            const draggedIndex = category.tags.findIndex(t => t.id === draggedItem.id);
+            const targetIndex = category.tags.findIndex(t => t.id === targetId);
+            if (draggedIndex === -1 || targetIndex === -1) return;
+            const [removed] = category.tags.splice(draggedIndex, 1);
+            category.tags.splice(targetIndex, 0, removed);
+        }
+    }));
+    
+    setIsDirty(true);
+    setDraggedItem(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
 
   const handleSaveChanges = async () => {
     if (window.confirm("Saving will reload the taxonomy and reset your current prompt. Are you sure you want to continue?")) {
@@ -149,7 +206,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
         <div className="p-4 border-b border-bunker-200/80 dark:border-bunker-800/80 flex justify-between items-center">
             <div>
                 <h3 className="text-lg font-semibold">Taxonomy Editor</h3>
-                <p className="text-xs text-bunker-500 dark:text-bunker-400 mt-1">Your custom taxonomy is saved locally. Resetting will restore the application default.</p>
+                <p className="text-xs text-bunker-500 dark:text-bunker-400 mt-1">Drag and drop to reorder. Your custom taxonomy is saved locally.</p>
             </div>
             <div className="flex items-center space-x-2">
                 <button onClick={handleResetToDefault} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-3 py-1.5 bg-white dark:bg-bunker-800 text-xs font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">Reset to Default</button>
@@ -157,52 +214,77 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
                 <button onClick={handleSaveChanges} disabled={!isDirty} className="rounded-md border border-transparent px-3 py-1.5 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Taxonomy</button>
             </div>
         </div>
-        <div className="p-4 flex space-x-4 min-h-[400px]">
+        <div className="p-4 flex space-x-4 h-[500px]">
             {/* Category List */}
-            <div className="w-1/3 border-r border-bunker-200/80 dark:border-bunker-800/80 pr-4">
-                <h4 className="font-semibold mb-2">Categories</h4>
-                <div className="space-y-1">
+            <div className="w-1/3 flex flex-col">
+                <h4 className="font-semibold mb-2 px-2 flex-shrink-0">Categories</h4>
+                <ul className="flex-grow space-y-1 pr-2 overflow-y-auto">
                     {editedTaxonomy.map(cat => (
-                        <div key={cat.id} 
+                        <li key={cat.id} 
                              onClick={() => setSelectedCategoryId(cat.id)}
-                             className={`group flex justify-between items-center p-2 rounded-md cursor-pointer ${selectedCategoryId === cat.id ? 'bg-blue-600 text-white' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'}`}>
-                            <span>{cat.name}</span>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             draggable
+                             onDragStart={(e) => handleDragStart(e, 'category', cat.id)}
+                             onDragOver={handleDragOver}
+                             onDrop={(e) => handleDrop(e, 'category', cat.id)}
+                             onDragEnd={handleDragEnd}
+                             className={`group flex justify-between items-center p-2 rounded-md cursor-pointer transition-all ${selectedCategoryId === cat.id ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'} ${draggedItem?.id === cat.id ? 'opacity-30 scale-95' : ''}`}>
+                            <div className="flex items-center">
+                                <Icon name="grip" className="w-5 h-5 mr-2 text-bunker-400 dark:text-bunker-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
+                                <span>{cat.name}</span>
+                            </div>
+                            <div className={`flex items-center space-x-1 transition-opacity ${selectedCategoryId === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                 <button onClick={(e) => { e.stopPropagation(); setModalState({ type: 'category', data: cat, isNew: false }); }} className="p-1 hover:bg-white/20 rounded"><Icon name="pencil" className="w-4 h-4" /></button>
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }} className="p-1 hover:bg-white/20 rounded"><Icon name="trash" className="w-4 h-4" /></button>
                             </div>
-                        </div>
+                        </li>
                     ))}
-                </div>
-                 <button onClick={handleAddCategory} className="mt-4 w-full flex items-center justify-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors">
+                </ul>
+                 <button onClick={handleAddCategory} className="mt-4 w-full flex-shrink-0 flex items-center justify-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors">
                     <Icon name="plus" className="w-4 h-4" />
                     <span>Add Category</span>
                 </button>
             </div>
+            
             {/* Tag List */}
-            <div className="w-2/3 flex flex-col">
+            <div className="w-2/3 flex flex-col border-l border-bunker-200/80 dark:border-bunker-800/80 pl-4">
                 {selectedCategory ? (
-                    <div className="flex flex-col flex-grow min-h-0">
+                    <>
                          <div className="flex-shrink-0 flex justify-between items-center mb-2">
                              <h4 className="font-semibold">Tags in "{selectedCategory.name}"</h4>
-                             <button onClick={handleAddTag} className="flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors">
+                             <button onClick={handleAddTag} disabled={selectedCategory.type !== 'tags' && !!selectedCategory.type} className="flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 <Icon name="plus" className="w-4 h-4" />
                                 <span>Add Tag</span>
                             </button>
                          </div>
-                        <div className="flex-grow space-y-1 p-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 overflow-y-auto">
-                            {selectedCategory.tags.map(tag => (
-                                <div key={tag.id} className="group flex justify-between items-center p-2 rounded-md hover:bg-bunker-100 dark:hover:bg-bunker-800">
-                                    <span>{tag.label}</span>
-                                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => setModalState({ type: 'tag', data: tag, isNew: false })} className="p-1 hover:bg-bunker-200 dark:hover:bg-bunker-700 rounded"><Icon name="pencil" className="w-4 h-4" /></button>
-                                        <button onClick={() => handleDeleteTag(tag.id)} className="p-1 hover:bg-bunker-200 dark:hover:bg-bunker-700 rounded"><Icon name="trash" className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-                            ))}
-                             {selectedCategory.tags.length === 0 && <p className="text-center text-sm text-bunker-400 py-4">No tags in this category.</p>}
-                        </div>
-                    </div>
+                        {(!selectedCategory.type || selectedCategory.type === 'tags') ? (
+                            <ul className="flex-grow space-y-1 p-1 pr-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 overflow-y-auto">
+                                {selectedCategory.tags.map(tag => (
+                                    <li key={tag.id} 
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, 'tag', tag.id)}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, 'tag', tag.id)}
+                                        onDragEnd={handleDragEnd}
+                                        className={`group flex justify-between items-center p-2 rounded-md transition-all hover:bg-bunker-100 dark:hover:bg-bunker-800 ${draggedItem?.id === tag.id ? 'opacity-30 scale-95' : ''}`}>
+                                        <div className="flex items-center space-x-2">
+                                            <Icon name="grip" className="w-5 h-5 text-bunker-400 dark:text-bunker-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
+                                            <div className={`w-3 h-3 rounded-full ${colorClasses[tag.color || 'gray']}`}></div>
+                                            <span>{tag.label}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => setModalState({ type: 'tag', data: tag, isNew: false })} className="p-1 hover:bg-bunker-200 dark:hover:bg-bunker-700 rounded"><Icon name="pencil" className="w-4 h-4" /></button>
+                                            <button onClick={() => handleDeleteTag(tag.id)} className="p-1 hover:bg-bunker-200 dark:hover:bg-bunker-700 rounded"><Icon name="trash" className="w-4 h-4" /></button>
+                                        </div>
+                                    </li>
+                                ))}
+                                {selectedCategory.tags.length === 0 && <p className="text-center text-sm text-bunker-400 py-4">No tags in this category.</p>}
+                            </ul>
+                        ) : (
+                             <div className="flex-grow flex items-center justify-center text-center p-4 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 text-bunker-500 text-sm">
+                                This category is of type '{selectedCategory.type}' and does not contain tags.
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="flex items-center justify-center h-full text-bunker-400">Select a category to view its tags.</div>
                 )}
