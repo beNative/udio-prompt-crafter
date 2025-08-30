@@ -20,6 +20,7 @@ import { SavePresetModal } from './components/SavePresetModal';
 import { PresetManagerModal } from './components/PresetManagerModal';
 import { PromptHistoryModal } from './components/PromptHistoryModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
+import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -66,6 +67,7 @@ const App: React.FC = () => {
   const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
+  const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
 
   // State for global features like status bar
   const [appVersion, setAppVersion] = useState('');
@@ -513,7 +515,7 @@ const App: React.FC = () => {
     setAppSettings({ ...appSettings, presets: filteredPresets });
   };
   
-  const handleRandomize = useCallback(() => {
+  const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags.');
     const newSelected: Record<string, SelectedTag> = {};
     categories.forEach(category => {
@@ -627,6 +629,56 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         }
     } catch (e: any) {
         logger.error("Error during prompt deconstruction:", { error: e.message });
+        throw e;
+    }
+  }, [allTags, callLlm, taxonomyMap, handleClear]);
+
+  const handleThematicRandomize = useCallback(async (theme: string): Promise<boolean> => {
+    logger.info("Generating tags from theme with AI...", { theme });
+
+    const systemPrompt = `You are a creative music director AI. Your task is to select a cohesive set of tags from a provided list that best captures a user's theme.
+- You will be given the user's theme and a complete list of available tags.
+- Each tag has a unique 'id' and a 'label'.
+- Your response MUST be a valid JSON object.
+- The JSON object must have a single key: "tag_ids".
+- The value of "tag_ids" must be an array of strings, where each string is the 'id' of a selected tag from the provided list.
+- Select a reasonable number of tags (e.g., 5-15) that create a well-rounded and interesting musical idea covering different categories like genre, mood, and instruments.
+- Do not include any text, explanations, or markdown formatting outside of the JSON object itself.
+
+Example: If the theme is "80s sci-fi movie car chase" your response might be:
+{
+  "tag_ids": ["g_synthwave", "era_80s", "m_driving", "m_suspenseful", "i_layered_synths", "cs_linndrum"]
+}`;
+
+    const userPrompt = `User Theme: "${theme}"
+
+Available Tags:
+${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, description })), null, 2)}`;
+
+    try {
+        const result = await callLlm(systemPrompt, userPrompt);
+        if (result && Array.isArray(result.tag_ids)) {
+            logger.info("AI thematic generation successful.", { tag_ids: result.tag_ids });
+            const newSelectedTags: Record<string, SelectedTag> = {};
+            result.tag_ids.forEach((tagId: string) => {
+                const fullTag = taxonomyMap.get(tagId);
+                if (fullTag) {
+                    newSelectedTags[tagId] = fullTag;
+                } else {
+                    logger.warn("AI returned a tag ID not found in taxonomy.", { tagId });
+                }
+            });
+            
+            handleClear(); 
+            setSelectedTags(newSelectedTags);
+
+            return true;
+        } else {
+            logger.error("AI returned an invalid response format for thematic generation.", { response: result });
+            throw new Error("The AI returned an invalid response. Please try again.");
+        }
+    } catch (e: any) {
+        logger.error("Error during thematic tag generation:", { error: e.message });
         throw e;
     }
   }, [allTags, callLlm, taxonomyMap, handleClear]);
@@ -776,7 +828,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
         onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
-        onRandomize={handleRandomize}
+        onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
         onClear={handleClear}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
@@ -804,7 +856,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         onToggleTag={handleToggleTag}
         onLoadPreset={handleLoadPreset}
         onSavePreset={() => setIsSavePresetModalOpen(true)}
-        onRandomize={handleRandomize}
+        onRandomize={handleSimpleRandomize}
         onClear={handleClear}
       />
       <SavePresetModal
@@ -835,6 +887,11 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         isOpen={isDeconstructModalOpen}
         onClose={() => setIsDeconstructModalOpen(false)}
         onDeconstruct={handleDeconstruct}
+      />
+      <ThematicRandomizerModal
+        isOpen={isThematicRandomizerModalOpen}
+        onClose={() => setIsThematicRandomizerModalOpen(false)}
+        onThematicRandomize={handleThematicRandomize}
       />
     </div>
   );

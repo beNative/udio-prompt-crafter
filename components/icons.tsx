@@ -35,6 +35,7 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     history: <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.691V5.25a2.25 2.25 0 00-2.25-2.25h-4.5a2.25 2.25 0 00-2.25 2.25v6.75m11.25 0l-3.181 3.183a8.25 8.25 0 01-11.664 0l-3.181-3.183" />,
     'arrows-pointing-out': <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />,
     'arrows-pointing-in': <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25" />,
+    lightbulb: <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a11.99 11.99 0 01-5.25 0m5.25 0a11.99 11.99 0 005.25 0M10.5 8.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM12 3a2.25 2.25 0 00-2.25 2.25v.75A2.25 2.25 0 0012 8.25a2.25 2.25 0 002.25-2.25v-.75A2.25 2.25 0 0012 3z" />,
   };
 
   return (

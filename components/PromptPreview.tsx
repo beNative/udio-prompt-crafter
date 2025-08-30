@@ -80,6 +80,10 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
   const [jsonOutput, setJsonOutput] = useState('');
   const [activeTab, setActiveTab] = useState('prompt');
 
+  const [aiAnalysis, setAiAnalysis] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
   const [aiDescription, setAiDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -174,12 +178,37 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     };
     setJsonOutput(JSON.stringify(json, null, 2));
 
+    setAiAnalysis('');
+    setAnalysisError(null);
     setAiDescription('');
     setGenerationError(null);
     setAiTitleIdeas([]);
     setTitleGenerationError(null);
   }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated]);
   
+  const handleAnalyzePrompt = async () => {
+    if (!prompt || !callLlm) return;
+    
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAiAnalysis('');
+
+    const systemPrompt = `You are a helpful and concise AI music prompt expert. Your task is to analyze a list of comma-separated musical tags and provide one or two sentences of constructive feedback. The feedback should identify the strengths of the prompt and suggest specific categories or types of tags that could be added to make it more evocative or complete. Do not be overly verbose. Focus on actionable advice. The output should be a single block of text.`;
+
+    try {
+      const result = await callLlm(systemPrompt, prompt, true);
+      if (typeof result === 'string') {
+        setAiAnalysis(result.trim());
+      } else {
+        throw new Error("Received an unexpected response format from the AI.");
+      }
+    } catch (e: any) {
+      setAnalysisError(e.message || 'An unknown error occurred.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleGenerateDescription = async () => {
     if (!prompt || !callLlm) return;
     
@@ -295,9 +324,34 @@ Example:
               
               {/* Bottom Panel: AI Features */}
               <div className="relative min-h-0 flex flex-col" style={{ height: `calc(${100 - topPanelHeight}% - ${splitterHeight/2}px)` }}>
-                <div className="flex-grow min-h-0 overflow-y-auto pr-1">
+                <div className="flex-grow min-h-0 overflow-y-auto pr-1 space-y-4">
+                    {(analysisError || aiAnalysis || isAnalyzing) && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-bunker-600 dark:text-bunker-300 mb-2">AI Prompt Analysis</h3>
+                            {analysisError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg text-sm">
+                                    <strong>Error:</strong> {analysisError}
+                                </div>
+                            )}
+                            {aiAnalysis && !isAnalyzing && (
+                                <div className="p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 font-sans text-sm border border-bunker-200 dark:border-bunker-800">
+                                    {aiAnalysis}
+                                </div>
+                            )}
+                            {isAnalyzing && (
+                                <div className="flex items-center justify-center h-24 p-4 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                    <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span className="text-bunker-500">Analyzing...</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {(generationError || aiDescription || isGenerating) && (
-                        <div className="mb-4">
+                        <div>
                             <h3 className="text-sm font-semibold text-bunker-600 dark:text-bunker-300 mb-2">AI Generated Description</h3>
                             {generationError && (
                                 <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg text-sm">
@@ -360,22 +414,30 @@ Example:
                     )}
                  </div>
 
-                 <div className="w-full flex-shrink-0 mt-2 flex items-center space-x-2">
+                 <div className="w-full flex-shrink-0 mt-2 grid grid-cols-3 gap-2">
+                    <button 
+                        onClick={handleAnalyzePrompt} 
+                        disabled={isAnalyzing || !prompt}
+                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-700 disabled:bg-yellow-400 dark:disabled:bg-yellow-800/50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <Icon name="lightbulb" className="w-5 h-5" />
+                        <span>{isAnalyzing ? 'Analyzing...' : 'Analyze'}</span>
+                    </button>
                     <button 
                         onClick={handleGenerateDescription} 
                         disabled={isGenerating || !prompt}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
                       >
                         <Icon name="wandSparkles" className="w-5 h-5" />
-                        <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate Description'}</span>
+                        <span>{isGenerating ? 'Generating...' : 'Description'}</span>
                     </button>
                      <button
                         onClick={handleGenerateTitle}
                         disabled={isGeneratingTitles || !prompt}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400 dark:disabled:bg-teal-800/50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400 dark:disabled:bg-teal-800/50 disabled:cursor-not-allowed transition-colors"
                     >
                         <Icon name="tag" className="w-5 h-5" />
-                        <span>{isGeneratingTitles ? 'Generating...' : 'Generate Titles'}</span>
+                        <span>{isGeneratingTitles ? 'Generating...' : 'Titles'}</span>
                     </button>
                 </div>
               </div>
