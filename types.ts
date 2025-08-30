@@ -75,6 +75,7 @@ export interface IElectronAPI {
   writeSettings: (settings: AppSettings) => void;
   readMarkdownFile: (filename: string) => Promise<string>;
   getAppVersion: () => Promise<string>;
+  readDebugLog: () => Promise<string>;
 }
 
 declare global {

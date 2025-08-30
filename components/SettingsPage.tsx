@@ -3,6 +3,7 @@ import type { AppSettings, Preset, AiStatus } from '../types';
 import { Icon } from './icons';
 import { logger } from '../utils/logger';
 import { JsonEditor } from './JsonEditor';
+import { DebugLogModal } from './DebugLogModal';
 
 interface SettingsPageProps {
   settings: AppSettings;
@@ -13,6 +14,8 @@ interface SettingsPageProps {
   isDetecting: boolean;
   onRefresh: () => void;
 }
+
+const isElectron = !!window.electronAPI;
 
 const LoadingSpinner: React.FC = () => (
     <svg className="animate-spin h-5 w-5 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -44,6 +47,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const [presetsText, setPresetsText] = useState('');
   const [jsonError, setJsonError] = useState<{ presets: string | null; }>({ presets: null });
+  const [isDebugLogModalOpen, setIsDebugLogModalOpen] = useState(false);
+  const [debugLogContent, setDebugLogContent] = useState('');
 
   useEffect(() => {
     setPresetsText(JSON.stringify(settings.presets, null, 2));
@@ -87,6 +92,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     });
   };
 
+  const handleShowDebugLog = async () => {
+    if (isElectron) {
+      try {
+        const content = await window.electronAPI.readDebugLog();
+        setDebugLogContent(content);
+        setIsDebugLogModalOpen(true);
+      } catch (e: any) {
+        logger.error("Failed to read debug log", { error: e.message });
+        alert("Failed to read debug log.");
+      }
+    }
+  };
+
   return (
     <div className="p-6 bg-bunker-50 dark:bg-transparent min-h-full">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -115,7 +133,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           <div>
               <label htmlFor="baseUrl" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">API Base URL</label>
-              <input type="text" id="baseUrl" value={settings.aiSettings.baseUrl} onChange={e => handleSaveAiSettings({...settings.aiSettings, baseUrl: e.target.value})} className="form-input bg-white dark:bg-bunker-800 dark:text-white"/>
+              <input type="text" id="baseUrl" value={settings.aiSettings.baseUrl} onChange={e => handleSaveAiSettings({...settings.aiSettings, baseUrl: e.target.value})} className="form-input bg-bunker-50 dark:bg-bunker-800 dark:text-white"/>
           </div>
           <div>
               <label htmlFor="model" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Model Name</label>
@@ -142,7 +160,32 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <button onClick={handleSaveConfigs} disabled={!!jsonError.presets} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Presets</button>
           </div>
         </SettingsCard>
+
+        {isElectron && (
+            <SettingsCard title="Debugging">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="text-sm font-medium text-bunker-700 dark:text-bunker-300">View Startup Log</p>
+                        <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
+                            If you experience a white screen or other critical startup errors, this log can help identify the problem.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={handleShowDebugLog}
+                        className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors"
+                    >
+                        Show Log
+                    </button>
+                </div>
+            </SettingsCard>
+        )}
       </div>
+
+      <DebugLogModal 
+        isOpen={isDebugLogModalOpen}
+        onClose={() => setIsDebugLogModalOpen(false)}
+        logContent={debugLogContent}
+      />
     </div>
   );
 };

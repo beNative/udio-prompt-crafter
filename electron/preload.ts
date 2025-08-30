@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeSettings: (settings) => ipcRenderer.send('write-settings', settings),
   readMarkdownFile: (filename: string) => ipcRenderer.invoke('read-markdown-file', filename),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  readDebugLog: () => ipcRenderer.invoke('read-debug-log'),
 });
