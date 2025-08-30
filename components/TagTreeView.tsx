@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import type { Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
 import { Icon } from './icons';
@@ -12,13 +13,23 @@ interface TreeNodeProps {
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
   level: number;
+  expandAllSignal: number;
+  collapseAllSignal: number;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, level }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, level, expandAllSignal, collapseAllSignal }) => {
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = node.children.length > 0;
 
   const isSelected = !!selectedTags[node.id];
+
+  useEffect(() => {
+    if (hasChildren) setIsOpen(true);
+  }, [expandAllSignal, hasChildren]);
+
+  useEffect(() => {
+    if (hasChildren) setIsOpen(false);
+  }, [collapseAllSignal, hasChildren]);
 
   return (
     <div>
@@ -51,7 +62,14 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
         </div>
       </div>
       {isOpen && hasChildren && (
-        <TagTreeView nodes={node.children} selectedTags={selectedTags} onToggleTag={onToggleTag} level={level + 1} />
+        <TagTreeView 
+            nodes={node.children} 
+            selectedTags={selectedTags} 
+            onToggleTag={onToggleTag} 
+            level={level + 1}
+            expandAllSignal={expandAllSignal}
+            collapseAllSignal={collapseAllSignal}
+        />
       )}
     </div>
   );
@@ -62,13 +80,23 @@ interface TagTreeViewProps {
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
   level?: number;
+  expandAllSignal: number;
+  collapseAllSignal: number;
 }
 
-export const TagTreeView: React.FC<TagTreeViewProps> = ({ nodes, selectedTags, onToggleTag, level = 0 }) => {
+export const TagTreeView: React.FC<TagTreeViewProps> = ({ nodes, selectedTags, onToggleTag, level = 0, expandAllSignal, collapseAllSignal }) => {
   return (
     <div className="space-y-1">
       {nodes.map(node => (
-        <TreeNode key={node.id} node={node} selectedTags={selectedTags} onToggleTag={onToggleTag} level={level} />
+        <TreeNode 
+            key={node.id} 
+            node={node} 
+            selectedTags={selectedTags} 
+            onToggleTag={onToggleTag} 
+            level={level}
+            expandAllSignal={expandAllSignal}
+            collapseAllSignal={collapseAllSignal}
+        />
       ))}
     </div>
   );

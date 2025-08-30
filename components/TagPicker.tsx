@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
 import { TagTreeView, TreeNodeData } from './TagTreeView';
 import { Icon } from './icons';
 import { AiFeatures } from './AiFeatures';
+import { Tooltip } from './Tooltip';
 
 interface TagPickerProps {
   category: Category | undefined;
@@ -27,6 +29,8 @@ export const TagPicker: React.FC<TagPickerProps> = ({
     callLlm
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandCounter, setExpandCounter] = useState(0);
+  const [collapseCounter, setCollapseCounter] = useState(0);
 
   const filteredTags = useMemo(() => {
     if (!category || category.type === 'text' || !searchTerm) return [];
@@ -127,15 +131,31 @@ export const TagPicker: React.FC<TagPickerProps> = ({
         />
       ) : (
         <>
-            <div className="relative mb-6">
-                <Icon name="search" className="absolute top-1/2 -translate-y-1/2 left-3 w-5 h-5 text-bunker-400" />
-                <input
-                    type="text"
-                    placeholder={`Search in ${category.name}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full p-2 pl-10 bg-bunker-100 dark:bg-bunker-900/80 border border-bunker-300 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            <div className="flex justify-between items-center mb-6">
+                <div className="relative flex-grow">
+                    <Icon name="search" className="absolute top-1/2 -translate-y-1/2 left-3 w-5 h-5 text-bunker-400" />
+                    <input
+                        type="text"
+                        placeholder={`Search in ${category.name}...`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full p-2 pl-10 bg-bunker-100 dark:bg-bunker-900/80 border border-bunker-300 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                 {tagTree.length > 0 && !searchTerm && (
+                    <div className="flex items-center space-x-1 ml-4">
+                        <Tooltip text="Expand All">
+                            <button onClick={() => setExpandCounter(c => c + 1)} className="p-2 rounded-md text-bunker-500 hover:bg-bunker-200 dark:hover:bg-bunker-700/60 hover:text-bunker-800 dark:hover:text-white transition-colors">
+                                <Icon name="arrows-pointing-out" className="w-5 h-5" />
+                            </button>
+                        </Tooltip>
+                        <Tooltip text="Collapse All">
+                            <button onClick={() => setCollapseCounter(c => c + 1)} className="p-2 rounded-md text-bunker-500 hover:bg-bunker-200 dark:hover:bg-bunker-700/60 hover:text-bunker-800 dark:hover:text-white transition-colors">
+                                <Icon name="arrows-pointing-in" className="w-5 h-5" />
+                            </button>
+                        </Tooltip>
+                    </div>
+                )}
             </div>
             <div className="pr-2 flex-grow">
                 {searchTerm ? (
@@ -158,6 +178,8 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                         nodes={tagTree}
                         selectedTags={selectedTags}
                         onToggleTag={onToggleTag}
+                        expandAllSignal={expandCounter}
+                        collapseAllSignal={collapseCounter}
                     />
                 )}
             </div>
