@@ -2,8 +2,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Fix: Import `process` to provide correct TypeScript types for standard Node.js properties.
-import process from 'process';
+// Fix: Removed incorrect import of 'process' to use the global Node.js process object.
+// The imported 'process' object was missing properties like .on, .cwd, and .platform.
 import { starterPresets } from '../data/presets';
 
 // --- START: Early Debug Logging ---
@@ -35,6 +35,38 @@ process.on('uncaughtException', (error, origin) => {
 const isDev = !app.isPackaged;
 logToFile(`isDev = ${isDev}`);
 
+// --- Settings Management (Synchronous Part) ---
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+const defaultSettings = {
+  aiSettings: {
+    provider: 'ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3',
+  },
+  presets: starterPresets,
+  promptPanelRatio: 50,
+  openDevToolsOnStart: isDev, // Default to true in dev, false in production
+};
+
+let currentSettings = defaultSettings;
+
+function readSettingsSync() {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const rawData = fs.readFileSync(settingsPath, 'utf-8');
+      // Merge with defaults to ensure new settings are present in existing files
+      return { ...defaultSettings, ...JSON.parse(rawData) };
+    } else {
+      fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+  } catch (error) {
+    logToFile(`[ERROR] Failed to read or create settings file synchronously: ${error}`);
+    return defaultSettings;
+  }
+}
+
+
 function createWindow() {
   logToFile('createWindow() called.');
   
@@ -59,9 +91,11 @@ function createWindow() {
   });
   logToFile('BrowserWindow created.');
 
-  // Force open developer tools for debugging.
-  mainWindow.webContents.openDevTools();
-  logToFile('Attempted to open DevTools.');
+  // Conditionally open developer tools based on settings.
+  if (currentSettings.openDevToolsOnStart) {
+    mainWindow.webContents.openDevTools();
+    logToFile('Opening DevTools based on user setting.');
+  }
 
   mainWindow.setMenu(null);
 
@@ -90,6 +124,10 @@ try {
   app.whenReady().then(() => {
     logToFile('App is ready.');
     
+    // Read settings synchronously before creating the window or setting up IPC.
+    currentSettings = readSettingsSync();
+    logToFile(`Settings loaded. openDevToolsOnStart: ${currentSettings.openDevToolsOnStart}`);
+    
     logToFile('Setting up IPC handlers...');
 
     // --- Debug Log IPC ---
@@ -104,36 +142,16 @@ try {
       }
     });
 
-    // --- Settings Management ---
-    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-    const defaultSettings = {
-      aiSettings: {
-        provider: 'ollama',
-        baseUrl: 'http://localhost:11434',
-        model: 'llama3',
-      },
-      presets: starterPresets,
-      promptPanelRatio: 50,
-    };
-
+    // --- Settings Management (IPC Part) ---
     ipcMain.handle('read-settings', () => {
-      try {
-        if (fs.existsSync(settingsPath)) {
-          const rawData = fs.readFileSync(settingsPath, 'utf-8');
-          return JSON.parse(rawData);
-        } else {
-          fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
-          return defaultSettings;
-        }
-      } catch (error) {
-        logToFile(`[ERROR] Failed to read or create settings file: ${error}`);
-        console.error('Failed to read or create settings file:', error);
-        return defaultSettings;
-      }
+      // The sync read has already happened for startup. This handler is for the UI.
+      // Re-reading ensures the UI gets the freshest data if the file was edited manually.
+      return readSettingsSync();
     });
 
     ipcMain.on('write-settings', (event, settings) => {
       try {
+        currentSettings = settings; // Keep the in-memory version up-to-date
         fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
       } catch (error) {
         logToFile(`[ERROR] Failed to write settings file: ${error}`);

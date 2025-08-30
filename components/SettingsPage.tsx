@@ -177,6 +177,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                         Show Log
                     </button>
                 </div>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="text-sm font-medium text-bunker-700 dark:text-bunker-300">Open Developer Tools on Startup</p>
+                        <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
+                            Automatically opens the developer console when the application starts.
+                        </p>
+                    </div>
+                    <label htmlFor="dev-tools-toggle" className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            id="dev-tools-toggle" 
+                            className="sr-only peer" 
+                            checked={settings.openDevToolsOnStart ?? false}
+                            onChange={e => onSettingsChange(prev => prev ? ({ ...prev, openDevToolsOnStart: e.target.checked }) : null)}
+                        />
+                        <div className="w-11 h-6 bg-bunker-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer dark:bg-bunker-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-bunker-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-bunker-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
             </SettingsCard>
         )}
       </div>

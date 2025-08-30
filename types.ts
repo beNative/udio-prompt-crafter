@@ -46,6 +46,7 @@ export interface AppSettings {
   aiSettings: AiSettings;
   presets: Preset[];
   promptPanelRatio?: number;
+  openDevToolsOnStart?: boolean;
 }
 
 // New Logging types
