@@ -85,6 +85,11 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
   const [aiDescription, setAiDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+
+  const [aiTitleIdeas, setAiTitleIdeas] = useState<string[]>([]);
+  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
+  const [titleGenerationError, setTitleGenerationError] = useState<string | null>(null);
+  const [copiedTitle, setCopiedTitle] = useState<string | null>(null);
   
   const [topPanelHeight, setTopPanelHeight] = useState(promptPanelRatio);
   const [isDragging, setIsDragging] = useState(false);
@@ -173,6 +178,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
 
     setAiDescription('');
     setGenerationError(null);
+    setAiTitleIdeas([]);
+    setTitleGenerationError(null);
   }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated]);
   
   const handleGenerateDescription = async () => {
@@ -197,6 +204,53 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     }
   };
   
+  const handleGenerateTitle = async () => {
+    if (!prompt || !callLlm) return;
+    
+    setIsGeneratingTitles(true);
+    setTitleGenerationError(null);
+    setAiTitleIdeas([]);
+
+    const systemPrompt = `You are an expert songwriter and creative director. Your task is to generate 5 creative and evocative song titles based on a list of comma-separated musical tags and descriptive text. The titles should be short, memorable, and reflect the mood and style described.
+
+- Your response MUST be a valid JSON object.
+- The JSON object must have a single key: "titles".
+- The value of "titles" must be an array of 5 strings.
+- Each string in the array should be a unique song title.
+- Do not include any text, explanations, or markdown formatting outside of the JSON object itself.
+
+Example:
+{
+  "titles": [
+    "Neon Midnight Drive",
+    "Fading Summer Ghosts",
+    "Electric Heartbeat",
+    "City of Rain and Chrome",
+    "Stars in the Rearview"
+  ]
+}`;
+
+    try {
+        const result = await callLlm(systemPrompt, prompt, false);
+        if (result && Array.isArray(result.titles)) {
+            setAiTitleIdeas(result.titles);
+        } else {
+            throw new Error("Received an unexpected response format from the AI.");
+        }
+    } catch (e: any) {
+        setTitleGenerationError(e.message || 'An unknown error occurred.');
+    } finally {
+        setIsGeneratingTitles(false);
+    }
+  };
+  
+  const handleCopyTitle = (title: string) => {
+    navigator.clipboard.writeText(title).then(() => {
+        setCopiedTitle(title);
+        setTimeout(() => setCopiedTitle(null), 2000);
+    });
+  };
+
   const splitterHeight = 6; // h-1.5 in px
 
   return (
@@ -241,44 +295,91 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
                   <div className="h-0.5 w-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
               </div>
               
-              {/* Bottom Panel: AI Description */}
+              {/* Bottom Panel: AI Features */}
               <div className="relative min-h-0 flex flex-col" style={{ height: `calc(${100 - topPanelHeight}% - ${splitterHeight/2}px)` }}>
-                <div className="flex-grow min-h-0 overflow-y-auto">
-                    {generationError && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-2 text-sm">
-                            <strong>Error:</strong> {generationError}
+                <div className="flex-grow min-h-0 overflow-y-auto pr-1">
+                    {(generationError || aiDescription || isGenerating) && (
+                        <div className="mb-4">
+                            <h3 className="text-sm font-semibold text-bunker-600 dark:text-bunker-300 mb-2">AI Generated Description</h3>
+                            {generationError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3 rounded-lg text-sm">
+                                    <strong>Error:</strong> {generationError}
+                                </div>
+                            )}
+                            {aiDescription && !isGenerating && (
+                                <div className="relative">
+                                    <textarea
+                                        readOnly
+                                        value={aiDescription}
+                                        className="w-full h-48 p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-y font-sans text-sm border border-bunker-200 dark:border-bunker-800"
+                                        placeholder="Your generated description will appear here..."
+                                    />
+                                    <CopyButton textToCopy={aiDescription} />
+                                </div>
+                            )}
+                            {isGenerating && (
+                                <div className="flex items-center justify-center h-48 p-4 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                    <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span className="text-bunker-500">Generating...</span>
+                                </div>
+                            )}
                         </div>
                     )}
-                    {aiDescription && !isGenerating && (
-                        <div className="relative mb-2 h-full">
-                            <textarea
-                                readOnly
-                                value={aiDescription}
-                                className="w-full h-full p-4 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-bunker-800 dark:text-bunker-200 resize-none font-sans text-sm border border-bunker-200 dark:border-bunker-800"
-                                placeholder="Your generated description will appear here..."
-                            />
-                            <CopyButton textToCopy={aiDescription} />
-                        </div>
-                    )}
-                    {isGenerating && (
-                        <div className="flex items-center justify-center h-full mb-2 p-4 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
-                            <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span className="text-bunker-500">Generating...</span>
+                    
+                    {(titleGenerationError || aiTitleIdeas.length > 0 || isGeneratingTitles) && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-bunker-600 dark:text-bunker-300 mb-2">AI Generated Titles</h3>
+                            {titleGenerationError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-2 rounded-lg text-xs">
+                                    <strong>Error:</strong> {titleGenerationError}
+                                </div>
+                            )}
+                            {isGeneratingTitles && (
+                                <div className="flex items-center justify-center h-24 bg-bunker-50/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                    <svg className="animate-spin h-5 w-5 mr-3 text-bunker-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span className="text-bunker-500 text-sm">Generating titles...</span>
+                                </div>
+                            )}
+                            {aiTitleIdeas.length > 0 && !isGeneratingTitles && (
+                                <ul className="space-y-1.5">
+                                    {aiTitleIdeas.map((title, index) => (
+                                        <li key={index} className="flex items-center justify-between p-2 pl-3 bg-bunker-50 dark:bg-bunker-900 rounded-lg text-sm">
+                                            <span className="text-bunker-800 dark:text-bunker-200">{title}</span>
+                                            <button onClick={() => handleCopyTitle(title)} className="p-1.5 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 transition-colors">
+                                                {copiedTitle === title ? <Icon name="check" className="w-4 h-4 text-green-500" /> : <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-300" />}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     )}
                  </div>
 
-                 <button 
-                    onClick={handleGenerateDescription} 
-                    disabled={isGenerating || !prompt}
-                    className="w-full flex-shrink-0 mt-2 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Icon name="wandSparkles" className="w-5 h-5" />
-                    <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate AI Description'}</span>
-                </button>
+                 <div className="w-full flex-shrink-0 mt-2 flex items-center space-x-2">
+                    <button 
+                        onClick={handleGenerateDescription} 
+                        disabled={isGenerating || !prompt}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Icon name="wandSparkles" className="w-5 h-5" />
+                        <span>{isGenerating ? 'Generating...' : aiDescription ? 'Regenerate Description' : 'Generate Description'}</span>
+                    </button>
+                     <button
+                        onClick={handleGenerateTitle}
+                        disabled={isGeneratingTitles || !prompt}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400 dark:disabled:bg-teal-800/50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <Icon name="tag" className="w-5 h-5" />
+                        <span>{isGeneratingTitles ? 'Generating...' : 'Generate Titles'}</span>
+                    </button>
+                </div>
               </div>
             </div>
           ) : activeTab === 'json' ? (
