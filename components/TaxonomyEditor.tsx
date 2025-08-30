@@ -3,7 +3,7 @@ import type { Taxonomy, Category, Tag } from '../types';
 import { Icon } from './icons';
 import { produce } from 'immer';
 import { CategoryEditModal } from './CategoryEditModal';
-import { TagEditModal } from './TagEditModal';
+import { TagEditor } from './TagEditor';
 
 interface TaxonomyEditorProps {
   taxonomy: Taxonomy;
@@ -127,7 +127,11 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   const [editedTaxonomy, setEditedTaxonomy] = useState<Taxonomy>(() => JSON.parse(JSON.stringify(taxonomy)));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(taxonomy[0]?.id || null);
   const [isDirty, setIsDirty] = useState(false);
-  const [modalState, setModalState] = useState<{ type: 'category' | 'tag', data: Category | Tag | null, isNew: boolean } | null>(null);
+  
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
+
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
   
   // Drag state for categories
   const [draggedCategory, setDraggedCategory] = useState<string | null>(null);
@@ -174,11 +178,19 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     setDraggedCategory(null);
   };
   
-  const handleAddCategory = () => setModalState({ type: 'category', data: { id: '', name: '', description: '', type: 'tags', tags: [] }, isNew: true });
+  const handleAddCategory = () => {
+    setCategoryToEdit({ id: '', name: '', description: '', type: 'tags', tags: [] });
+    setIsCategoryModalOpen(true);
+  }
+
+  const handleEditCategory = (category: Category) => {
+    setCategoryToEdit(category);
+    setIsCategoryModalOpen(true);
+  }
   
   const handleSaveCategory = (categoryToSave: Category) => {
     setEditedTaxonomy(produce(draft => {
-      if (modalState?.isNew) {
+      if (!categoryToSave.id) { // isNew
         const newId = slugify(categoryToSave.name);
         if (draft.some(c => c.id === newId)) { alert(`Error: A category with ID '${newId}' already exists.`); return; }
         draft.push({ ...categoryToSave, id: newId });
@@ -189,7 +201,8 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
       }
     }));
     setIsDirty(true);
-    setModalState(null);
+    setIsCategoryModalOpen(false);
+    setCategoryToEdit(null);
   };
   
   const handleDeleteCategory = (categoryId: string) => {
@@ -203,7 +216,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   // --- Tag Actions ---
   const handleAddTag = () => {
     if (!selectedCategoryId) return;
-    setModalState({ type: 'tag', data: { id: '', label: '', description: '', color: 'gray' }, isNew: true });
+    setEditingTag({ id: '', label: '', description: '', color: 'gray' });
   };
 
   const handleSaveTag = (tagToSave: Tag, originalId: string) => {
@@ -214,68 +227,57 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
       const isNewTag = !originalId;
 
       if (isNewTag) {
-        // --- Handle New Tag ---
         const category = draft.find(c => c.id === selectedCategoryId);
         if (!category) return;
         
-        const newId = `${slugify(category.id.split('_')[0])}_${slugify(tagToSave.label)}`;
+        let newId = tagToSave.id.trim();
+        if (!newId) {
+            newId = `${slugify(category.id.split('_')[0])}_${slugify(tagToSave.label)}`;
+        }
+
         if (allTagsInDraft.some(t => t.id === newId)) {
           alert(`Error: A tag with ID '${newId}' already exists.`);
           return;
         }
         category.tags.push({ ...tagToSave, id: newId });
-
       } else {
-        // --- Handle Existing Tag ---
         const newId = tagToSave.id;
 
-        // Check for ID uniqueness if it has changed
         if (originalId !== newId && allTagsInDraft.some(t => t.id === newId)) {
           alert(`Error: A tag with the ID '${newId}' already exists.`);
           return;
         }
         
-        // Update references if ID has changed
         if (originalId !== newId) {
           allTagsInDraft.forEach(tag => {
-            if (tag.suggests?.includes(originalId)) {
-              tag.suggests = tag.suggests.map(id => id === originalId ? newId : id);
-            }
-            if (tag.conflictsWith?.includes(originalId)) {
-              tag.conflictsWith = tag.conflictsWith.map(id => id === originalId ? newId : id);
-            }
+            if (tag.suggests?.includes(originalId)) tag.suggests = tag.suggests.map(id => id === originalId ? newId : id);
+            if (tag.conflictsWith?.includes(originalId)) tag.conflictsWith = tag.conflictsWith.map(id => id === originalId ? newId : id);
           });
         }
         
-        // Find and update the tag itself
         const category = draft.find(c => c.tags.some(t => t.id === originalId));
         if (category) {
             const tagIndex = category.tags.findIndex(t => t.id === originalId);
-            if (tagIndex !== -1) {
-                category.tags[tagIndex] = tagToSave;
-            }
+            if (tagIndex !== -1) category.tags[tagIndex] = tagToSave;
         }
       }
     }));
 
     setIsDirty(true);
-    setModalState(null);
+    setEditingTag(null);
   };
   
   const handleDeleteTag = (tagId: string) => {
     if (!selectedCategoryId) return;
-    if (window.confirm("Are you sure you want to delete this tag?")) {
+    if (window.confirm("Are you sure you want to delete this tag? This will also remove any relationships pointing to it.")) {
       setEditedTaxonomy(produce(draft => {
-        const category = draft.find(c => c.id === selectedCategoryId);
-        if (category) {
-          // Remove the tag itself
-          category.tags = category.tags.filter(t => t.id !== tagId);
-          // Remove references to the deleted tag from other tags in the same category
-          category.tags.forEach(t => { 
-            if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId);
-            if (t.conflictsWith?.includes(tagId)) t.conflictsWith = t.conflictsWith.filter(cId => cId !== tagId);
+          draft.forEach(category => {
+              category.tags = category.tags.filter(t => t.id !== tagId);
+              category.tags.forEach(t => { 
+                if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId);
+                if (t.conflictsWith?.includes(tagId)) t.conflictsWith = t.conflictsWith.filter(cId => cId !== tagId);
+              });
           });
-        }
       }));
       setIsDirty(true);
     }
@@ -412,14 +414,14 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
           <h4 className="font-semibold mb-2 px-2 flex-shrink-0">Categories</h4>
           <ul className="flex-grow space-y-1 pr-2 overflow-y-auto">
             {editedTaxonomy.map(cat => (
-              <li key={cat.id} onClick={() => setSelectedCategoryId(cat.id)} draggable onDragStart={() => setDraggedCategory(cat.id)} onDragOver={(e) => e.preventDefault()} onDrop={() => handleDropCategory(cat.id)} onDragEnd={() => setDraggedCategory(null)}
+              <li key={cat.id} onClick={() => { setSelectedCategoryId(cat.id); setEditingTag(null); }} draggable onDragStart={() => setDraggedCategory(cat.id)} onDragOver={(e) => e.preventDefault()} onDrop={() => handleDropCategory(cat.id)} onDragEnd={() => setDraggedCategory(null)}
                 className={`group flex justify-between items-center p-2 rounded-md cursor-pointer transition-all ${selectedCategoryId === cat.id ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'} ${draggedCategory === cat.id ? 'opacity-30' : ''}`}>
                 <div className="flex items-center">
                   <Icon name="grip" className="w-5 h-5 mr-2 text-bunker-400 dark:text-bunker-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
                   <span>{cat.name}</span>
                 </div>
                 <div className={`flex items-center space-x-1 transition-opacity ${selectedCategoryId === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                  <button onClick={(e) => { e.stopPropagation(); setModalState({ type: 'category', data: cat, isNew: false }); }} className="p-1 hover:bg-white/20 rounded"><Icon name="pencil" className="w-4 h-4" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); handleEditCategory(cat); }} className="p-1 hover:bg-white/20 rounded"><Icon name="pencil" className="w-4 h-4" /></button>
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }} className="p-1 hover:bg-white/20 rounded"><Icon name="trash" className="w-4 h-4" /></button>
                 </div>
               </li>
@@ -429,39 +431,47 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
         </div>
         <div className="w-2/3 flex flex-col border-l border-bunker-200/80 dark:border-bunker-800/80 pl-4">
           {selectedCategory ? (
-            <>
-              <div className="flex-shrink-0 flex justify-between items-center mb-2">
-                <h4 className="font-semibold">Tags in "{selectedCategory.name}"</h4>
-                <button onClick={handleAddTag} disabled={selectedCategory.type !== 'tags' && !!selectedCategory.type} className="flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><Icon name="plus" className="w-4 h-4" /><span>Add Tag</span></button>
-              </div>
-              {(!selectedCategory.type || selectedCategory.type === 'tags') ? (
-                <div className="flex-grow p-1 pr-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 overflow-y-auto">
-                    <div className="h-4" onDragOver={e => e.preventDefault()} onDrop={handleRootDrop} />
-                    <TagTreeView
-                        nodes={tagTree}
-                        onDragStart={handleTagDragStart}
-                        onDragEnd={handleTagDragEnd}
-                        onDragOver={handleTagDragOver}
-                        onDragLeave={handleTagDragLeave}
-                        onDrop={handleTagDrop}
-                        onEdit={(tag) => setModalState({ type: 'tag', data: tag, isNew: false })}
-                        onDelete={handleDeleteTag}
-                        draggedTagId={draggedTagId}
-                        dropTarget={dropTarget}
-                    />
-                    {selectedCategory.tags.length === 0 && <p className="text-center text-sm text-bunker-400 py-4">No tags in this category.</p>}
-                </div>
+              editingTag ? (
+                <TagEditor 
+                    tag={editingTag} 
+                    allTags={allTagsFlat} 
+                    onSave={handleSaveTag} 
+                    onCancel={() => setEditingTag(null)} 
+                />
               ) : (
-                <div className="flex-grow flex items-center justify-center text-center p-4 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 text-bunker-500 text-sm">This category is of type '{selectedCategory.type}' and does not contain tags.</div>
-              )}
-            </>
+                <>
+                  <div className="flex-shrink-0 flex justify-between items-center mb-2">
+                    <h4 className="font-semibold">Tags in "{selectedCategory.name}"</h4>
+                    <button onClick={handleAddTag} disabled={selectedCategory.type !== 'tags' && !!selectedCategory.type} className="flex items-center space-x-2 text-sm px-3 py-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><Icon name="plus" className="w-4 h-4" /><span>Add Tag</span></button>
+                  </div>
+                  {(!selectedCategory.type || selectedCategory.type === 'tags') ? (
+                    <div className="flex-grow p-1 pr-2 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 overflow-y-auto">
+                        <div className="h-4" onDragOver={e => e.preventDefault()} onDrop={handleRootDrop} />
+                        <TagTreeView
+                            nodes={tagTree}
+                            onDragStart={handleTagDragStart}
+                            onDragEnd={handleTagDragEnd}
+                            onDragOver={handleTagDragOver}
+                            onDragLeave={handleTagDragLeave}
+                            onDrop={handleTagDrop}
+                            onEdit={setEditingTag}
+                            onDelete={handleDeleteTag}
+                            draggedTagId={draggedTagId}
+                            dropTarget={dropTarget}
+                        />
+                        {selectedCategory.tags.length === 0 && <p className="text-center text-sm text-bunker-400 py-4">No tags in this category.</p>}
+                    </div>
+                  ) : (
+                    <div className="flex-grow flex items-center justify-center text-center p-4 border border-bunker-200 dark:border-bunker-700 rounded-md bg-bunker-50 dark:bg-bunker-950/50 text-bunker-500 text-sm">This category is of type '{selectedCategory.type}' and does not contain tags.</div>
+                  )}
+                </>
+              )
           ) : (
             <div className="flex items-center justify-center h-full text-bunker-400">Select a category to view its tags.</div>
           )}
         </div>
       </div>
-      {modalState?.type === 'category' && <CategoryEditModal isOpen={true} onClose={() => setModalState(null)} onSave={handleSaveCategory} category={modalState.data as Category} />}
-      {modalState?.type === 'tag' && <TagEditModal isOpen={true} onClose={() => setModalState(null)} onSave={handleSaveTag} tag={modalState.data as Tag} allTags={allTagsFlat} />}
+      {isCategoryModalOpen && categoryToEdit && <CategoryEditModal isOpen={true} onClose={() => setIsCategoryModalOpen(false)} onSave={handleSaveCategory} category={categoryToEdit} />}
     </div>
   );
 };
