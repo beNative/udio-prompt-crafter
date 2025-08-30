@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import type { Tag } from '../types';
 import { Icon } from './icons';
-import { MultiSelectTransferList } from './MultiSelectTransferList'; // New component import
+import { MultiSelectTransferList } from './MultiSelectTransferList';
 
 interface TagEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (tag: Tag) => void;
+  onSave: (tag: Tag, originalId: string) => void;
   tag: Tag;
   allTags: Tag[];
 }
@@ -68,9 +68,11 @@ const SynonymInput: React.FC<{ synonyms: string[]; onChange: (synonyms: string[]
 
 export const TagEditModal: React.FC<TagEditModalProps> = ({ isOpen, onClose, onSave, tag, allTags }) => {
   const [editedTag, setEditedTag] = useState<Tag>(tag);
+  const [originalId, setOriginalId] = useState('');
 
   useEffect(() => {
     setEditedTag(tag);
+    setOriginalId(tag.id);
   }, [tag, isOpen]);
 
   const handleSave = () => {
@@ -80,7 +82,7 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({ isOpen, onClose, onS
       if (!finalTag.synonyms?.length) delete finalTag.synonyms;
       if (!finalTag.conflictsWith?.length) delete finalTag.conflictsWith;
       if (!finalTag.suggests?.length) delete finalTag.suggests;
-      onSave(finalTag);
+      onSave(finalTag, originalId);
     } else {
       alert("Tag label cannot be empty.");
     }
@@ -128,10 +130,13 @@ export const TagEditModal: React.FC<TagEditModalProps> = ({ isOpen, onClose, onS
                     <input
                       id="tag-id"
                       type="text"
-                      value={editedTag.id || '(auto-generated from label)'}
-                      className="form-input bg-bunker-100 dark:bg-bunker-800"
-                      disabled
+                      value={editedTag.id}
+                      onChange={e => setEditedTag(t => ({ ...t, id: e.target.value.trim() }))}
+                      className={`form-input ${!originalId ? 'bg-bunker-100 dark:bg-bunker-800' : ''}`}
+                      placeholder="(auto-generated from label)"
+                      disabled={!originalId}
                     />
+                    {!originalId && <p className="text-xs text-bunker-400 mt-1">The ID can be edited after the tag has been created.</p>}
                  </div>
                  <div>
                     <label htmlFor="tag-desc" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Description</label>

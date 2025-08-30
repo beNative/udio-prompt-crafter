@@ -206,20 +206,58 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     setModalState({ type: 'tag', data: { id: '', label: '', description: '', color: 'gray' }, isNew: true });
   };
 
-  const handleSaveTag = (tagToSave: Tag) => {
-    if (!selectedCategoryId) return;
+  const handleSaveTag = (tagToSave: Tag, originalId: string) => {
+    if (!selectedCategoryId && !originalId) return;
+
     setEditedTaxonomy(produce(draft => {
-      const category = draft.find(c => c.id === selectedCategoryId);
-      if (!category) return;
-      if (modalState?.isNew) {
+      const allTagsInDraft = draft.flatMap(c => c.tags);
+      const isNewTag = !originalId;
+
+      if (isNewTag) {
+        // --- Handle New Tag ---
+        const category = draft.find(c => c.id === selectedCategoryId);
+        if (!category) return;
+        
         const newId = `${slugify(category.id.split('_')[0])}_${slugify(tagToSave.label)}`;
-        if (category.tags.some(t => t.id === newId)) { alert(`Error: A tag with ID '${newId}' already exists.`); return; }
+        if (allTagsInDraft.some(t => t.id === newId)) {
+          alert(`Error: A tag with ID '${newId}' already exists.`);
+          return;
+        }
         category.tags.push({ ...tagToSave, id: newId });
+
       } else {
-        const index = category.tags.findIndex(t => t.id === tagToSave.id);
-        if (index !== -1) category.tags[index] = tagToSave;
+        // --- Handle Existing Tag ---
+        const newId = tagToSave.id;
+
+        // Check for ID uniqueness if it has changed
+        if (originalId !== newId && allTagsInDraft.some(t => t.id === newId)) {
+          alert(`Error: A tag with the ID '${newId}' already exists.`);
+          return;
+        }
+        
+        // Update references if ID has changed
+        if (originalId !== newId) {
+          allTagsInDraft.forEach(tag => {
+            if (tag.suggests?.includes(originalId)) {
+              tag.suggests = tag.suggests.map(id => id === originalId ? newId : id);
+            }
+            if (tag.conflictsWith?.includes(originalId)) {
+              tag.conflictsWith = tag.conflictsWith.map(id => id === originalId ? newId : id);
+            }
+          });
+        }
+        
+        // Find and update the tag itself
+        const category = draft.find(c => c.tags.some(t => t.id === originalId));
+        if (category) {
+            const tagIndex = category.tags.findIndex(t => t.id === originalId);
+            if (tagIndex !== -1) {
+                category.tags[tagIndex] = tagToSave;
+            }
+        }
       }
     }));
+
     setIsDirty(true);
     setModalState(null);
   };
@@ -230,8 +268,13 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
       setEditedTaxonomy(produce(draft => {
         const category = draft.find(c => c.id === selectedCategoryId);
         if (category) {
+          // Remove the tag itself
           category.tags = category.tags.filter(t => t.id !== tagId);
-          category.tags.forEach(t => { if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId); });
+          // Remove references to the deleted tag from other tags in the same category
+          category.tags.forEach(t => { 
+            if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId);
+            if (t.conflictsWith?.includes(tagId)) t.conflictsWith = t.conflictsWith.filter(cId => cId !== tagId);
+          });
         }
       }));
       setIsDirty(true);
