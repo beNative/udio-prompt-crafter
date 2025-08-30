@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -73,7 +74,8 @@ app.whenReady().then(() => {
     try {
       const docsPath = isDev 
           ? path.join(appRoot, 'dist', 'docs') 
-          : path.join((process as any).resourcesPath, 'docs');
+          // Fix: Use global.process to avoid potential type conflicts with a shadowed `process` variable.
+          : path.join(global.process.resourcesPath, 'docs');
       const filePath = path.join(docsPath, filename);
       if (fs.existsSync(filePath)) {
         return fs.readFileSync(filePath, 'utf-8');
@@ -93,8 +95,8 @@ app.whenReady().then(() => {
   });
 
   // --- Logging ---
-  // Fix: Cast 'process' to 'any' to resolve TypeScript error 'Property 'cwd' does not exist on type 'Process''.
-  const logDir = isDev ? (process as any).cwd() : path.dirname(app.getPath('exe'));
+  // Fix: Use global.process to avoid potential type conflicts with a shadowed `process` variable.
+  const logDir = isDev ? global.process.cwd() : path.dirname(app.getPath('exe'));
   const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
   let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -127,6 +129,6 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  // Fix: Cast 'process' to 'any' to resolve TypeScript error 'Property 'platform' does not exist on type 'Process''.
-  if ((process as any).platform !== 'darwin') app.quit();
+  // Fix: Use global.process to avoid potential type conflicts with a shadowed `process` variable.
+  if (global.process.platform !== 'darwin') app.quit();
 });
