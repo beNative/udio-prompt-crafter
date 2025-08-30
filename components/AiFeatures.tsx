@@ -16,10 +16,11 @@ const LoadingSpinner: React.FC = () => (
     </svg>
 );
 
-export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, callLlm, onSetLyricText }) => {
+export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, callLlm }) => {
     const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
     const [lyricError, setLyricError] = useState<string | null>(null);
     const [lyricIdeas, setLyricIdeas] = useState<string[]>([]);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     
     const handleGenerateLyrics = useCallback(async () => {
         setIsLoadingLyrics(true);
@@ -62,10 +63,14 @@ Here is a perfect example of the required response format:
 
     }, [selectedTags, callLlm]);
     
-    const handleLyricIdeaClick = (idea: string) => {
-        onSetLyricText(idea);
-        setLyricIdeas([]);
-    }
+    const handleCopyLyric = (idea: string, index: number) => {
+        navigator.clipboard.writeText(idea).then(() => {
+            setCopiedIndex(index);
+            setTimeout(() => {
+                setCopiedIndex(null);
+            }, 2000);
+        });
+    };
 
     if (category.id !== 'lyrics') {
         return null;
@@ -82,9 +87,20 @@ Here is a perfect example of the required response format:
             {lyricIdeas.length > 0 && (
                 <div className="mt-4 space-y-2">
                     {lyricIdeas.map((idea, i) => (
-                        <button key={i} onClick={() => handleLyricIdeaClick(idea)} className="block w-full text-left p-2 bg-bunker-100 dark:bg-bunker-800 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 text-sm">
-                            "{idea}"
-                        </button>
+                        <div key={i} className="flex items-center justify-between p-2 pl-3 bg-bunker-100 dark:bg-bunker-800 rounded-md text-sm">
+                            <span className="flex-grow pr-2 text-bunker-800 dark:text-bunker-200">"{idea}"</span>
+                            <button 
+                                onClick={() => handleCopyLyric(idea, i)} 
+                                className="p-1.5 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 transition-colors flex-shrink-0"
+                                title="Copy to clipboard"
+                            >
+                                {copiedIndex === i ? (
+                                    <Icon name="check" className="w-4 h-4 text-green-500" />
+                                ) : (
+                                    <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-400" />
+                                )}
+                            </button>
+                        </div>
                     ))}
                 </div>
             )}
