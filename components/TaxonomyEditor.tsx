@@ -397,8 +397,8 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   }, [selectedCategory]);
 
   return (
-    <div className="bg-white/50 dark:bg-bunker-900/50 backdrop-blur-sm rounded-xl border border-bunker-200/80 dark:border-bunker-800/80 shadow-sm">
-      <div className="p-4 border-b border-bunker-200/80 dark:border-bunker-800/80 flex justify-between items-center">
+    <div className="bg-white/50 dark:bg-bunker-900/50 backdrop-blur-sm rounded-xl border border-bunker-200/80 dark:border-bunker-800/80 shadow-sm h-full flex flex-col">
+      <div className="p-4 border-b border-bunker-200/80 dark:border-bunker-800/80 flex justify-between items-center flex-shrink-0">
         <div>
           <h3 className="text-lg font-semibold">Taxonomy Editor</h3>
           <p className="text-xs text-bunker-500 dark:text-bunker-400 mt-1">Drag and drop to reorder. Your custom taxonomy is saved locally.</p>
@@ -409,7 +409,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
           <button onClick={handleSaveChanges} disabled={!isDirty} className="rounded-md border border-transparent px-3 py-1.5 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Taxonomy</button>
         </div>
       </div>
-      <div className="p-4 flex space-x-4 h-[600px]">
+      <div className="p-4 flex space-x-4 flex-grow min-h-0">
         <div className="w-1/3 flex flex-col">
           <h4 className="font-semibold mb-2 px-2 flex-shrink-0">Categories</h4>
           <ul className="flex-grow space-y-1 pr-2 overflow-y-auto">

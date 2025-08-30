@@ -218,8 +218,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   }
 
   return (
-    <div className="p-6 bg-bunker-50 dark:bg-transparent min-h-full">
-      <div>
+    <div className="p-6 bg-bunker-50 dark:bg-transparent h-full flex flex-col">
+      <div className="flex-shrink-0">
         <div className="pb-5 border-b border-bunker-200 dark:border-bunker-800">
           <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Settings</h2>
           <p className="text-bunker-500 dark:text-bunker-400 mt-1">Manage application configuration and AI connections.</p>
@@ -233,10 +233,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 {isElectron && <TabButton label="Application" isActive={activeTab === 'application'} onClick={() => setActiveTab('application')} />}
             </nav>
         </div>
-        
-        <div className="mt-6">
-            {renderContent()}
-        </div>
+      </div>
+      
+      <div className="mt-6 flex-grow min-h-0">
+          {renderContent()}
       </div>
 
       <DebugLogModal 
