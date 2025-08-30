@@ -51,7 +51,7 @@ const SynonymInput: React.FC<{ synonyms: string[]; onChange: (synonyms: string[]
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-grow bg-transparent focus:outline-none min-w-[100px]"
+                className="flex-grow bg-transparent focus:outline-none min-w-[100px] text-bunker-900 dark:text-bunker-100"
                 placeholder={synonyms.length === 0 ? "Add synonyms..." : ""}
             />
         </div>

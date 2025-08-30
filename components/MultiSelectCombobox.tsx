@@ -96,7 +96,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({ title,
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            className="flex-grow bg-transparent focus:outline-none min-w-[120px]"
+            className="flex-grow bg-transparent focus:outline-none min-w-[120px] text-bunker-900 dark:text-bunker-100"
             placeholder="Search to add..."
           />
         </div>
