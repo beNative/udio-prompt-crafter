@@ -28,20 +28,22 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
 
         const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes(t.categoryId));
 
-        const systemPrompt = `You are a creative songwriter AI. Your task is to generate 3 short, distinct lyrical theme ideas based on a list of music style tags provided by the user.
+        const systemPrompt = `You are a creative songwriter AI. Your task is to generate 3 short, distinct lyrical theme ideas in English, based on a list of music style tags provided by the user.
 
-Your response MUST be a valid JSON object with a single key, "themes", which is an array of strings. Each string should be a lyrical theme.
+- Your response MUST be a valid JSON object.
+- The JSON object must have a single key: "themes".
+- The value of "themes" must be an array of 3 strings.
+- Each string in the array should be a unique lyrical theme.
+- Do NOT include any text, explanations, or markdown formatting outside of the JSON object itself.
 
-Example of a valid response:
+Here is a perfect example of the required response format:
 {
   "themes": [
     "a story about a lost robot in a neon city",
     "the feeling of a fading summer memory",
     "a secret whispered on a midnight train"
   ]
-}
-
-Your response must contain ONLY the JSON object, with no other text, comments, or markdown formatting.`;
+}`;
         const userPrompt = `Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`;
 
         try {
