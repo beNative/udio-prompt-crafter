@@ -139,8 +139,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     const normalizedLabels = normalizeTagLabels(tagLabels);
 
     const textInputs = orderedCategories
-        // Fix: Include 'helper_input' type categories when gathering text inputs for the prompt string.
-        .filter(cat => (cat.type === 'text' || cat.type === 'helper_input') && textCategoryValues[cat.id])
+        // Note: 'helper_input' type categories are intentionally excluded from the final prompt string.
+        .filter(cat => cat.type === 'text' && textCategoryValues[cat.id])
         .map(cat => textCategoryValues[cat.id]);
 
     const allPromptParts = [...normalizedLabels, ...textInputs];
