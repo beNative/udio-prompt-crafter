@@ -2,14 +2,9 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { fileURLToPath } from 'url';
 // Note: 'process' is a global in Node.js environments and does not need to be imported.
 // The explicit import was removed to prevent shadowing the correctly-typed global variable.
 import { starterPresets } from '../data/presets';
-
-// Fix: Manually define `__dirname` for ES module scope. This is necessary because __dirname is not available in ES modules by default.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const isDev = !app.isPackaged;
 
