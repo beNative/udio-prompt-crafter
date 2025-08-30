@@ -13,8 +13,8 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
 -   **AI-Powered Assistance:**
     -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
+    -   **AI-Powered Songwriting:** Generate creative lyrical theme ideas based on keywords and then expand them into full song lyrics with verses and choruses.
     -   **Tag Suggestions:** Get recommendations for complementary tags.
-    -   **Lyrical Ideas:** Generate creative starting points for lyrics.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").

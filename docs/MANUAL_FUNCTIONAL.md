@@ -23,7 +23,10 @@ This is where you choose the building blocks of your prompt.
 -   **Searching:** Use the search bar at the top to filter tags within the current category by name or synonym.
 -   **Tree View:** For complex categories, tags are organized in a hierarchical tree view. You can expand or collapse branches to navigate.
 -   **Clearing Tags:** If you have tags selected in a category, a "Clear" button will appear at the top right, allowing you to deselect all tags from that category at once.
--   **Text Categories:** Some categories, like "Lyrics" or "References," are free-form text boxes instead of tag lists. Simply type your desired content here.
+-   **Text Categories:** Some categories, like "References," are free-form text boxes instead of tag lists. Simply type your desired content here.
+-   **AI Lyric Helper:** When you select the "Lyric Helper Keywords" category, a special AI-powered section appears. This is a two-step songwriting assistant:
+    1.  **Generate Ideas:** Enter keywords (e.g., "summer, nostalgia, road trip") into the text box. The helper will also consider any selected "Genre" and "Mood" tags. Click "Generate Lyric Ideas," and the AI will produce several distinct themes for a song.
+    2.  **Generate Full Lyrics:** Once the ideas appear, each one will have a "Generate Lyrics" button next to it. Clicking this button will take that specific theme and use the AI to write a complete song with a conventional structure (verses, chorus, bridge, etc.).
 
 ### 3. Live Preview Panel (Right)
 

@@ -1,5 +1,15 @@
 # Version Log
 
+## v1.2.0 - The Songwriter's Assistant Update
+
+This release introduces a major enhancement to the AI features, turning the crafter into a powerful songwriting partner.
+
+### Features Added
+
+-   **AI Lyric Helper:** When the "Lyric Helper Keywords" category is selected, a new "AI Lyric Helper" section appears.
+    -   **Generate Lyric Ideas:** Users can input keywords and use selected Genre/Mood tags to generate multiple creative lyrical theme ideas.
+    -   **Generate Full Lyrics:** After generating ideas, a new "Generate Lyrics" button appears for each theme. Clicking it uses the AI to expand the chosen idea into a complete set of song lyrics with a conventional structure (verses, chorus, bridge).
+
 ## v1.1.0 - The Creative Flow Update
 
 This release focuses on streamlining the prompt creation workflow and expanding the creative toolkit.

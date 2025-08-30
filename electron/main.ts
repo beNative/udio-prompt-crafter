@@ -23,7 +23,8 @@ logToFile('Main process started.');
 
 // Catch unhandled errors in the main process.
 // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-process.on('uncaughtException', (error, origin) => {
+// FIX: Cast `process` to `any` to resolve TypeScript error about property 'on' not existing on type 'Process'.
+(process as any).on('uncaughtException', (error, origin) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
   // It's generally recommended to quit after an uncaught exception.
@@ -194,7 +195,8 @@ try {
 
     // --- Logging ---
     // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-    const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+    // FIX: Cast `process` to `any` to resolve TypeScript error about property 'cwd' not existing on type 'Process'.
+    const logDir = isDev ? (process as any).cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -240,5 +242,6 @@ try {
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
   // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-  if (process.platform !== 'darwin') app.quit();
+  // FIX: Cast `process` to `any` to resolve TypeScript error about property 'platform' not existing on type 'Process'.
+  if ((process as any).platform !== 'darwin') app.quit();
 });
