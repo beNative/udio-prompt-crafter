@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
@@ -123,7 +124,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       switch(activeTab) {
         case 'ai':
             return (
-                <div className="space-y-6 max-w-4xl">
+                <div className="space-y-6 max-w-4xl mx-auto">
                     <div>
                       <div className="flex justify-between items-center">
                           <label htmlFor="provider" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Provider</label>
@@ -157,7 +158,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             return <TaxonomyEditor taxonomy={taxonomy} onSave={onTaxonomyChange} />;
         case 'presets':
             return (
-                 <div>
+                 <div className="mx-auto">
                     <p className="text-sm text-bunker-500 dark:text-bunker-400 mb-4">
                       For advanced users, presets can be edited directly here. For a user-friendly experience, use the "Manage Presets" button in the header.
                     </p>
@@ -178,7 +179,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         case 'application':
              if (!isElectron) return <p className="text-bunker-500">Application settings are only available in the desktop version.</p>;
              return (
-                <div className="space-y-6 max-w-4xl">
+                <div className="space-y-6 max-w-4xl mx-auto">
                    <div className="flex justify-between items-center p-4 bg-white/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200/80 dark:border-bunker-800/80">
                         <div>
                             <p className="text-sm font-medium text-bunker-700 dark:text-bunker-300">View Startup Log</p>
@@ -218,8 +219,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   }
 
   return (
-    <div className="p-6 bg-bunker-50 dark:bg-transparent h-full flex flex-col">
-      <div className="flex-shrink-0">
+    <div className="bg-bunker-50 dark:bg-transparent h-full flex flex-col">
+      <div className="px-6 pt-6 flex-shrink-0">
         <div className="pb-5 border-b border-bunker-200 dark:border-bunker-800">
           <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Settings</h2>
           <p className="text-bunker-500 dark:text-bunker-400 mt-1">Manage application configuration and AI connections.</p>
@@ -235,7 +236,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
       
-      <div className="mt-6 flex-grow min-h-0">
+      <div className="mt-6 px-6 pb-6 flex-grow min-h-0 overflow-y-auto">
           {renderContent()}
       </div>
 

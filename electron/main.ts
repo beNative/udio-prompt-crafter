@@ -1,16 +1,15 @@
-// Fix: Removed the triple-slash directive that was causing a "Cannot find type definition file" error.
-// This is often due to a misconfigured tsconfig.json or missing @types/node, which cannot be fixed here.
-// Declaring __dirname manually below solves the related "Cannot find name" errors.
+
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { starterPresets } from '../data/presets';
 
-// Fix: Declare __dirname to resolve TypeScript "Cannot find name '__dirname'" errors.
-// In an Electron main process (a Node.js environment), __dirname is a global variable available at runtime.
+// In an Electron main process (a Node.js environment), __dirname and process are global variables available at runtime.
+// Declaring them helps TypeScript understand they exist.
 declare const __dirname: string;
+declare const process: any;
 
-// --- START: Early Debug Logging ---
+// --- START: Robust Startup Debug Logging ---
 const debugLogPath = path.join(app.getPath('userData'), 'debug.log');
 // Clear log on each start to keep it relevant to the current session.
 fs.writeFileSync(debugLogPath, '', { encoding: 'utf-8' }); 
@@ -27,16 +26,14 @@ const logToFile = (message: string) => {
 
 logToFile('Main process started.');
 
-// Catch unhandled errors in the main process.
-// Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-// FIX: Cast `process` to `any` to resolve TypeScript error about property 'on' not existing on type 'Process'.
-(process as any).on('uncaughtException', (error, origin) => {
+// Catch unhandled errors in the main process and log them before quitting.
+process.on('uncaughtException', (error: Error, origin: string) => {
   logToFile(`[FATAL] Uncaught Exception: ${error.stack || error.message}`);
   logToFile(`Origin: ${origin}`);
   // It's generally recommended to quit after an uncaught exception.
   app.quit();
 });
-// --- END: Early Debug Logging ---
+// --- END: Robust Startup Debug Logging ---
 
 const isDev = !app.isPackaged;
 logToFile(`isDev = ${isDev}`);
@@ -220,10 +217,9 @@ try {
     // --- Documentation ---
     ipcMain.handle('read-markdown-file', (event, filename) => {
       try {
-        // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
         const docsPath = isDev 
             ? path.join(__dirname, '..', 'docs') 
-            : path.join((process as any).resourcesPath, 'docs'); // extraResources are not in app.asar
+            : path.join(process.resourcesPath, 'docs'); // extraResources are not in app.asar
             
         const filePath = path.join(docsPath, filename);
         if (fs.existsSync(filePath)) {
@@ -244,9 +240,7 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-    // FIX: Cast `process` to `any` to resolve TypeScript error about property 'cwd' not existing on type 'Process'.
-    const logDir = isDev ? (process as any).cwd() : path.dirname(app.getPath('exe'));
+    const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
     let currentLogFilePath = path.join(logDir, getLogFileName());
 
@@ -291,7 +285,5 @@ try {
 
 app.on('window-all-closed', () => {
   logToFile('All windows closed. Quitting app.');
-  // Fix: In a Node.js environment, `process` is a global object. Using it directly resolves the TypeScript error.
-  // FIX: Cast `process` to `any` to resolve TypeScript error about property 'platform' not existing on type 'Process'.
-  if ((process as any).platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') app.quit();
 });

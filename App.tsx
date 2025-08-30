@@ -309,34 +309,18 @@ const App: React.FC = () => {
     let endpoint = '';
     let body: any = {};
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // Deprecated but good fallback
 
     if (provider === 'ollama') {
       endpoint = `${baseUrl.replace(/\/$/, '')}/api/chat`;
-      body = {
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        stream: false,
-      };
-      if (!isResponseTextFreeform) {
-        body.format = 'json';
-      }
+      body = { model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], stream: false };
+      if (!isResponseTextFreeform) body.format = 'json';
     } else { // lmstudio (openai-compatible)
       endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
-      body = {
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        stream: false,
-      };
+      body = { model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], stream: false };
     }
     
-    logger.info(`Calling LLM at ${endpoint}`, { provider });
+    logger.info(`Calling LLM at ${endpoint}`, { provider, model });
     logger.debug('LLM request body:', body);
 
     try {
@@ -344,7 +328,7 @@ const App: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        signal: controller.signal
+        signal: AbortSignal.timeout(90000) // Modern timeout
       });
       clearTimeout(timeoutId);
 
@@ -356,7 +340,7 @@ const App: React.FC = () => {
       }
       
       const data = await response.json();
-      logger.debug('LLM response data:', data);
+      logger.debug('LLM response data received.');
 
       const contentString: string = provider === 'ollama' ? data.message.content : data.choices[0].message.content;
 
@@ -369,38 +353,27 @@ const App: React.FC = () => {
       
       const markdownMatch = textToParse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (markdownMatch && markdownMatch[1]) {
+        logger.debug('Extracted JSON from markdown code block.');
         textToParse = markdownMatch[1].trim();
       }
 
-      const firstBrace = textToParse.indexOf('{');
-      const firstBracket = textToParse.indexOf('[');
-      let startIndex = -1;
-      if (firstBrace === -1) startIndex = firstBracket;
-      else if (firstBracket === -1) startIndex = firstBrace;
-      else startIndex = Math.min(firstBrace, firstBracket);
-
-      if (startIndex === -1) throw new Error('AI response did not contain a valid JSON object or array.');
-      
-      const lastBrace = textToParse.lastIndexOf('}');
-      const lastBracket = textToParse.lastIndexOf(']');
-      const endIndex = Math.max(lastBrace, lastBracket);
-
-      if (endIndex === -1) throw new Error('AI response has a malformed JSON object (no closing brace/bracket).');
-      
-      const jsonSubstring = textToParse.substring(startIndex, endIndex + 1);
-
       try {
-        const parsedJson = JSON.parse(jsonSubstring);
+        const parsedJson = JSON.parse(textToParse);
         logger.info('Successfully received and parsed LLM response.');
         return parsedJson;
       } catch (error: any) {
-        logger.error('Failed to parse extracted JSON from AI response', { errorMessage: error.message, extractedJson: jsonSubstring });
-        throw new Error(`Error: ${error.message}. The AI returned the following invalid JSON: ${jsonSubstring.substring(0, 100)}...`);
+        logger.error('Failed to parse JSON from AI response', { errorMessage: error.message, content: textToParse });
+        throw new Error(`The AI returned invalid JSON. Response snippet: ${textToParse.substring(0, 150)}...`);
       }
 
     } catch (error: any) {
         clearTimeout(timeoutId);
-        const errorMessage = error.name === 'AbortError' ? "AI API request timed out after 90 seconds." : error.message;
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            const timeoutMessage = "AI API request timed out after 90 seconds. Please check if the service is running and the model is loaded.";
+            logger.error(timeoutMessage);
+            throw new Error(timeoutMessage);
+        }
+        const errorMessage = error.message || 'An unknown network error occurred.';
         logger.error("Error calling LLM:", { message: errorMessage });
         throw new Error(errorMessage);
     }

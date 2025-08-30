@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLogger } from '../hooks/useLogger';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -100,8 +101,6 @@ export const LogPanel: React.FC<LogPanelProps> = ({ onClose }) => {
       </header>
       <div ref={logContainerRef} className="flex-grow p-2 overflow-y-auto font-mono text-xs">
         {filteredLogs.map((log, i) => {
-          // Fix: The 'fractionalSecondDigits' option for toLocaleTimeString is not available in all TypeScript lib versions.
-          // Manually format the time to include milliseconds for broader compatibility.
           const d = new Date(log.timestamp);
           const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}.${d.getMilliseconds().toString().padStart(3, '0')}`;
           return (

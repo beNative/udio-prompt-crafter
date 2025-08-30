@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { SelectedTag, Conflict, Preset } from '../types';
+import type { SelectedTag, Conflict, Preset, Category } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
 
 interface PromptPreviewProps {
-  // Fix: Allow 'helper_input' for category type to match the 'Category' type from types.ts, resolving the type error in App.tsx.
-  orderedCategories: { id: string, name: string, type?: 'tags' | 'text' | 'helper_input' }[];
+  orderedCategories: Pick<Category, 'id' | 'name' | 'type'>[];
   selectedTags: Record<string, SelectedTag>;
   textCategoryValues: Record<string, string>;
   conflicts: Conflict[];
