@@ -47,6 +47,7 @@ export interface AppSettings {
   presets: Preset[];
   promptPanelRatio?: number;
   openDevToolsOnStart?: boolean;
+  iconSet?: 'heroicons' | 'lucide';
 }
 
 // New Logging types

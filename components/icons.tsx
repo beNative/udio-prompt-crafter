@@ -1,13 +1,12 @@
-
 import React from 'react';
+import { useSettings } from '../index';
 
 type IconProps = {
   name: string;
   className?: string;
 };
 
-export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
-  const icons: { [key: string]: JSX.Element } = {
+const heroicons: { [key: string]: JSX.Element } = {
     sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />,
     moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />,
     save: <path strokeLinecap="round" strokeLinejoin="round" d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338A2.25 2.25 0 0017.088 3.75H15M12 3.75v9" />,
@@ -36,11 +35,58 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     'arrows-pointing-out': <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />,
     'arrows-pointing-in': <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25" />,
     lightbulb: <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a11.99 11.99 0 01-5.25 0m5.25 0a11.99 11.99 0 005.25 0M10.5 8.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM12 3a2.25 2.25 0 00-2.25 2.25v.75A2.25 2.25 0 0012 8.25a2.25 2.25 0 002.25-2.25v-.75A2.25 2.25 0 0012 3z" />,
-  };
+};
+
+const lucideIcons: { [key: string]: JSX.Element } = {
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></>,
+  moon: <><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></>,
+  save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></>,
+  load: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 11 12 16 17 11" /><line x1="12" y1="16" x2="12" y2="4" /></>,
+  sparkles: <><path d="M9.93 2.07a2 2 0 0 0-1.86 0L6.66 3.5a2 2 0 0 1-2.11.12l-1.93-1a2 2 0 0 0-2.22.44l-1 1.74a2 2 0 0 0 .44 2.22l1 1.93a2 2 0 0 1-.12 2.11l-1.41 1.41a2 2 0 0 0 0 2.82l1.41 1.41a2 2 0 0 1 .12 2.11l-1 1.93a2 2 0 0 0-.44 2.22l1 1.74a2 2 0 0 0 2.22.44l1.93-1a2 2 0 0 1 2.11.12l1.41 1.41a2 2 0 0 0 2.82 0l1.41-1.41a2 2 0 0 1 2.11-.12l1.93 1a2 2 0 0 0 2.22-.44l1-1.74a2 2 0 0 0-.44-2.22l-1-1.93a2 2 0 0 1 .12-2.11l1.41-1.41a2 2 0 0 0 0-2.82l-1.41-1.41a2 2 0 0 1-.12-2.11l1-1.93a2 2 0 0 0 .44-2.22l-1-1.74a2 2 0 0 0-2.22-.44l-1.93 1a2 2 0 0 1-2.11-.12Z"/></>,
+  trash: <><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></>,
+  info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
+  copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></>,
+  check: <><path d="M20 6 9 17l-5-5" /></>,
+  chevronDown: <><path d="m6 9 6 6 6-6" /></>,
+  chevronRight: <><path d="m9 18 6-6-6-6" /></>,
+  x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
+  grip: <><circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" /><circle cx="5" cy="5" r="1" /><circle cx="5" cy="12" r="1" /><circle cx="5" cy="19" r="1" /><circle cx="19" cy="5" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="19" cy="19" r="1" /></>,
+  warning: <><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></>,
+  wandSparkles: <><path d="M9.93 2.07a2 2 0 0 0-1.86 0L6.66 3.5a2 2 0 0 1-2.11.12l-1.93-1a2 2 0 0 0-2.22.44l-1 1.74a2 2 0 0 0 .44 2.22l1 1.93a2 2 0 0 1-.12 2.11l-1.41 1.41a2 2 0 0 0 0 2.82l1.41 1.41a2 2 0 0 1 .12 2.11l-1 1.93a2 2 0 0 0-.44 2.22l1 1.74a2 2 0 0 0 2.22.44l1.93-1a2 2 0 0 1 2.11.12l1.41 1.41a2 2 0 0 0 2.82 0l1.41-1.41a2 2 0 0 1 2.11-.12l1.93 1a2 2 0 0 0 2.22-.44l1-1.74a2 2 0 0 0-.44-2.22l-1-1.93a2 2 0 0 1 .12-2.11l1.41-1.41a2 2 0 0 0 0-2.82l-1.41-1.41a2 2 0 0 1-.12-2.11l1-1.93a2 2 0 0 0 .44-2.22l-1-1.74a2 2 0 0 0-2.22-.44l-1.93 1a2 2 0 0 1-2.11-.12Z"/></>,
+  search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
+  cog: <><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" /><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M12 2v2" /><path d="M12 22v-2" /><path d="m17 20.66-1-1.73" /><path d="m6 3.34 1 1.73" /><path d="m7 3.34-1 1.73" /><path d="m18 20.66 1-1.73" /><path d="m3.34 7 1.73 1" /><path d="m20.66 17-1.73-1" /><path d="m3.34 17 1.73-1" /><path d="m20.66 7-1.73 1" /></>,
+  terminal: <><polyline points="4 17 10 11 4 5" /><line x1="12" x2="20" y1="19" y2="19" /></>,
+  folder: <><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L8.6 3.3A2 2 0 0 0 6.9 2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z" /></>,
+  tag: <><path d="M12.586 2.586a2 2 0 0 0-2.828 0L2.172 10.172a2 2 0 0 0 0 2.828l7.414 7.414a2 2 0 0 0 2.828 0l7.586-7.586a2 2 0 0 0 0-2.828Z" /><circle cx="16" cy="8" r="1" /></>,
+  plus: <><path d="M5 12h14" /><path d="M12 5v14" /></>,
+  pencil: <><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></>,
+  'list-bullet': <><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" /></>,
+  upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></>,
+  history: <><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></>,
+  'arrows-pointing-out': <><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" /></>,
+  'arrows-pointing-in': <><path d="M9 3H3v6" /><path d="M21 15v6h-6" /><path d="M3 3l7 7" /><path d="M21 21l-7-7" /></>,
+  lightbulb: <><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.7.8 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></>,
+};
+
+export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
+  const { settings } = useSettings();
+  const iconSet = settings?.iconSet || 'heroicons';
+  
+  const selectedIcons = iconSet === 'lucide' ? lucideIcons : heroicons;
+  const strokeWidth = iconSet === 'lucide' ? 2 : 1.5;
 
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-      {icons[name]}
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+      {selectedIcons[name]}
     </svg>
   );
 };

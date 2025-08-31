@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
@@ -21,6 +20,7 @@ import { PresetManagerModal } from './components/PresetManagerModal';
 import { PromptHistoryModal } from './components/PromptHistoryModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
+import { SettingsContext } from './index';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -196,6 +196,7 @@ const App: React.FC = () => {
         const storedPresets = localStorage.getItem('user-presets');
         const storedAiSettings = localStorage.getItem('ai-settings');
         const storedPromptRatio = localStorage.getItem('prompt-panel-ratio');
+        const storedIconSet = localStorage.getItem('icon-set');
         setAppSettings({
           presets: storedPresets ? JSON.parse(storedPresets) : starterPresets,
           aiSettings: storedAiSettings ? JSON.parse(storedAiSettings) : {
@@ -204,6 +205,7 @@ const App: React.FC = () => {
             model: 'llama3',
           },
           promptPanelRatio: storedPromptRatio ? JSON.parse(storedPromptRatio) : 50,
+          iconSet: storedIconSet ? JSON.parse(storedIconSet) : 'heroicons',
         });
       }
     };
@@ -263,6 +265,9 @@ const App: React.FC = () => {
       localStorage.setItem('ai-settings', JSON.stringify(appSettings.aiSettings));
       if (appSettings.promptPanelRatio) {
         localStorage.setItem('prompt-panel-ratio', JSON.stringify(appSettings.promptPanelRatio));
+      }
+      if (appSettings.iconSet) {
+        localStorage.setItem('icon-set', JSON.stringify(appSettings.iconSet));
       }
     }
   }, [appSettings]);
@@ -778,8 +783,6 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         return (
           <div className="h-full overflow-y-auto">
             <SettingsPage 
-              settings={appSettings}
-              onSettingsChange={setAppSettings}
               taxonomy={taxonomy}
               onTaxonomyChange={handleTaxonomyChange}
               defaultPresets={starterPresets}
@@ -818,82 +821,84 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   };
 
   return (
-    <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
-      <Header 
-        theme={theme} 
-        activeView={activeView}
-        onSetView={setActiveView}
-        onToggleTheme={toggleTheme}
-        onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
-        onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
-        onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-        onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
-        onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
-        onClear={handleClear}
-        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
-      />
-      <main className="flex-grow flex flex-col min-h-0">
-        {renderActiveView()}
-      </main>
-      <StatusBar 
-        appVersion={appVersion}
-        tagCount={Object.keys(selectedTags).length}
-        conflictCount={conflicts.length}
-        aiStatus={aiStatus}
-      />
-       {conflictState && (
-        <ConflictResolutionModal
-          conflict={conflictState}
-          onResolve={handleResolveConflict}
+    <SettingsContext.Provider value={{ settings: appSettings, setSettings: setAppSettings }}>
+      <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
+        <Header 
+          theme={theme} 
+          activeView={activeView}
+          onSetView={setActiveView}
+          onToggleTheme={toggleTheme}
+          onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
+          onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
+          onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+          onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
+          onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
+          onClear={handleClear}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
         />
-      )}
-      <CommandPalette 
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        tags={allTags}
-        presets={appSettings.presets}
-        onToggleTag={handleToggleTag}
-        onLoadPreset={handleLoadPreset}
-        onSavePreset={() => setIsSavePresetModalOpen(true)}
-        onRandomize={handleSimpleRandomize}
-        onClear={handleClear}
-      />
-      <SavePresetModal
-        isOpen={isSavePresetModalOpen}
-        onClose={() => setIsSavePresetModalOpen(false)}
-        onSave={handleSavePreset}
-      />
-      <PresetManagerModal
-        isOpen={isPresetManagerModalOpen}
-        onClose={() => setIsPresetManagerModalOpen(false)}
-        presets={appSettings.presets}
-        onLoadPreset={(preset) => {
-            handleLoadPreset(preset);
-            setIsPresetManagerModalOpen(false);
-        }}
-        onUpdatePreset={handleUpdatePreset}
-        onDeletePreset={handleDeletePreset}
-        onRenamePreset={handleRenamePreset}
-      />
-      <PromptHistoryModal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setIsHistoryModalOpen(false)}
-        history={history}
-        onLoad={handleLoadFromHistory}
-        onClear={handleClearHistory}
-      />
-      <DeconstructPromptModal
-        isOpen={isDeconstructModalOpen}
-        onClose={() => setIsDeconstructModalOpen(false)}
-        onDeconstruct={handleDeconstruct}
-      />
-      <ThematicRandomizerModal
-        isOpen={isThematicRandomizerModalOpen}
-        onClose={() => setIsThematicRandomizerModalOpen(false)}
-        onThematicRandomize={handleThematicRandomize}
-      />
-    </div>
+        <main className="flex-grow flex flex-col min-h-0">
+          {renderActiveView()}
+        </main>
+        <StatusBar 
+          appVersion={appVersion}
+          tagCount={Object.keys(selectedTags).length}
+          conflictCount={conflicts.length}
+          aiStatus={aiStatus}
+        />
+        {conflictState && (
+          <ConflictResolutionModal
+            conflict={conflictState}
+            onResolve={handleResolveConflict}
+          />
+        )}
+        <CommandPalette 
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          tags={allTags}
+          presets={appSettings.presets}
+          onToggleTag={handleToggleTag}
+          onLoadPreset={handleLoadPreset}
+          onSavePreset={() => setIsSavePresetModalOpen(true)}
+          onRandomize={handleSimpleRandomize}
+          onClear={handleClear}
+        />
+        <SavePresetModal
+          isOpen={isSavePresetModalOpen}
+          onClose={() => setIsSavePresetModalOpen(false)}
+          onSave={handleSavePreset}
+        />
+        <PresetManagerModal
+          isOpen={isPresetManagerModalOpen}
+          onClose={() => setIsPresetManagerModalOpen(false)}
+          presets={appSettings.presets}
+          onLoadPreset={(preset) => {
+              handleLoadPreset(preset);
+              setIsPresetManagerModalOpen(false);
+          }}
+          onUpdatePreset={handleUpdatePreset}
+          onDeletePreset={handleDeletePreset}
+          onRenamePreset={handleRenamePreset}
+        />
+        <PromptHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          history={history}
+          onLoad={handleLoadFromHistory}
+          onClear={handleClearHistory}
+        />
+        <DeconstructPromptModal
+          isOpen={isDeconstructModalOpen}
+          onClose={() => setIsDeconstructModalOpen(false)}
+          onDeconstruct={handleDeconstruct}
+        />
+        <ThematicRandomizerModal
+          isOpen={isThematicRandomizerModalOpen}
+          onClose={() => setIsThematicRandomizerModalOpen(false)}
+          onThematicRandomize={handleThematicRandomize}
+        />
+      </div>
+    </SettingsContext.Provider>
   );
 };
 

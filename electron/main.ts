@@ -1,4 +1,3 @@
-
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -49,6 +48,7 @@ const defaultSettings = {
   },
   presets: starterPresets,
   promptPanelRatio: 50,
+  iconSet: 'heroicons',
   openDevToolsOnStart: isDev, // Default to true in dev, false in production
 };
 

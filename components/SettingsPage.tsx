@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
@@ -6,10 +5,9 @@ import { logger } from '../utils/logger';
 import { JsonEditor } from './JsonEditor';
 import { DebugLogModal } from './DebugLogModal';
 import { TaxonomyEditor } from './TaxonomyEditor';
+import { useSettings } from '../index';
 
 interface SettingsPageProps {
-  settings: AppSettings;
-  onSettingsChange: React.Dispatch<React.SetStateAction<AppSettings | null>>;
   taxonomy: Taxonomy;
   onTaxonomyChange: (newTaxonomy: Taxonomy, reset?: boolean) => Promise<void>;
   defaultPresets: Preset[];
@@ -49,8 +47,6 @@ const TabButton: React.FC<{
 
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({ 
-    settings, 
-    onSettingsChange, 
     taxonomy,
     onTaxonomyChange,
     defaultPresets,
@@ -59,6 +55,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     isDetecting,
     onRefresh 
 }) => {
+  const { settings, setSettings } = useSettings();
   const [activeTab, setActiveTab] = useState<SettingsTab>('ai');
   const [presetsText, setPresetsText] = useState('');
   const [jsonError, setJsonError] = useState<{ presets: string | null; }>({ presets: null });
@@ -66,11 +63,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [debugLogContent, setDebugLogContent] = useState('');
 
   useEffect(() => {
-    setPresetsText(JSON.stringify(settings.presets, null, 2));
-  }, [settings.presets]);
+    if (settings) {
+      setPresetsText(JSON.stringify(settings.presets, null, 2));
+    }
+  }, [settings?.presets]);
   
   const handleSaveAiSettings = (newAiSettings: AppSettings['aiSettings']) => {
-      onSettingsChange(prev => prev ? ({ ...prev, aiSettings: newAiSettings }) : null);
+      setSettings(prev => prev ? ({ ...prev, aiSettings: newAiSettings }) : null);
   }
 
   const handlePresetsChange = (text: string) => {
@@ -89,7 +88,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         return;
     }
     logger.info("Saving presets configuration.");
-    onSettingsChange(prev => {
+    setSettings(prev => {
       if (!prev) return null;
       return {
         ...prev,
@@ -120,6 +119,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
   
+  if (!settings) return null;
+
   const renderContent = () => {
       switch(activeTab) {
         case 'ai':
@@ -178,8 +179,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             );
         case 'application':
              if (!isElectron) return <p className="text-bunker-500">Application settings are only available in the desktop version.</p>;
+             const iconSet = settings.iconSet || 'heroicons';
              return (
                 <div className="space-y-6 max-w-4xl mx-auto">
+                   <div className="flex justify-between items-center p-4 bg-white/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200/80 dark:border-bunker-800/80">
+                        <div>
+                            <p className="text-sm font-medium text-bunker-700 dark:text-bunker-300">Icon Set</p>
+                            <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
+                                Choose the visual style for icons throughout the application.
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-1 p-1 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg">
+                            <button onClick={() => setSettings(prev => prev ? ({ ...prev, iconSet: 'heroicons' }) : null)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${iconSet === 'heroicons' ? 'bg-blue-600 text-white shadow-sm' : 'text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50'}`}>
+                                Heroicons
+                            </button>
+                            <button onClick={() => setSettings(prev => prev ? ({ ...prev, iconSet: 'lucide' }) : null)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${iconSet === 'lucide' ? 'bg-blue-600 text-white shadow-sm' : 'text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50'}`}>
+                                Lucide
+                            </button>
+                        </div>
+                    </div>
                    <div className="flex justify-between items-center p-4 bg-white/50 dark:bg-bunker-900/50 rounded-lg border border-bunker-200/80 dark:border-bunker-800/80">
                         <div>
                             <p className="text-sm font-medium text-bunker-700 dark:text-bunker-300">View Startup Log</p>
@@ -207,7 +225,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 id="dev-tools-toggle" 
                                 className="sr-only peer" 
                                 checked={settings.openDevToolsOnStart ?? false}
-                                onChange={e => onSettingsChange(prev => prev ? ({ ...prev, openDevToolsOnStart: e.target.checked }) : null)}
+                                onChange={e => setSettings(prev => prev ? ({ ...prev, openDevToolsOnStart: e.target.checked }) : null)}
                             />
                             <div className="w-11 h-6 bg-bunker-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer dark:bg-bunker-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-bunker-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-bunker-600 peer-checked:bg-blue-600"></div>
                         </label>
