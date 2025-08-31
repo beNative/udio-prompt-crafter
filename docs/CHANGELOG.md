@@ -1,5 +1,15 @@
 # Version Log
 
+## v1.5.0 - The Polish & Persistence Update
+
+This update focuses on improving the user experience within the Live Preview panel by fixing a critical bug and refreshing the UI.
+
+### Bug Fixes
+-   **Persistent AI Content:** Corrected a bug where AI-generated content (Analysis, Description, and Titles) would disappear when the Live Preview panels were resized. This content now persists correctly until the prompt itself is changed.
+
+### UI Improvements
+-   **Button Redesign:** Restyled the "Analyze," "Description," and "Titles" buttons for a cleaner, more professional look that integrates better with both light and dark themes.
+
 ## v1.4.0 - The Stability & Workflow Update
 
 This release is a major overhaul focused on improving core stability, workflow efficiency, and the user experience, directly addressing user feedback on persistent bugs and usability issues.
