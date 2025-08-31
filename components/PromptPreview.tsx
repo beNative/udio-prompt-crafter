@@ -153,9 +153,18 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     const allPromptParts = [...normalizedLabels, ...textInputs];
     const promptString = allPromptParts.join(', ');
     
+    const json = {
+      prompt: promptString,
+      tags: sortedTags.map(({ id, label, categoryId }) => ({ id, label, categoryId })),
+      text_inputs: textCategoryValues,
+      category_order: orderedCategories.map(c => c.id),
+    };
+
     setPrompt(promptString);
-    
-    if (promptString && promptString !== prevPromptRef.current) {
+    setJsonOutput(JSON.stringify(json, null, 2));
+
+    if (promptString !== prevPromptRef.current) {
+      if (promptString) {
         const selectedTagsForHistory: Preset['selectedTags'] = {};
         Object.entries(selectedTags).forEach(([id, tag]) => {
             selectedTagsForHistory[id] = { categoryId: tag.categoryId };
@@ -167,23 +176,17 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
             categoryOrder: orderedCategories.map(c => c.id),
             textCategoryValues,
         });
-        prevPromptRef.current = promptString;
+      }
+      
+      prevPromptRef.current = promptString;
+
+      setAiAnalysis('');
+      setAnalysisError(null);
+      setAiDescription('');
+      setGenerationError(null);
+      setAiTitleIdeas([]);
+      setTitleGenerationError(null);
     }
-
-    const json = {
-      prompt: promptString,
-      tags: sortedTags.map(({ id, label, categoryId }) => ({ id, label, categoryId })),
-      text_inputs: textCategoryValues,
-      category_order: orderedCategories.map(c => c.id),
-    };
-    setJsonOutput(JSON.stringify(json, null, 2));
-
-    setAiAnalysis('');
-    setAnalysisError(null);
-    setAiDescription('');
-    setGenerationError(null);
-    setAiTitleIdeas([]);
-    setTitleGenerationError(null);
   }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated]);
   
   const handleAnalyzePrompt = async () => {
@@ -279,6 +282,8 @@ Example:
   };
 
   const splitterHeight = 6; // h-1.5 in px
+  const baseButtonClasses = "flex items-center justify-center space-x-2 px-3 py-2 text-sm font-medium rounded-md border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-bunker-900 disabled:opacity-50 disabled:cursor-not-allowed";
+
 
   return (
     <div className="p-4 bg-bunker-50/50 dark:bg-bunker-900/50 text-bunker-500 dark:text-bunker-300 h-full flex flex-col">
@@ -418,7 +423,7 @@ Example:
                     <button 
                         onClick={handleAnalyzePrompt} 
                         disabled={isAnalyzing || !prompt}
-                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-700 disabled:bg-yellow-400 dark:disabled:bg-yellow-800/50 disabled:cursor-not-allowed transition-colors"
+                        className={`${baseButtonClasses} text-amber-700 bg-amber-100 border-amber-200 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/50 dark:border-amber-800 dark:hover:bg-amber-900 focus:ring-amber-500`}
                     >
                         <Icon name="lightbulb" className="w-5 h-5" />
                         <span>{isAnalyzing ? 'Analyzing...' : 'Analyze'}</span>
@@ -426,7 +431,7 @@ Example:
                     <button 
                         onClick={handleGenerateDescription} 
                         disabled={isGenerating || !prompt}
-                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition-colors"
+                        className={`${baseButtonClasses} text-indigo-700 bg-indigo-100 border-indigo-200 hover:bg-indigo-200 dark:text-indigo-300 dark:bg-indigo-900/50 dark:border-indigo-800 dark:hover:bg-indigo-900 focus:ring-indigo-500`}
                       >
                         <Icon name="wandSparkles" className="w-5 h-5" />
                         <span>{isGenerating ? 'Generating...' : 'Description'}</span>
@@ -434,7 +439,7 @@ Example:
                      <button
                         onClick={handleGenerateTitle}
                         disabled={isGeneratingTitles || !prompt}
-                        className="flex items-center justify-center space-x-2 px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400 dark:disabled:bg-teal-800/50 disabled:cursor-not-allowed transition-colors"
+                        className={`${baseButtonClasses} text-teal-700 bg-teal-100 border-teal-200 hover:bg-teal-200 dark:text-teal-300 dark:bg-teal-900/50 dark:border-teal-800 dark:hover:bg-teal-900 focus:ring-teal-500`}
                     >
                         <Icon name="tag" className="w-5 h-5" />
                         <span>{isGeneratingTitles ? 'Generating...' : 'Titles'}</span>
