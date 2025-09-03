@@ -24,7 +24,7 @@ const TABS: { id: SettingsTab; label: string; icon: string; electronOnly: boolea
     { id: 'ai', label: 'AI Configuration', icon: 'wandSparkles', electronOnly: false },
     { id: 'taxonomy', label: 'Taxonomy', icon: 'tag', electronOnly: false },
     { id: 'presets', label: 'Presets', icon: 'list-bullet', electronOnly: false },
-    { id: 'application', label: 'Application', icon: 'cog', electronOnly: true },
+    { id: 'application', label: 'Application', icon: 'cog', electronOnly: false },
 ];
 
 
@@ -198,7 +198,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </SettingsPanel>
             );
         case 'application':
-             if (!isElectron) return <p className="p-8 text-bunker-500">Application settings are only available in the desktop version.</p>;
              const iconSet = settings.iconSet || 'heroicons';
              return (
                 <SettingsPanel title="Application Settings" description="Customize the application's appearance and behavior.">
@@ -219,38 +218,42 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 </button>
                             </div>
                         </div>
-                        <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
-                            <div>
-                                <p className="font-medium text-bunker-800 dark:text-bunker-200">View Startup Log</p>
-                                <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
-                                    If you experience a white screen or other critical startup errors, this log can help identify the problem.
-                                </p>
+                        {isElectron && (
+                          <>
+                            <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                <div>
+                                    <p className="font-medium text-bunker-800 dark:text-bunker-200">View Startup Log</p>
+                                    <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
+                                        If you experience a white screen or other critical startup errors, this log can help identify the problem.
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={handleShowDebugLog}
+                                    className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors"
+                                >
+                                    Show Log
+                                </button>
                             </div>
-                            <button 
-                                onClick={handleShowDebugLog}
-                                className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors"
-                            >
-                                Show Log
-                            </button>
-                        </div>
-                        <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
-                            <div>
-                                <p className="font-medium text-bunker-800 dark:text-bunker-200">Open Developer Tools on Startup</p>
-                                <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
-                                    Automatically opens the developer console when the application starts.
-                                </p>
+                            <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                <div>
+                                    <p className="font-medium text-bunker-800 dark:text-bunker-200">Open Developer Tools on Startup</p>
+                                    <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">
+                                        Automatically opens the developer console when the application starts.
+                                    </p>
+                                </div>
+                                <label htmlFor="dev-tools-toggle" className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        id="dev-tools-toggle" 
+                                        className="sr-only peer" 
+                                        checked={settings.openDevToolsOnStart ?? false}
+                                        onChange={e => setSettings(prev => prev ? ({ ...prev, openDevToolsOnStart: e.target.checked }) : null)}
+                                    />
+                                    <div className="w-11 h-6 bg-bunker-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer dark:bg-bunker-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-bunker-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-bunker-600 peer-checked:bg-blue-600"></div>
+                                </label>
                             </div>
-                            <label htmlFor="dev-tools-toggle" className="relative inline-flex items-center cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    id="dev-tools-toggle" 
-                                    className="sr-only peer" 
-                                    checked={settings.openDevToolsOnStart ?? false}
-                                    onChange={e => setSettings(prev => prev ? ({ ...prev, openDevToolsOnStart: e.target.checked }) : null)}
-                                />
-                                <div className="w-11 h-6 bg-bunker-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer dark:bg-bunker-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-bunker-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-bunker-600 peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
+                          </>
+                        )}
                     </div>
                 </SettingsPanel>
              );
