@@ -216,6 +216,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 <button onClick={() => setSettings(prev => prev ? ({ ...prev, iconSet: 'lucide' }) : null)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${iconSet === 'lucide' ? 'bg-blue-600 text-white shadow-sm' : 'text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50'}`}>
                                     Lucide
                                 </button>
+                                <button onClick={() => setSettings(prev => prev ? ({ ...prev, iconSet: 'feather' }) : null)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${iconSet === 'feather' ? 'bg-blue-600 text-white shadow-sm' : 'text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50'}`}>
+                                    Feather
+                                </button>
+                                <button onClick={() => setSettings(prev => prev ? ({ ...prev, iconSet: 'tabler' }) : null)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${iconSet === 'tabler' ? 'bg-blue-600 text-white shadow-sm' : 'text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50'}`}>
+                                    Tabler
+                                </button>
                             </div>
                         </div>
                         {isElectron && (
