@@ -182,20 +182,28 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             return <TaxonomyEditor taxonomy={taxonomy} onSave={onTaxonomyChange} />;
         case 'presets':
             return (
-                <SettingsPanel title="Presets" description="For advanced users, presets can be edited directly here. For a user-friendly experience, use the 'Manage Presets' button in the header.">
-                    <JsonEditor 
-                        id="presets"
-                        value={presetsText}
-                        onChange={handlePresetsChange}
-                        error={jsonError.presets}
-                        height="calc(100vh - 280px)"
-                    />
-                    {jsonError.presets && <p className="mt-1 text-xs text-red-500">{jsonError.presets}</p>}
-                    <div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-bunker-200/80 dark:border-bunker-800/80">
-                      <button onClick={() => { setPresetsText(JSON.stringify(defaultPresets, null, 2)); setJsonError({presets: null}); }} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">Reset to Defaults</button>
-                      <button onClick={handleSaveConfigs} disabled={!!jsonError.presets} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Presets</button>
+                <div className="h-full flex flex-col">
+                    <div className="p-8 pb-5 border-b border-bunker-200 dark:border-bunker-800 flex-shrink-0">
+                      <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Presets</h2>
+                      <p className="text-bunker-500 dark:text-bunker-400 mt-1">For advanced users, presets can be edited directly here. For a user-friendly experience, use the 'Manage Presets' button in the header.</p>
                     </div>
-                </SettingsPanel>
+                    <div className="px-8 pt-6 pb-8 flex-grow min-h-0 flex flex-col">
+                        <div className="flex-grow min-h-0">
+                            <JsonEditor 
+                                id="presets"
+                                value={presetsText}
+                                onChange={handlePresetsChange}
+                                error={jsonError.presets}
+                                height="100%"
+                            />
+                        </div>
+                        {jsonError.presets && <p className="flex-shrink-0 mt-1 text-xs text-red-500">{jsonError.presets}</p>}
+                        <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 mt-4 border-t border-bunker-200/80 dark:border-bunker-800/80">
+                          <button onClick={() => { setPresetsText(JSON.stringify(defaultPresets, null, 2)); setJsonError({presets: null}); }} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">Reset to Defaults</button>
+                          <button onClick={handleSaveConfigs} disabled={!!jsonError.presets} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Presets</button>
+                        </div>
+                    </div>
+                </div>
             );
         case 'application':
              const iconSet = settings.iconSet || 'heroicons';
