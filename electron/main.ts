@@ -8,8 +8,14 @@ import { starterPresets } from '../data/presets';
 declare const __dirname: string;
 declare const process: any;
 
+const isDev = !app.isPackaged;
+
+// Define a single path for all portable data storage.
+// In dev, it's the project root. In production, it's the folder containing the .exe.
+const storagePath = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+
 // --- START: Robust Startup Debug Logging ---
-const debugLogPath = path.join(app.getPath('userData'), 'debug.log');
+const debugLogPath = path.join(storagePath, 'debug.log');
 // Clear log on each start to keep it relevant to the current session.
 fs.writeFileSync(debugLogPath, '', { encoding: 'utf-8' }); 
 
@@ -24,6 +30,8 @@ const logToFile = (message: string) => {
 };
 
 logToFile('Main process started.');
+logToFile(`isDev = ${isDev}`);
+logToFile(`Using portable storage path: ${storagePath}`);
 
 // Catch unhandled errors in the main process and log them before quitting.
 process.on('uncaughtException', (error: Error, origin: string) => {
@@ -34,12 +42,9 @@ process.on('uncaughtException', (error: Error, origin: string) => {
 });
 // --- END: Robust Startup Debug Logging ---
 
-const isDev = !app.isPackaged;
-logToFile(`isDev = ${isDev}`);
-
 // --- Settings Management (Synchronous Part) ---
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-const customTaxonomyPath = path.join(app.getPath('userData'), 'taxonomy.json');
+const settingsPath = path.join(storagePath, 'settings.json');
+const customTaxonomyPath = path.join(storagePath, 'taxonomy.json');
 const defaultSettings = {
   aiSettings: {
     provider: 'ollama',
@@ -240,12 +245,11 @@ try {
     ipcMain.handle('get-app-version', () => app.getVersion());
 
     // --- Logging ---
-    const logDir = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
     const getLogFileName = () => `udio-prompt-crafter-${new Date().toISOString().split('T')[0]}.log`;
-    let currentLogFilePath = path.join(logDir, getLogFileName());
+    let currentLogFilePath = path.join(storagePath, getLogFileName());
 
     ipcMain.on('write-log', (event, logEntry) => {
-      currentLogFilePath = path.join(logDir, getLogFileName());
+      currentLogFilePath = path.join(storagePath, getLogFileName());
       const contextString = logEntry.context ? ` ${JSON.stringify(logEntry.context, null, 2)}` : '';
       const formattedMessage = `${logEntry.timestamp} [${logEntry.level}] ${logEntry.message}${contextString}\n`;
       
@@ -264,7 +268,7 @@ try {
         shell.showItemInFolder(currentLogFilePath);
     });
 
-    ipcMain.handle('get-logs-path', () => path.join(logDir, getLogFileName()));
+    ipcMain.handle('get-logs-path', () => path.join(storagePath, getLogFileName()));
 
     // --- Create the window ---
     createWindow();
