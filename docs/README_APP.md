@@ -10,6 +10,7 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 
 -   **Expanded Taxonomy:** Browse a massively expanded, curated library of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
 -   **Live Prompt Preview:** See your prompt string update in real-time. A resizable panel allows you to view and copy your prompt, generate an AI-powered prose description, and brainstorm AI-generated song titles.
+-   **UDIO-Specific Parameters:** A dedicated panel to control instrumental toggles, provide custom lyrics, and set track duration, which are saved with presets and history.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
 -   **AI-Powered Assistance:**
     -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
@@ -18,6 +19,7 @@ Crafting the perfect prompt is key to getting great results from AI music genera
     -   **AI-Powered Songwriting:** Generate creative lyrical theme ideas based on keywords and then expand them into full song lyrics with verses and choruses.
     -   **Tag Suggestions:** Get recommendations for complementary tags.
 -   **Streamlined Taxonomy Editor:** A fully redesigned, inline editor on the Settings page allows for stable and intuitive management of your custom tag library. The buggy modal has been completely replaced.
+-   **Icon Customization:** Choose from four popular icon sets (Heroicons, Lucide, Feather, Tabler) to personalize the application's appearance.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").

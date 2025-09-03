@@ -38,7 +38,8 @@ This panel shows you the output of your selections in real-time.
         -   **Generate Description:** Converts your tag list into a descriptive, paragraph-style prompt. The generated text appears in this panel.
         -   **Generate Titles:** Analyzes your prompt to brainstorm five creative song titles. The list of titles will appear in this panel, each with a copy button.
     -   **Resizable Splitter:** You can click and drag the splitter between the two panels to resize them to your preference. Your chosen layout is saved automatically.
--   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, and category order. This is useful for saving, sharing, or for use in other tools.
+-   **UDIO Params Tab:** This tab provides a dedicated form to specify parameters for UDIO. You can toggle if the track is instrumental, provide custom lyrics, and set a target duration in seconds.
+-   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, category order, and UDIO parameters. This is useful for saving, sharing, or for use in other tools.
 -   **Conflict Warnings:** If you select tags that are logically incompatible (e.g., "Slow Tempo" and "High Tempo"), a warning box will appear at the top of this panel listing the conflicts.
 
 ## Header Controls (Crafter View Only)
@@ -46,8 +47,8 @@ This panel shows you the output of your selections in real-time.
 These buttons provide quick access to powerful features.
 
 -   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All" or "Load Preset."
--   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter.
--   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets.
+-   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter. History entries also save the UDIO Parameters that were active when the prompt was generated.
+-   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets. Presets now also store any UDIO Parameters you've set.
 -   **Save as Preset:** Save your current selections and category order as a new preset.
 -   **Deconstruct Prompt with AI:** (Magic wand icon) Opens a modal where you can paste a descriptive, text-based prompt. The AI will analyze it and attempt to select all the matching tags from the taxonomy, replacing your current selection. This is a powerful way to reverse-engineer prompts you find elsewhere.
 -   **Randomize:** Selects one random tag from each tag-based category. A great way to find inspiration!
@@ -72,6 +73,8 @@ Click the "Settings" tab in the header to access the configuration page. The pag
 -   **Presets Tab:**
     -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets at any time.
+-   **Application Tab:**
+    - Customize the look and feel of the app. You can choose from multiple icon sets (Heroicons, Lucide, Feather, Tabler). For the desktop app, you can also configure developer-centric options like opening the DevTools on startup.
 
 ## Info Page
 

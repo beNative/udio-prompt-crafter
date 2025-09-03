@@ -23,10 +23,17 @@ export interface SelectedTag extends Tag {
   categoryId: string;
 }
 
+export interface UdioParams {
+  lyrics?: string;
+  instrumental: boolean;
+  duration?: number;
+}
+
 export interface Preset {
   name:string;
   selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'suggests' | 'color'>>;
   categoryOrder: string[];
+  udioParams?: UdioParams;
 }
 
 export interface Conflict {
@@ -66,6 +73,7 @@ export interface HistoryEntry {
   selectedTags: Preset['selectedTags'];
   categoryOrder: string[];
   textCategoryValues: Record<string, string>;
+  udioParams?: UdioParams;
 }
 
 // New Electron API types

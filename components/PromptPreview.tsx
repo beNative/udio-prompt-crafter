@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { SelectedTag, Conflict, Preset, Category } from '../types';
+import type { SelectedTag, Conflict, Preset, Category, UdioParams } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
+import { UDIOParams } from './UDIOParams';
 
 interface PromptPreviewProps {
   orderedCategories: Pick<Category, 'id' | 'name' | 'type'>[];
@@ -17,7 +18,10 @@ interface PromptPreviewProps {
     selectedTags: Preset['selectedTags'];
     categoryOrder: string[];
     textCategoryValues: Record<string, string>;
+    udioParams: UdioParams;
   }) => void;
+  udioParams: UdioParams;
+  onUdioParamsChange: (params: UdioParams) => void;
 }
 
 const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
@@ -75,10 +79,12 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     promptPanelRatio, 
     onPromptPanelResize,
     onPromptGenerated,
+    udioParams,
+    onUdioParamsChange,
 }) => {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
-  const [activeTab, setActiveTab] = useState('prompt');
+  const [activeTab, setActiveTab] = useState<'prompt' | 'udio' | 'json'>('prompt');
 
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -153,31 +159,31 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     const allPromptParts = [...normalizedLabels, ...textInputs];
     const promptString = allPromptParts.join(', ');
     
-    const json = {
+    const json: any = {
       prompt: promptString,
       tags: sortedTags.map(({ id, label, categoryId }) => ({ id, label, categoryId })),
       text_inputs: textCategoryValues,
       category_order: orderedCategories.map(c => c.id),
+      udio_params: udioParams,
     };
 
     setPrompt(promptString);
     setJsonOutput(JSON.stringify(json, null, 2));
 
-    if (promptString !== prevPromptRef.current) {
-      if (promptString) {
-        const selectedTagsForHistory: Preset['selectedTags'] = {};
-        Object.entries(selectedTags).forEach(([id, tag]) => {
-            selectedTagsForHistory[id] = { categoryId: tag.categoryId };
-        });
+    const selectedTagsForHistory: Preset['selectedTags'] = {};
+    Object.entries(selectedTags).forEach(([id, tag]) => {
+        selectedTagsForHistory[id] = { categoryId: tag.categoryId };
+    });
 
-        onPromptGenerated({
-            promptString,
-            selectedTags: selectedTagsForHistory,
-            categoryOrder: orderedCategories.map(c => c.id),
-            textCategoryValues,
-        });
-      }
-      
+    onPromptGenerated({
+        promptString,
+        selectedTags: selectedTagsForHistory,
+        categoryOrder: orderedCategories.map(c => c.id),
+        textCategoryValues,
+        udioParams,
+    });
+
+    if (promptString !== prevPromptRef.current) {
       prevPromptRef.current = promptString;
 
       setAiAnalysis('');
@@ -187,7 +193,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       setAiTitleIdeas([]);
       setTitleGenerationError(null);
     }
-  }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated]);
+  }, [selectedTags, orderedCategories, textCategoryValues, onPromptGenerated, udioParams]);
   
   const handleAnalyzePrompt = async () => {
     if (!prompt || !callLlm) return;
@@ -301,6 +307,7 @@ Example:
         
         <div className="flex border-b border-bunker-200 dark:border-bunker-800 mb-4 shrink-0">
           <button onClick={() => setActiveTab('prompt')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'prompt' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>Prompt String</button>
+          <button onClick={() => setActiveTab('udio')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'udio' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>UDIO Params</button>
           <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'json' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-bunker-500 dark:text-bunker-400 hover:bg-bunker-100 dark:hover:bg-bunker-800/50'}`}>JSON Output</button>
         </div>
         
@@ -446,6 +453,10 @@ Example:
                     </button>
                 </div>
               </div>
+            </div>
+          ) : activeTab === 'udio' ? (
+            <div className="h-full">
+                <UDIOParams params={udioParams} onChange={onUdioParamsChange} />
             </div>
           ) : activeTab === 'json' ? (
             <div className="relative h-full">

@@ -1,5 +1,18 @@
 # Version Log
 
+## v1.6.0 - The Conductor's Update
+
+This update introduces a dedicated panel for UDIO-specific parameters, adds more icon customization options, and includes several UI/UX and stability improvements.
+
+### Features Added
+-   **UDIO Parameters Panel:** A new "UDIO Params" tab has been added to the Live Preview panel. You can now specify lyrics, mark a track as instrumental, and set a target duration. These parameters are saved with presets and prompt history.
+-   **New Icon Sets:** Added two popular icon libraries, **Feather** and **Tabler**, to the Application settings. Users can now choose from four distinct icon styles.
+
+### Bug Fixes
+-   **Persistent AI Content:** Corrected a bug where AI-generated content (Analysis, Description, and Titles) would disappear when the Live Preview panels were resized. This content now persists correctly until the prompt itself is changed.
+-   **Preset Panel Layout:** Fixed a layout issue where buttons in the Presets settings tab could be pushed off-screen. The layout now uses a flexible model to ensure buttons are always visible.
+-   **JSON Editor Cursor:** Fixed a bug where the text cursor was invisible in the JSON editor.
+
 ## v1.5.0 - The Polish & Persistence Update
 
 This update focuses on improving the user experience within the Live Preview panel by fixing a critical bug and refreshing the UI.

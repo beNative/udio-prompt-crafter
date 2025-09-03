@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus, HistoryEntry } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus, HistoryEntry, UdioParams } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [activeCategoryId, setActiveCategoryId] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<Record<string, SelectedTag>>({});
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
+  const [udioParams, setUdioParams] = useState<UdioParams>({ instrumental: false });
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
@@ -129,6 +130,7 @@ const App: React.FC = () => {
     logger.info('Clearing all selected tags and text.');
     setSelectedTags({});
     setTextCategoryValues({});
+    setUdioParams({ instrumental: false });
   }, []);
 
   const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
@@ -451,6 +453,7 @@ const App: React.FC = () => {
 
     setSelectedTags(newSelectedTags);
     setTextCategoryValues({});
+    setUdioParams(preset.udioParams || { instrumental: false });
     setCategories(prevCategories => {
         const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
         const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter((c): c is Category => !!c);
@@ -473,7 +476,7 @@ const App: React.FC = () => {
         selectedTagsForPreset[id] = { categoryId: tag.categoryId };
     });
 
-    const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id) };
+    const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id), udioParams };
     setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
     return true;
   };
@@ -491,7 +494,7 @@ const App: React.FC = () => {
 
     const updatedPresets = appSettings.presets.map(p => {
         if (p.name === presetName) {
-            return { ...p, selectedTags: selectedTagsForPreset, categoryOrder };
+            return { ...p, selectedTags: selectedTagsForPreset, categoryOrder, udioParams };
         }
         return p;
     });
@@ -532,6 +535,7 @@ const App: React.FC = () => {
     });
     setSelectedTags(newSelected);
     setTextCategoryValues({});
+    setUdioParams({ instrumental: false });
   }, [categories, taxonomyMap]);
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
@@ -551,9 +555,17 @@ const App: React.FC = () => {
 
   const handlePromptGenerated = useCallback((data: Omit<HistoryEntry, 'timestamp'>) => {
     setHistory(prevHistory => {
-        if (prevHistory[0]?.promptString === data.promptString) {
+        const lastEntry = prevHistory[0];
+        // Avoid adding duplicate entries if nothing significant has changed
+        if (lastEntry &&
+            lastEntry.promptString === data.promptString &&
+            JSON.stringify(lastEntry.selectedTags) === JSON.stringify(data.selectedTags) &&
+            JSON.stringify(lastEntry.textCategoryValues) === JSON.stringify(data.textCategoryValues) &&
+            JSON.stringify(lastEntry.udioParams) === JSON.stringify(data.udioParams)
+        ) {
             return prevHistory;
         }
+
         const newEntry: HistoryEntry = {
             ...data,
             timestamp: new Date().toISOString(),
@@ -573,6 +585,7 @@ const App: React.FC = () => {
 
       setSelectedTags(newSelectedTags);
       setTextCategoryValues(entry.textCategoryValues);
+      setUdioParams(entry.udioParams || { instrumental: false });
       setCategories(prevCategories => {
           const historyCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
           const ordered = entry.categoryOrder.map(id => historyCategoryMap.get(id)).filter((c): c is Category => !!c);
@@ -772,6 +785,8 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               promptPanelRatio={appSettings.promptPanelRatio ?? 50}
               onPromptPanelResize={handlePromptPanelResize}
               onPromptGenerated={handlePromptGenerated}
+              udioParams={udioParams}
+              onUdioParamsChange={setUdioParams}
             />
           </div>
       </ResizablePanels>
