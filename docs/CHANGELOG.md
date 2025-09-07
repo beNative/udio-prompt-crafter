@@ -1,5 +1,15 @@
 # Version Log
 
+## v0.9.0 - The Customization & Polish Update
+
+This release adds more flexibility for Windows users during installation and provides a cleaner, more focused user interface.
+
+### Features Added
+-   **Custom Installation Path:** The Windows installer now provides an installation wizard, allowing users to choose a custom installation directory.
+
+### UI Improvements
+-   **Cleaner Header:** The main "UDIO Prompt Crafter" title has been removed from the application header for a more streamlined and less cluttered look.
+
 ## v0.8.0 - The Integration Update
 
 This update changes the application's data storage behavior from a "portable" model to the standard installed application model. All user data, including settings, presets, custom taxonomies, and logs, are now stored in the appropriate system user data directory (`%APPDATA%` on Windows, `~/Library/Application Support` on macOS, etc.). This ensures better system integration and prevents clutter in the application's installation folder.
