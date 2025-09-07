@@ -46,7 +46,10 @@
       "output": "release"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "nsis": {
+        "allowToChangeInstallationDirectory": true
+      }
     },
     "mac": {
       "target": "dmg"
