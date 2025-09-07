@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Preset } from '../types';
 import { Icon } from './icons';
@@ -52,8 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200/80 dark:border-bunker-800/80 shrink-0 sticky top-0 z-30">
-      <div className="flex items-center space-x-6">
-          <h1 className="text-xl font-bold">UDIO Prompt Crafter</h1>
+      <div className="flex items-center">
           <nav className="flex items-center space-x-1 p-1 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg">
               <button onClick={() => onSetView('crafter')} className={`${tabButtonStyles} ${activeView === 'crafter' ? activeTabStyles : inactiveTabStyles}`}>
                   Crafter
