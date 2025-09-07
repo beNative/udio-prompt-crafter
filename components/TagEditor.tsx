@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Tag } from '../types';
 import { Icon } from './icons';
@@ -69,10 +68,12 @@ interface TagEditorProps {
 export const TagEditor: React.FC<TagEditorProps> = ({ tag, allTags, onSave, onCancel }) => {
   const [editedTag, setEditedTag] = useState<Tag>(tag);
   const [originalId, setOriginalId] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setEditedTag(tag);
     setOriginalId(tag.id);
+    setError('');
   }, [tag]);
 
   const handleSave = () => {
@@ -84,7 +85,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({ tag, allTags, onSave, onCa
       if (!finalTag.suggests?.length) delete finalTag.suggests;
       onSave(finalTag, originalId);
     } else {
-      alert("Tag label cannot be empty.");
+      setError("Tag label cannot be empty.");
     }
   };
   
@@ -100,7 +101,8 @@ export const TagEditor: React.FC<TagEditorProps> = ({ tag, allTags, onSave, onCa
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="tag-label" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Label</label>
-                    <input id="tag-label" type="text" value={editedTag.label} onChange={e => setEditedTag(t => ({ ...t, label: e.target.value }))} className="form-input" autoFocus />
+                    <input id="tag-label" type="text" value={editedTag.label} onChange={e => { setEditedTag(t => ({ ...t, label: e.target.value })); setError(''); }} className="form-input" autoFocus />
+                    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                 </div>
                 <div>
                     <label htmlFor="tag-id" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">ID</label>

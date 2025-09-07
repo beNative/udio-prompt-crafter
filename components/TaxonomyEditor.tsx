@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Taxonomy, Category, Tag } from '../types';
 import { Icon } from './icons';
 import { produce } from 'immer';
 import { CategoryEditModal } from './CategoryEditModal';
 import { TagEditor } from './TagEditor';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface TaxonomyEditorProps {
   taxonomy: Taxonomy;
@@ -128,6 +128,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   const [editedTaxonomy, setEditedTaxonomy] = useState<Taxonomy>(() => JSON.parse(JSON.stringify(taxonomy)));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(taxonomy[0]?.id || null);
   const [isDirty, setIsDirty] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ title: string; message: React.ReactNode; onConfirm: () => void; variant: 'primary' | 'danger', confirmText: string } | null>(null);
   
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
@@ -147,11 +148,17 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     setIsDirty(false);
   }, [taxonomy]);
   
-  const handleSaveChanges = async () => {
-    if (window.confirm("Saving will reload the taxonomy and reset your current prompt. Are you sure you want to continue?")) {
-      await onSave(editedTaxonomy);
-      setIsDirty(false);
-    }
+  const handleSaveChanges = () => {
+    setConfirmation({
+        title: "Save Taxonomy?",
+        message: "Saving will reload the taxonomy and reset your current prompt. Are you sure you want to continue?",
+        variant: 'primary',
+        confirmText: "Save",
+        onConfirm: async () => {
+            await onSave(editedTaxonomy);
+            setIsDirty(false);
+        }
+    });
   };
 
   const handleDiscardChanges = () => {
@@ -159,10 +166,16 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     setIsDirty(false);
   };
   
-  const handleResetToDefault = async () => {
-    if (window.confirm("This will delete your custom taxonomy and restore the application default. This action cannot be undone. Are you sure?")) {
-      await onSave(taxonomy, true);
-    }
+  const handleResetToDefault = () => {
+    setConfirmation({
+        title: "Reset to Default?",
+        message: "This will delete your custom taxonomy and restore the application default. This action cannot be undone. Are you sure?",
+        variant: 'danger',
+        confirmText: "Reset",
+        onConfirm: async () => {
+            await onSave(taxonomy, true);
+        }
+    });
   };
 
   // --- Category Actions ---
@@ -207,11 +220,17 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   };
   
   const handleDeleteCategory = (categoryId: string) => {
-    if (window.confirm("Are you sure you want to delete this category and all its tags?")) {
-      setEditedTaxonomy(produce(draft => draft.filter(c => c.id !== categoryId)));
-      if(selectedCategoryId === categoryId) setSelectedCategoryId(editedTaxonomy[0]?.id || null);
-      setIsDirty(true);
-    }
+    setConfirmation({
+        title: "Delete Category?",
+        message: <span>Are you sure you want to delete the category <strong>"{editedTaxonomy.find(c=>c.id === categoryId)?.name}"</strong> and all its tags? This action cannot be undone.</span>,
+        variant: 'danger',
+        confirmText: "Delete",
+        onConfirm: () => {
+            setEditedTaxonomy(produce(draft => draft.filter(c => c.id !== categoryId)));
+            if(selectedCategoryId === categoryId) setSelectedCategoryId(editedTaxonomy[0]?.id || null);
+            setIsDirty(true);
+        }
+    });
   };
 
   // --- Tag Actions ---
@@ -270,18 +289,25 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   
   const handleDeleteTag = (tagId: string) => {
     if (!selectedCategoryId) return;
-    if (window.confirm("Are you sure you want to delete this tag? This will also remove any relationships pointing to it.")) {
-      setEditedTaxonomy(produce(draft => {
-          draft.forEach(category => {
-              category.tags = category.tags.filter(t => t.id !== tagId);
-              category.tags.forEach(t => { 
-                if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId);
-                if (t.conflictsWith?.includes(tagId)) t.conflictsWith = t.conflictsWith.filter(cId => cId !== tagId);
-              });
-          });
-      }));
-      setIsDirty(true);
-    }
+    const tagLabel = editedTaxonomy.flatMap(c => c.tags).find(t => t.id === tagId)?.label;
+    setConfirmation({
+        title: "Delete Tag?",
+        message: <span>Are you sure you want to delete the tag <strong>"{tagLabel}"</strong>? This will also remove any relationships pointing to it.</span>,
+        variant: 'danger',
+        confirmText: "Delete",
+        onConfirm: () => {
+            setEditedTaxonomy(produce(draft => {
+                draft.forEach(category => {
+                    category.tags = category.tags.filter(t => t.id !== tagId);
+                    category.tags.forEach(t => { 
+                        if (t.suggests?.includes(tagId)) t.suggests = t.suggests.filter(sId => sId !== tagId);
+                        if (t.conflictsWith?.includes(tagId)) t.conflictsWith = t.conflictsWith.filter(cId => cId !== tagId);
+                    });
+                });
+            }));
+            setIsDirty(true);
+        }
+    });
   };
 
   // --- Tag Drag & Drop Handlers ---
@@ -473,6 +499,17 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
         </div>
       </div>
       {isCategoryModalOpen && categoryToEdit && <CategoryEditModal isOpen={true} onClose={() => setIsCategoryModalOpen(false)} onSave={handleSaveCategory} category={categoryToEdit} />}
+      {confirmation && (
+        <ConfirmationModal
+            isOpen={true}
+            onClose={() => setConfirmation(null)}
+            onConfirm={confirmation.onConfirm}
+            title={confirmation.title}
+            message={confirmation.message}
+            confirmVariant={confirmation.variant}
+            confirmText={confirmation.confirmText}
+        />
+      )}
     </div>
   );
 };

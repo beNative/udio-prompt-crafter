@@ -21,6 +21,7 @@ import { PromptHistoryModal } from './components/PromptHistoryModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
 import { SettingsContext } from './index';
+import { AlertModal } from './components/AlertModal';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -69,6 +70,7 @@ const App: React.FC = () => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
+  const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
 
   // State for global features like status bar
   const [appVersion, setAppVersion] = useState('');
@@ -466,7 +468,11 @@ const App: React.FC = () => {
     if (!name || !appSettings) return false;
     if (appSettings.presets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
         logger.error(`A preset with the name "${name}" already exists.`);
-        alert(`A preset with the name "${name}" already exists.`);
+        setAlert({
+            title: "Duplicate Preset Name",
+            message: `A preset with the name "${name}" already exists. Please choose a different name.`,
+            variant: 'error',
+        });
         return false;
     }
     
@@ -506,7 +512,11 @@ const App: React.FC = () => {
       if (!newName || !appSettings) return false;
       if (oldName.toLowerCase() !== newName.toLowerCase() && appSettings.presets.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
           logger.error(`A preset with the name "${newName}" already exists.`);
-          alert(`A preset with the name "${newName}" already exists.`);
+          setAlert({
+              title: "Duplicate Preset Name",
+              message: `A preset with the name "${newName}" already exists. Please choose a different name.`,
+              variant: 'error',
+          });
           return false;
       }
 
@@ -912,6 +922,15 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           onClose={() => setIsThematicRandomizerModalOpen(false)}
           onThematicRandomize={handleThematicRandomize}
         />
+        {alert && (
+            <AlertModal 
+                isOpen={true}
+                onClose={() => setAlert(null)}
+                title={alert.title}
+                message={alert.message}
+                variant={alert.variant}
+            />
+        )}
       </div>
     </SettingsContext.Provider>
   );

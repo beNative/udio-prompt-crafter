@@ -11,16 +11,18 @@ interface CategoryEditModalProps {
 
 export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({ isOpen, onClose, onSave, category }) => {
   const [editedCategory, setEditedCategory] = useState<Category>(category);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setEditedCategory(category);
+    setError('');
   }, [category, isOpen]);
 
   const handleSave = () => {
     if (editedCategory.name.trim()) {
       onSave(editedCategory);
     } else {
-      alert("Category name cannot be empty.");
+      setError("Category name cannot be empty.");
     }
   };
 
@@ -44,10 +46,11 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({ isOpen, on
               id="cat-name"
               type="text"
               value={editedCategory.name}
-              onChange={e => setEditedCategory(c => ({ ...c, name: e.target.value }))}
+              onChange={e => { setEditedCategory(c => ({ ...c, name: e.target.value })); setError(''); }}
               className="form-input"
               autoFocus
             />
+            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
           </div>
           <div>
             <label htmlFor="cat-desc" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">Description</label>

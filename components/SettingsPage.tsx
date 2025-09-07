@@ -6,6 +6,7 @@ import { JsonEditor } from './JsonEditor';
 import { DebugLogModal } from './DebugLogModal';
 import { TaxonomyEditor } from './TaxonomyEditor';
 import { useSettings } from '../index';
+import { AlertModal } from './AlertModal';
 
 const isElectron = !!window.electronAPI;
 
@@ -163,6 +164,8 @@ const ApplicationSettingsPanel: React.FC = () => {
     const { settings, setSettings } = useSettings();
     const [isDebugLogModalOpen, setIsDebugLogModalOpen] = useState(false);
     const [debugLogContent, setDebugLogContent] = useState('');
+    const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
+
 
     const handleShowDebugLog = async () => {
         if (isElectron) {
@@ -172,7 +175,7 @@ const ApplicationSettingsPanel: React.FC = () => {
                 setIsDebugLogModalOpen(true);
             } catch (e: any) {
                 logger.error("Failed to read debug log", { error: e.message });
-                alert("Failed to read debug log.");
+                setAlert({ title: "Error", message: "Failed to read debug log.", variant: 'error' });
             }
         }
     };
@@ -238,6 +241,15 @@ const ApplicationSettingsPanel: React.FC = () => {
                 onClose={() => setIsDebugLogModalOpen(false)}
                 logContent={debugLogContent}
             />
+            {alert && (
+                <AlertModal 
+                    isOpen={true}
+                    onClose={() => setAlert(null)}
+                    title={alert.title}
+                    message={alert.message}
+                    variant={alert.variant}
+                />
+            )}
         </>
     );
 };

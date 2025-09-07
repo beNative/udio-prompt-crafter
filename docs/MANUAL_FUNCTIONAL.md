@@ -69,12 +69,12 @@ Click the "Settings" tab in the header to access the configuration page. The pag
     -   **Categories List (Left):** Add, edit, delete, and reorder your categories. Click a category to manage its tags.
     -   **Tags List (Right):** When a category is selected, this area shows all of its tags. You can drag and drop tags to reorder them or create parent-child relationships (for suggestions). Click "Add Tag" or the pencil icon on an existing tag to open the inline editor.
     -   **Inline Tag Editor:** When adding or editing a tag, a panel appears directly on the page. Here you can edit the tag's label, ID, description, color, and manage its "Suggests" and "Conflicts With" relationships using a powerful search-and-select combobox.
-    -   **Saving:** Changes are not applied until you click the "Save Taxonomy" button at the top. You can also discard all your changes or reset the entire taxonomy to the application's default. *Warning: Saving or resetting will reload the app's data and clear your current prompt.*
+    -   **Saving:** Changes are not applied until you click the "Save Taxonomy" button at the top. You can also discard all your changes or reset the entire taxonomy to the application's default. *All destructive actions like deleting or resetting will prompt for confirmation using a themed, in-app dialog.*
 -   **Presets Tab:**
     -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets at any time.
 -   **Application Tab:**
-    - Customize the look and feel of the app. You can choose from multiple icon sets (Heroicons, Lucide, Feather, Tabler). For the desktop app, you can also configure developer-centric options like opening the DevTools on startup.
+    -   Customize the look and feel of the app. You can choose from multiple icon sets (Heroicons, Lucide, Feather, Tabler). For the desktop app, you can also configure developer-centric options like opening the DevTools on startup.
 
 ## Info Page
 

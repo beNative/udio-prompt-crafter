@@ -1,5 +1,14 @@
 # Version Log
 
+## v0.7.0 - The Consistency Update
+
+This update introduces custom, consistently styled modals for all confirmation dialogs and alerts throughout the application, replacing native OS-level dialogs. This significantly improves the user interface's visual consistency and attractiveness.
+
+### UI Improvements
+-   **Custom Confirmation Modals:** All `confirm()` dialogs (e.g., when deleting a category or saving taxonomy changes) have been replaced with a custom modal component that matches the application's theme.
+-   **Custom Alert Modals:** All `alert()` messages (e.g., for duplicate preset names) now use a custom, themed alert modal.
+-   **Inline Validation:** Validation errors in the Category and Tag editors are now shown as inline error messages directly under the input fields, providing a smoother editing experience.
+
 ## v0.6.0 - The Conductor's Update
 
 This update introduces a dedicated panel for UDIO-specific parameters, adds more icon customization options, and includes several UI/UX and stability improvements.
