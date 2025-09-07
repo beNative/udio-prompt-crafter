@@ -1,6 +1,6 @@
 # Version Log
 
-## v1.6.0 - The Conductor's Update
+## v0.6.0 - The Conductor's Update
 
 This update introduces a dedicated panel for UDIO-specific parameters, adds more icon customization options, and includes several UI/UX and stability improvements.
 
@@ -13,7 +13,7 @@ This update introduces a dedicated panel for UDIO-specific parameters, adds more
 -   **Preset Panel Layout:** Fixed a layout issue where buttons in the Presets settings tab could be pushed off-screen. The layout now uses a flexible model to ensure buttons are always visible.
 -   **JSON Editor Cursor:** Fixed a bug where the text cursor was invisible in the JSON editor.
 
-## v1.5.0 - The Polish & Persistence Update
+## v0.5.0 - The Polish & Persistence Update
 
 This update focuses on improving the user experience within the Live Preview panel by fixing a critical bug and refreshing the UI.
 
@@ -23,7 +23,7 @@ This update focuses on improving the user experience within the Live Preview pan
 ### UI Improvements
 -   **Button Redesign:** Restyled the "Analyze," "Description," and "Titles" buttons for a cleaner, more professional look that integrates better with both light and dark themes.
 
-## v1.4.0 - The Stability & Workflow Update
+## v0.4.0 - The Stability & Workflow Update
 
 This release is a major overhaul focused on improving core stability, workflow efficiency, and the user experience, directly addressing user feedback on persistent bugs and usability issues.
 
@@ -36,7 +36,7 @@ This release is a major overhaul focused on improving core stability, workflow e
     -   For the desktop app, a high-priority startup logging system (`debug.log`) has been implemented to help diagnose "white screen" errors and other critical launch failures.
 -   **UI/UX Enhancements:** The Settings page and Taxonomy Editor have been refactored to utilize the full available height and width of the application window, providing a much better experience for managing large tag libraries on bigger screens.
 
-## v1.3.0 - The Architect's Toolkit Update
+## v0.3.0 - The Architect's Toolkit Update
 
 This release adds powerful new features for advanced users, including AI-powered prompt reverse-engineering and an integrated taxonomy editor.
 
@@ -45,7 +45,7 @@ This release adds powerful new features for advanced users, including AI-powered
 -   **AI Prompt Deconstruction:** A new AI-powered tool (accessible via the "magic wand" icon in the header) that can analyze a descriptive prompt (e.g., from another source) and automatically select the corresponding tags in the crafter.
 -   **In-App Taxonomy Editor:** A comprehensive editor has been added to the Settings page. Users can now create, edit, and delete categories and tags directly within the application to fully customize their prompting experience.
 
-## v1.2.0 - The Songwriter's Assistant Update
+## v0.2.0 - The Songwriter's Assistant Update
 
 This release introduces a major enhancement to the AI features, turning the crafter into a powerful songwriting partner.
 
@@ -55,7 +55,7 @@ This release introduces a major enhancement to the AI features, turning the craf
     -   **Generate Lyric Ideas:** Users can input keywords and use selected Genre/Mood tags to generate multiple creative lyrical theme ideas.
     -   **Generate Full Lyrics:** After generating ideas, a new "Generate Lyrics" button appears for each theme. Clicking it uses the AI to expand the chosen idea into a complete set of song lyrics with a conventional structure (verses, chorus, bridge).
 
-## v1.1.0 - The Creative Flow Update
+## v0.1.0 - The Creative Flow Update
 
 This release focuses on streamlining the prompt creation workflow and expanding the creative toolkit.
 
@@ -66,9 +66,9 @@ This release focuses on streamlining the prompt creation workflow and expanding 
 -   **Prompt History:** The application now automatically saves your last 50 unique prompts. A new "History" button in the header opens a modal where you can view, load, or clear your prompt history.
 -   **Expanded Genre Library:** The "Genre & Crossover" category has been significantly expanded with many new popular music styles and their subgenres, including Rock, Metal, Funk, Soul, R&B, Reggae, Country, and more.
 
-## v1.0.0 - Initial Release
+## v0.0.1 - Initial Release
 
-This is the first public release of the UDIO Prompt Crafter.
+This is the first release of the UDIO Prompt Crafter.
 
 ### Features Added
 
