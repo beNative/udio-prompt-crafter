@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { autoUpdater } from 'electron-updater';
 import { starterPresets } from '../data/presets';
 
 // In an Electron main process (a Node.js environment), __dirname and process are global variables available at runtime.
@@ -55,6 +56,7 @@ const defaultSettings = {
   promptPanelRatio: 50,
   iconSet: 'heroicons',
   openDevToolsOnStart: isDev, // Default to true in dev, false in production
+  allowPrerelease: false,
 };
 
 let currentSettings = defaultSettings;
@@ -143,7 +145,7 @@ try {
     
     // Read settings synchronously before creating the window or setting up IPC.
     currentSettings = readSettingsSync();
-    logToFile(`Settings loaded. openDevToolsOnStart: ${currentSettings.openDevToolsOnStart}`);
+    logToFile(`Settings loaded. openDevToolsOnStart: ${currentSettings.openDevToolsOnStart}, allowPrerelease: ${currentSettings.allowPrerelease}`);
     
     logToFile('Setting up IPC handlers...');
 
@@ -272,6 +274,18 @@ try {
 
     // --- Create the window ---
     createWindow();
+
+    // --- Auto-updater logic ---
+    logToFile('Initializing auto-updater.');
+    autoUpdater.logger = {
+      debug: (message) => logToFile(`[Updater] DEBUG: ${message}`),
+      info: (message) => logToFile(`[Updater] INFO: ${message}`),
+      warn: (message) => logToFile(`[Updater] WARN: ${message}`),
+      error: (message) => logToFile(`[Updater] ERROR: ${message}`),
+    };
+    autoUpdater.allowPrerelease = currentSettings.allowPrerelease || false;
+    autoUpdater.checkForUpdatesAndNotify();
+    logToFile(`checkForUpdatesAndNotify called. allowPrerelease is set to ${autoUpdater.allowPrerelease}.`);
 
     app.on('activate', () => {
       logToFile('App activate event triggered.');

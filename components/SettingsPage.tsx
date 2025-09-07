@@ -211,6 +211,16 @@ const ApplicationSettingsPanel: React.FC = () => {
                             </div>
                             <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
                                 <div>
+                                    <p className="font-medium text-bunker-800 dark:text-bunker-200">Receive Pre-releases</p>
+                                    <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">Get notified about beta versions and pre-releases. Requires app restart to take effect.</p>
+                                </div>
+                                <label htmlFor="prerelease-toggle" className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="prerelease-toggle" className="sr-only peer" checked={settings.allowPrerelease ?? false} onChange={e => setSettings(prev => prev ? { ...prev, allowPrerelease: e.target.checked } : null)} />
+                                    <div className="w-11 h-6 bg-bunker-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer dark:bg-bunker-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-bunker-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-bunker-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                                <div>
                                     <p className="font-medium text-bunker-800 dark:text-bunker-200">Open Developer Tools on Startup</p>
                                     <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">Automatically opens the developer console when the application starts.</p>
                                 </div>

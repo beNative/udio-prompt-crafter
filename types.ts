@@ -55,6 +55,7 @@ export interface AppSettings {
   promptPanelRatio?: number;
   openDevToolsOnStart?: boolean;
   iconSet?: 'heroicons' | 'lucide' | 'feather' | 'tabler';
+  allowPrerelease?: boolean;
 }
 
 // New Logging types
