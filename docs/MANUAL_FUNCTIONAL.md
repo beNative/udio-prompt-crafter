@@ -56,6 +56,20 @@ These buttons provide quick access to powerful features.
 -   **Toggle Logs:** Opens or closes the log panel at the bottom of the screen.
 -   **Toggle Theme:** Switches between light and dark mode.
 
+## Data Storage (Desktop App)
+
+To behave like a standard installed application, all user-generated data is stored in the operating system's standard user data directory. This includes:
+
+-   `settings.json` (your presets, AI configuration, and app settings)
+-   `taxonomy.json` (your custom taxonomy, if you've created one)
+-   Log files (`udio-prompt-crafter-YYYY-MM-DD.log`)
+
+This keeps your data safe during application updates and organized according to system standards. The specific location is typically:
+
+-   **Windows:** `%APPDATA%\UDIO Prompt Crafter`
+-   **macOS:** `~/Library/Application Support/UDIO Prompt Crafter`
+-   **Linux:** `~/.config/UDIO Prompt Crafter`
+
 ## Settings Page
 
 Click the "Settings" tab in the header to access the configuration page. The page is organized into cards for clarity.
@@ -85,7 +99,7 @@ Click the "Info" tab to view application documentation, including the Readme, th
 The Log Panel provides a real-time view of application events, which is useful for debugging.
 
 -   **Filter Levels:** You can toggle which log levels (DEBUG, INFO, WARNING, ERROR) are visible.
--   **Log to File (Electron Only):** When running the desktop app, you can enable this to write logs to a file (`udio-prompt-crafter-YYYY-MM-DD.log`) in the same directory as the executable.
+-   **Log to File (Electron Only):** When running the desktop app, you can enable this to write logs to a file (`udio-prompt-crafter-YYYY-MM-DD.log`) inside the application's standard data directory (see the "Data Storage" section for specific locations).
 -   **Open Location (Electron Only):** Opens the folder containing the log file.
 
 ## Status Bar

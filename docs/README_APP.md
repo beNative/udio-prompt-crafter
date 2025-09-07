@@ -24,7 +24,7 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").
 -   **Command Palette:** A powerful search tool (`Ctrl+;`) to quickly find and toggle any tag, or execute actions like loading a preset or clearing the board.
--   **File-Based Settings:** When running the desktop version, all your custom presets, settings, and custom taxonomy are saved to local files, making them persistent across sessions.
+-   **Standard Data Location:** In the desktop version, all your data (presets, settings, custom taxonomy, logs) is stored in the standard user application data directory (e.g., `%APPDATA%` on Windows). This makes the application behave like a standard installed program and keeps your data safe during updates.
 
 ## Getting Started
 

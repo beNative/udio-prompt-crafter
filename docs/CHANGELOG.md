@@ -1,5 +1,13 @@
 # Version Log
 
+## v0.8.0 - The Integration Update
+
+This update changes the application's data storage behavior from a "portable" model to the standard installed application model. All user data, including settings, presets, custom taxonomies, and logs, are now stored in the appropriate system user data directory (`%APPDATA%` on Windows, `~/Library/Application Support` on macOS, etc.). This ensures better system integration and prevents clutter in the application's installation folder.
+
+### Architectural Changes
+-   **Standard Data Location:** User data is now stored in `app.getPath('userData')` instead of next to the executable. This makes the application a better citizen on the user's operating system.
+-   **Documentation:** All user-facing documentation has been updated to reflect this new standard behavior.
+
 ## v0.7.0 - The Consistency Update
 
 This update introduces custom, consistently styled modals for all confirmation dialogs and alerts throughout the application, replacing native OS-level dialogs. This significantly improves the user interface's visual consistency and attractiveness.

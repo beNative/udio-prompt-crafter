@@ -11,9 +11,9 @@ declare const process: any;
 
 const isDev = !app.isPackaged;
 
-// Define a single path for all portable data storage.
-// In dev, it's the project root. In production, it's the folder containing the .exe.
-const storagePath = isDev ? process.cwd() : path.dirname(app.getPath('exe'));
+// Define a single path for data storage.
+// In dev, it's the project root. In production, it's the standard user data directory.
+const storagePath = isDev ? process.cwd() : app.getPath('userData');
 
 // --- START: Robust Startup Debug Logging ---
 const debugLogPath = path.join(storagePath, 'debug.log');
@@ -32,7 +32,7 @@ const logToFile = (message: string) => {
 
 logToFile('Main process started.');
 logToFile(`isDev = ${isDev}`);
-logToFile(`Using portable storage path: ${storagePath}`);
+logToFile(`Using data storage path: ${storagePath}`);
 
 // Catch unhandled errors in the main process and log them before quitting.
 process.on('uncaughtException', (error: Error, origin: string) => {
