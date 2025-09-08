@@ -77,6 +77,29 @@ export interface HistoryEntry {
   udioParams?: UdioParams;
 }
 
+// New Toast Notification types
+export interface Toast {
+  id: number;
+  type: 'info' | 'success' | 'error' | 'loading';
+  title: string;
+  message: string;
+  duration?: number;
+  actions?: { label: string; onClick: () => void }[];
+  progress?: number; // For download progress
+}
+
+// Auto-update info type
+export interface UpdateInfo {
+  version: string;
+  files: any[];
+  path: string;
+  sha512: string;
+  releaseDate: string;
+  releaseName?: string;
+  releaseNotes?: string | any[];
+}
+
+
 // New Electron API types
 export interface IElectronAPI {
   writeLog: (logEntry: LogEntry) => void;
@@ -91,6 +114,11 @@ export interface IElectronAPI {
   readCustomTaxonomy: () => Promise<Taxonomy | null>;
   writeCustomTaxonomy: (taxonomy: Taxonomy) => void;
   resetCustomTaxonomy: () => void;
+  // Auto-update API
+  onUpdateEvent: (callback: (event: string, data?: any) => void) => () => void;
+  checkForUpdates: () => void;
+  downloadUpdate: () => void;
+  restartAndInstall: () => void;
 }
 
 declare global {

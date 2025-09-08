@@ -16,4 +16,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readCustomTaxonomy: () => ipcRenderer.invoke('read-custom-taxonomy'),
   writeCustomTaxonomy: (taxonomy) => ipcRenderer.send('write-custom-taxonomy', taxonomy),
   resetCustomTaxonomy: () => ipcRenderer.send('reset-custom-taxonomy'),
+
+  // Update mechanism
+  onUpdateEvent: (callback) => {
+    const listener = (event, ...args) => callback(...args);
+    ipcRenderer.on('update-event', listener);
+    return () => {
+      ipcRenderer.removeListener('update-event', listener);
+    };
+  },
+  checkForUpdates: () => ipcRenderer.send('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.send('download-update'),
+  restartAndInstall: () => ipcRenderer.send('restart-and-install'),
 });

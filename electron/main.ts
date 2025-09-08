@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater, UpdateInfo } from 'electron-updater';
 import { starterPresets } from '../data/presets';
 
 // In an Electron main process (a Node.js environment), __dirname and process are global variables available at runtime.
@@ -77,6 +77,7 @@ function readSettingsSync() {
   }
 }
 
+let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
   logToFile('createWindow() called.');
@@ -90,7 +91,7 @@ function createWindow() {
       logToFile(`[FATAL] Preload script not found at ${preloadPath}`);
   }
 
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     show: false, // Create the window hidden
@@ -284,8 +285,50 @@ try {
       error: (message) => logToFile(`[Updater] ERROR: ${message}`),
     };
     autoUpdater.allowPrerelease = currentSettings.allowPrerelease || false;
-    autoUpdater.checkForUpdatesAndNotify();
-    logToFile(`checkForUpdatesAndNotify called. allowPrerelease is set to ${autoUpdater.allowPrerelease}.`);
+    // Auto check on startup without notifying. The UI will handle it.
+    autoUpdater.checkForUpdates(); 
+
+    autoUpdater.on('update-available', (info: UpdateInfo) => {
+      logToFile(`[Updater] Update available: v${info.version}`);
+      mainWindow?.webContents.send('update-event', 'update-available', info);
+    });
+
+    autoUpdater.on('update-not-available', () => {
+      logToFile('[Updater] No update available.');
+      mainWindow?.webContents.send('update-event', 'update-not-available');
+    });
+
+    autoUpdater.on('download-progress', (progressObj) => {
+      const logMessage = `[Updater] Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
+      logToFile(logMessage);
+      mainWindow?.webContents.send('update-event', 'download-progress', progressObj.percent);
+    });
+
+    autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
+      logToFile(`[Updater] Update downloaded: v${info.version}`);
+      mainWindow?.webContents.send('update-event', 'update-downloaded', info);
+    });
+
+    autoUpdater.on('error', (err) => {
+      logToFile(`[Updater] Error: ${err.message}`);
+      mainWindow?.webContents.send('update-event', 'error', err.message);
+    });
+
+    ipcMain.on('check-for-updates', () => {
+      logToFile('[IPC] Received check-for-updates request from renderer.');
+      autoUpdater.checkForUpdates();
+    });
+
+    ipcMain.on('download-update', () => {
+      logToFile('[IPC] Received download-update request from renderer.');
+      autoUpdater.downloadUpdate();
+    });
+
+    ipcMain.on('restart-and-install', () => {
+      logToFile('[IPC] Received restart-and-install request from renderer.');
+      autoUpdater.quitAndInstall();
+    });
+
 
     app.on('activate', () => {
       logToFile('App activate event triggered.');

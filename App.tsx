@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { starterPresets } from './data/presets';
-import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus, HistoryEntry, UdioParams } from './types';
+import type { Tag, Category, SelectedTag, Preset, Conflict, Taxonomy, AppSettings, AiStatus, HistoryEntry, UdioParams, Toast, UpdateInfo } from './types';
 import { Header } from './components/Header';
 import { CategoryList } from './components/CategoryList';
 import { TagPicker } from './components/TagPicker';
@@ -22,6 +22,7 @@ import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
 import { SettingsContext } from './index';
 import { AlertModal } from './components/AlertModal';
+import { ToastContainer } from './components/ToastContainer';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -72,12 +73,28 @@ const App: React.FC = () => {
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
 
-  // State for global features like status bar
+  // State for global features
   const [appVersion, setAppVersion] = useState('');
   const [aiStatus, setAiStatus] = useState<AiStatus>('checking');
   const [detectedProviders, setDetectedProviders] = useState<('ollama' | 'lmstudio')[]>([]);
   const [availableModels, setAvailableModels] = useState<{ ollama: string[]; lmstudio: string[] }>({ ollama: [], lmstudio: [] });
   const [isDetecting, setIsDetecting] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const updateToastIdRef = useRef<number | null>(null);
+
+  const addToast = (toast: Omit<Toast, 'id'>) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { ...toast, id }]);
+    return id;
+  };
+
+  const removeToast = (id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const updateToast = (id: number, updates: Partial<Omit<Toast, 'id'>>) => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  }
   
   const detectServicesAndFetchModels = useCallback(async () => {
     logger.info("Detecting local LLM services...");
@@ -309,6 +326,78 @@ const App: React.FC = () => {
     };
   }, []);
   
+  useEffect(() => {
+    if (!isElectron) return;
+    
+    const unsubscribe = window.electronAPI.onUpdateEvent((event, data) => {
+        logger.info(`Received update event: ${event}`, data);
+
+        const currentToastId = updateToastIdRef.current;
+
+        switch(event) {
+            case 'update-available': {
+                if (currentToastId) removeToast(currentToastId);
+                const info = data as UpdateInfo;
+                const id = addToast({
+                    type: 'info',
+                    title: `Update Available: v${info.version}`,
+                    message: 'A new version is ready. Would you like to download it now?',
+                    actions: [{
+                        label: 'Download',
+                        onClick: () => {
+                            window.electronAPI.downloadUpdate();
+                            updateToast(id, {
+                                type: 'loading',
+                                title: `Downloading v${info.version}`,
+                                message: 'Preparing to download...',
+                                progress: 0,
+                                actions: undefined
+                            });
+                        }
+                    }]
+                });
+                updateToastIdRef.current = id;
+                break;
+            }
+            case 'download-progress': {
+                if (currentToastId) {
+                    updateToast(currentToastId, {
+                        message: `Download in progress...`,
+                        progress: Math.round(data as number)
+                    });
+                }
+                break;
+            }
+            case 'update-downloaded': {
+                const downloadedInfo = data as UpdateInfo;
+                const commonProps = {
+                    type: 'success' as const,
+                    title: `Update Ready: v${downloadedInfo.version}`,
+                    message: 'Restart the application to install the latest version.',
+                    progress: undefined,
+                    actions: [{ label: 'Restart Now', onClick: () => window.electronAPI.restartAndInstall() }]
+                };
+                if (currentToastId) {
+                    updateToast(currentToastId, commonProps);
+                } else {
+                    const newId = addToast(commonProps);
+                    updateToastIdRef.current = newId;
+                }
+                break;
+            }
+            case 'update-not-available':
+                addToast({ type: 'success', title: 'Up to Date', message: 'You are running the latest version.', duration: 3000 });
+                break;
+            
+            case 'error':
+                 addToast({ type: 'error', title: 'Update Error', message: data as string, duration: 8000 });
+                break;
+        }
+    });
+
+    return unsubscribe;
+  }, []);
+
   const callLlm = useCallback(async (systemPrompt: string, userPrompt: string, isResponseTextFreeform = false): Promise<any> => {
     if (!appSettings?.aiSettings.baseUrl || !appSettings?.aiSettings.model) {
       const errorMsg = "AI settings are not configured. Please configure them in the settings menu.";
@@ -808,6 +897,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         return (
           <div className="h-full overflow-y-auto">
             <SettingsPage 
+              appVersion={appVersion}
               taxonomy={taxonomy}
               onTaxonomyChange={handleTaxonomyChange}
               defaultPresets={starterPresets}
@@ -931,6 +1021,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
                 variant={alert.variant}
             />
         )}
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
       </div>
     </SettingsContext.Provider>
   );
