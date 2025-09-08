@@ -18,7 +18,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text }) => {
       {visible && text && (
         <div 
           role="tooltip"
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max max-w-xs p-2.5 bg-bunker-950 text-bunker-100 text-xs rounded-lg shadow-lg z-50 transition-opacity duration-200"
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max max-w-xs p-2.5 bg-white dark:bg-bunker-900 border border-bunker-200 dark:border-bunker-800 text-bunker-900 dark:text-bunker-100 text-xs rounded-lg shadow-lg z-50 transition-opacity duration-200"
         >
           {text}
         </div>

@@ -1,5 +1,12 @@
 # Version Log
 
+## v1.0.0 - The Readability & Refinement Update
+
+This release focuses on improving UI clarity and overall user experience with small but impactful refinements.
+
+### UI Improvements
+-   **Opaque Tooltips:** All tooltips are now fully opaque and theme-aware (solid light/dark backgrounds), significantly improving readability against any background content.
+
 ## v0.9.0 - The Customization & Polish Update
 
 This release adds more flexibility for Windows users during installation and provides a cleaner, more focused user interface.

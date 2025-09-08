@@ -46,12 +46,12 @@ This panel shows you the output of your selections in real-time.
 
 These buttons provide quick access to powerful features.
 
--   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All" or "Load Preset."
+-   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All," "Randomize Tags," "Save as Preset...," or "Load Preset."
 -   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter. History entries also save the UDIO Parameters that were active when the prompt was generated.
 -   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets. Presets now also store any UDIO Parameters you've set.
 -   **Save as Preset:** Save your current selections and category order as a new preset.
 -   **Deconstruct Prompt with AI:** (Magic wand icon) Opens a modal where you can paste a descriptive, text-based prompt. The AI will analyze it and attempt to select all the matching tags from the taxonomy, replacing your current selection. This is a powerful way to reverse-engineer prompts you find elsewhere.
--   **Randomize:** Selects one random tag from each tag-based category. A great way to find inspiration!
+-   **Thematic Randomizer:** (Sparkles icon) Opens a modal where you can enter a theme (e.g., 'magical forest'). The AI will then generate a cohesive set of tags that match the theme, replacing your current selection.
 -   **Clear All:** Deselects all tags and clears all text inputs.
 -   **Toggle Logs:** Opens or closes the log panel at the bottom of the screen.
 -   **Toggle Theme:** Switches between light and dark mode.
