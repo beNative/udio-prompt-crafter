@@ -1,5 +1,14 @@
 # Version Log
 
+## v0.14.0 - The Conductor's Baton Update
+
+This release gives users finer control over their creative process, much like a conductor guiding an orchestra. It introduces more flexible conflict resolution and robust preset management.
+
+### Features Added
+-   **Enhanced Conflict Resolution:** When selecting a tag that conflicts with multiple existing tags, a new modal appears, listing all conflicts. It provides three choices: keep the new tag (deselecting all conflicts), keep both (overriding the rule), or cancel.
+-   **Preset Renaming:** Presets can now be renamed directly within the "Manage Presets" modal. The feature includes validation to prevent duplicate names.
+-   **Delete Confirmation:** A confirmation dialog has been added when deleting a preset to prevent accidental data loss.
+
 ## v0.13.0 - The Phoenix Update
 
 This release focuses on internal refinement and stability. Like a phoenix, the codebase has been renewed, resulting in a cleaner, more reliable foundation for future features.

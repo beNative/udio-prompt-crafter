@@ -40,7 +40,7 @@ This panel shows you the output of your selections in real-time.
     -   **Resizable Splitter:** You can click and drag the splitter between the two panels to resize them to your preference. Your chosen layout is saved automatically.
 -   **UDIO Params Tab:** This tab provides a dedicated form to specify parameters for UDIO. You can toggle if the track is instrumental, provide custom lyrics, and set a target duration in seconds.
 -   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, category order, and UDIO parameters. This is useful for saving, sharing, or for use in other tools.
--   **Conflict Warnings:** If you select tags that are logically incompatible (e.g., "Slow Tempo" and "High Tempo"), a warning box will appear at the top of this panel listing the conflicts.
+-   **Conflict Warnings:** When you select a tag that conflicts with one or more already selected tags, a modal will appear. It clearly lists all conflicts and gives you three options: keep the new tag (which deselects all conflicting tags), keep both (allowing you to override the conflict rule), or cancel the selection.
 
 ## Header Controls (Crafter View Only)
 
@@ -48,7 +48,7 @@ These buttons provide quick access to powerful features.
 
 -   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All," "Randomize Tags," "Save as Preset...," or "Load Preset."
 -   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter. History entries also save the UDIO Parameters that were active when the prompt was generated.
--   **Manage Presets:** Opens a modal to load, update, rename, or delete your saved presets. Presets now also store any UDIO Parameters you've set.
+-   **Manage Presets:** Opens a modal to manage your presets. You can load a preset, update it with your current selection, rename it via an inline editor (with duplicate name prevention), or delete it. Deleting a preset now requires confirmation to prevent accidents.
 -   **Save as Preset:** Save your current selections and category order as a new preset.
 -   **Deconstruct Prompt with AI:** (Magic wand icon) Opens a modal where you can paste a descriptive, text-based prompt. The AI will analyze it and attempt to select all the matching tags from the taxonomy, replacing your current selection. This is a powerful way to reverse-engineer prompts you find elsewhere.
 -   **Thematic Randomizer:** (Sparkles icon) Opens a modal where you can enter a theme (e.g., 'magical forest'). The AI will then generate a cohesive set of tags that match the theme, replacing your current selection.
