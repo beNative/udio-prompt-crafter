@@ -8,10 +8,10 @@ interface ToastNotificationProps {
 }
 
 const typeStyles = {
-  info: { icon: 'info', iconColor: 'text-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-900/40', borderColor: 'border-blue-300 dark:border-blue-600/50' },
-  success: { icon: 'check', iconColor: 'text-green-500', bgColor: 'bg-green-50 dark:bg-green-900/40', borderColor: 'border-green-300 dark:border-green-600/50' },
-  error: { icon: 'warning', iconColor: 'text-red-500', bgColor: 'bg-red-50 dark:bg-red-900/40', borderColor: 'border-red-300 dark:border-red-600/50' },
-  loading: { icon: 'loading', iconColor: 'text-bunker-500', bgColor: 'bg-bunker-50 dark:bg-bunker-900/40', borderColor: 'border-bunker-300 dark:border-bunker-600/50' },
+  info: { icon: 'info', iconColor: 'text-blue-500', bgColor: 'bg-blue-50 dark:bg-bunker-800', borderColor: 'border-blue-300 dark:border-blue-700' },
+  success: { icon: 'check', iconColor: 'text-green-500', bgColor: 'bg-green-50 dark:bg-bunker-800', borderColor: 'border-green-300 dark:border-green-700' },
+  error: { icon: 'warning', iconColor: 'text-red-500', bgColor: 'bg-red-50 dark:bg-bunker-800', borderColor: 'border-red-300 dark:border-red-700' },
+  loading: { icon: 'loading', iconColor: 'text-bunker-500', bgColor: 'bg-bunker-50 dark:bg-bunker-800', borderColor: 'border-bunker-300 dark:border-bunker-700' },
 };
 
 export const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onDismiss }) => {

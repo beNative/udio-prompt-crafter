@@ -81,6 +81,7 @@ const App: React.FC = () => {
   const [isDetecting, setIsDetecting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const updateToastIdRef = useRef<number | null>(null);
+  const initialUpdateCheckHandled = useRef(false);
 
   const addToast = (toast: Omit<Toast, 'id'>) => {
     const id = Date.now();
@@ -357,6 +358,7 @@ const App: React.FC = () => {
                     }]
                 });
                 updateToastIdRef.current = id;
+                initialUpdateCheckHandled.current = true;
                 break;
             }
             case 'download-progress': {
@@ -383,14 +385,19 @@ const App: React.FC = () => {
                     const newId = addToast(commonProps);
                     updateToastIdRef.current = newId;
                 }
+                initialUpdateCheckHandled.current = true;
                 break;
             }
             case 'update-not-available':
-                addToast({ type: 'success', title: 'Up to Date', message: 'You are running the latest version.', duration: 3000 });
+                if (initialUpdateCheckHandled.current) {
+                    addToast({ type: 'success', title: 'Up to Date', message: 'You are running the latest version.', duration: 3000 });
+                }
+                initialUpdateCheckHandled.current = true;
                 break;
             
             case 'error':
                  addToast({ type: 'error', title: 'Update Error', message: data as string, duration: 8000 });
+                 initialUpdateCheckHandled.current = true;
                 break;
         }
     });
