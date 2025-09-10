@@ -26,7 +26,7 @@ import { ToastContainer } from './components/ToastContainer';
 
 interface ConflictState {
   newlySelectedTag: Tag;
-  conflictingTag: Tag;
+  conflictingTags: Tag[];
 }
 
 const isElectron = !!window.electronAPI;
@@ -494,11 +494,13 @@ const App: React.FC = () => {
     const isCurrentlySelected = !!selectedTags[tag.id];
 
     if (!isCurrentlySelected) {
-      const conflict = tag.conflictsWith?.find(id => selectedTags[id]);
-      if (conflict) {
-        const conflictingTag = selectedTags[conflict];
-        logger.warn('Tag conflict detected.', { newTag: tag.label, existingTag: conflictingTag.label });
-        setConflictState({ newlySelectedTag: tag, conflictingTag });
+      const conflicts = tag.conflictsWith
+        ?.map(id => selectedTags[id])
+        .filter((t): t is SelectedTag => !!t);
+
+      if (conflicts && conflicts.length > 0) {
+        logger.warn('Tag conflict detected.', { newTag: tag.label, existingTags: conflicts.map(t => t.label) });
+        setConflictState({ newlySelectedTag: tag, conflictingTags: conflicts });
         return; 
       }
     }
@@ -518,19 +520,43 @@ const App: React.FC = () => {
     });
   }, [selectedTags, taxonomyMap]);
 
-  const handleResolveConflict = (keepNew: boolean) => {
+  const handleResolveConflict = (resolution: 'keep_new' | 'cancel' | 'keep_both') => {
     if (!conflictState) return;
-    logger.info('Resolving tag conflict.', { keptNew: keepNew, newTag: conflictState.newlySelectedTag.label, oldTag: conflictState.conflictingTag.label });
-    if (keepNew) {
-      const { newlySelectedTag, conflictingTag } = conflictState;
-      setSelectedTags(prev => {
-        const newSelected = { ...prev };
-        delete newSelected[conflictingTag.id];
-        const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
-        if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
-        return newSelected;
-      });
+    logger.info('Resolving tag conflict.', { 
+        resolution, 
+        newTag: conflictState.newlySelectedTag.label, 
+        oldTags: conflictState.conflictingTags.map(t => t.label)
+    });
+    
+    const { newlySelectedTag, conflictingTags } = conflictState;
+
+    switch (resolution) {
+      case 'keep_new':
+        setSelectedTags(prev => {
+          const newSelected = { ...prev };
+          conflictingTags.forEach(tag => {
+            delete newSelected[tag.id];
+          });
+          const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
+          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
+          return newSelected;
+        });
+        break;
+
+      case 'keep_both':
+        setSelectedTags(prev => {
+          const newSelected = { ...prev };
+          const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
+          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
+          return newSelected;
+        });
+        break;
+      
+      case 'cancel':
+        // Do nothing.
+        break;
     }
+
     setConflictState(null);
   };
   
