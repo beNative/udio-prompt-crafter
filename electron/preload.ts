@@ -5,7 +5,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   writeLog: (logEntry) => ipcRenderer.send('write-log', logEntry),
-  showItemInFolder: () => ipcRenderer.send('show-item-in-folder'),
+  showLogInFolder: () => ipcRenderer.send('show-log-in-folder'),
+  showSettingsInFolder: () => ipcRenderer.send('show-settings-in-folder'),
   getLogsPath: () => ipcRenderer.invoke('get-logs-path'),
   readSettings: () => ipcRenderer.invoke('read-settings'),
   writeSettings: (settings) => ipcRenderer.send('write-settings', settings),

@@ -104,7 +104,8 @@ export interface UpdateInfo {
 // New Electron API types
 export interface IElectronAPI {
   writeLog: (logEntry: LogEntry) => void;
-  showItemInFolder: () => void;
+  showLogInFolder: () => void;
+  showSettingsInFolder: () => void;
   getLogsPath: () => Promise<string>;
   readSettings: () => Promise<AppSettings>;
   writeSettings: (settings: AppSettings) => void;

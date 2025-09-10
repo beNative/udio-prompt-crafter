@@ -265,11 +265,19 @@ try {
       });
     });
 
-    ipcMain.on('show-item-in-folder', () => {
+    ipcMain.on('show-log-in-folder', () => {
         if (!fs.existsSync(currentLogFilePath)) {
           fs.writeFileSync(currentLogFilePath, `Log file for ${new Date().toISOString()} created.\n`);
         }
         shell.showItemInFolder(currentLogFilePath);
+    });
+
+    ipcMain.on('show-settings-in-folder', () => {
+      if (fs.existsSync(settingsPath)) {
+          shell.showItemInFolder(settingsPath);
+      } else {
+          logToFile('[WARN] show-settings-in-folder called but settings file does not exist.');
+      }
     });
 
     ipcMain.handle('get-logs-path', () => path.join(storagePath, getLogFileName()));

@@ -371,6 +371,12 @@ const DataManagementPanel: React.FC = () => {
     const handleImportClick = () => {
         fileInputRef.current?.click();
     };
+    
+    const handleOpenSettingsLocation = () => {
+        if (isElectron) {
+            window.electronAPI.showSettingsInFolder();
+        }
+    };
 
     const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -433,6 +439,12 @@ const DataManagementPanel: React.FC = () => {
                                 <Icon name="load" className="w-5 h-5"/>
                                 <span>Export to File...</span>
                             </button>
+                            {isElectron && (
+                                <button onClick={handleOpenSettingsLocation} className="flex items-center space-x-2 rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">
+                                    <Icon name="folder" className="w-5 h-5"/>
+                                    <span>Open File Location</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                     <div className="p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800 flex flex-col flex-grow min-h-0">

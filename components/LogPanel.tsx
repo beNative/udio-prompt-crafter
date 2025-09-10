@@ -54,7 +54,7 @@ export const LogPanel: React.FC<LogPanelProps> = ({ onClose }) => {
 
   const handleOpenLocation = () => {
       if (isElectron) {
-          window.electronAPI.showItemInFolder();
+          window.electronAPI.showLogInFolder();
       }
   }
 
