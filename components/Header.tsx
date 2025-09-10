@@ -23,7 +23,7 @@ const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; 
         <button 
             onClick={onClick} 
             className={`px-3 py-2 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg text-bunker-600 dark:text-bunker-300 hover:bg-bunker-200 hover:text-bunker-800 dark:hover:bg-bunker-700/80 dark:hover:text-white transition-colors ${className}`}
-            title={title}
+            aria-label={title}
         >
           {children || <Icon name={icon} className="w-5 h-5" />}
         </button>
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
         {activeView === 'crafter' && (
             <>
                 <Tooltip text={<>Open Command Palette <kbd className="ml-2 px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">Ctrl</kbd>+<kbd className="px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">;</kbd></>}>
-                  <button onClick={onOpenCommandPalette} className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg text-bunker-600 dark:text-bunker-300 hover:bg-bunker-200 hover:text-bunker-800 dark:hover:bg-bunker-700/80 dark:hover:text-white transition-colors">
+                  <button onClick={onOpenCommandPalette} aria-label="Open Command Palette" className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg text-bunker-600 dark:text-bunker-300 hover:bg-bunker-200 hover:text-bunker-800 dark:hover:bg-bunker-700/80 dark:hover:text-white transition-colors">
                       <Icon name="search" className="w-5 h-5" />
                   </button>
                 </Tooltip>
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <HeaderButton onClick={onOpenDeconstructModal} title="Deconstruct Prompt with AI" icon="wandSparkles" />
                 <HeaderButton onClick={onOpenThematicRandomizerModal} title="Thematic Randomizer" icon="sparkles" />
                 <Tooltip text="Clear All">
-                    <button onClick={onClear} className="px-3 py-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-colors" title="Clear All">
+                    <button onClick={onClear} className="px-3 py-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-colors" aria-label="Clear All">
                       <Icon name="trash" className="w-5 h-5" />
                     </button>
                 </Tooltip>

@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { SelectedTag, Conflict, Preset, Category, UdioParams } from '../types';
 import { Icon } from './icons';
 import { normalizeTagLabels } from '../utils/normalization';
 import { UDIOParams } from './UDIOParams';
+import { Tooltip } from './Tooltip';
 
 interface PromptPreviewProps {
   orderedCategories: Pick<Category, 'id' | 'name' | 'type'>[];
@@ -33,15 +33,21 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
       setTimeout(() => setCopied(false), 2000);
     });
   };
+  
+  const tooltipText = copied ? "Copied!" : "Copy to clipboard";
 
   return (
-    <button
-      onClick={handleCopy}
-      className="absolute top-3 right-3 p-1.5 bg-bunker-200/50 dark:bg-bunker-700/50 rounded-lg hover:bg-bunker-300 dark:hover:bg-bunker-600 transition-colors"
-      title="Copy to clipboard"
-    >
-      {copied ? <Icon name="check" className="w-5 h-5 text-green-500" /> : <Icon name="copy" className="w-5 h-5 text-bunker-500 dark:text-bunker-300" />}
-    </button>
+    <div className="absolute top-3 right-3">
+        <Tooltip text={tooltipText}>
+          <button
+            onClick={handleCopy}
+            className="p-1.5 bg-bunker-200/50 dark:bg-bunker-700/50 rounded-lg hover:bg-bunker-300 dark:hover:bg-bunker-600 transition-colors"
+            aria-label={tooltipText}
+          >
+            {copied ? <Icon name="check" className="w-5 h-5 text-green-500" /> : <Icon name="copy" className="w-5 h-5 text-bunker-500 dark:text-bunker-300" />}
+          </button>
+        </Tooltip>
+    </div>
   );
 };
 
@@ -326,13 +332,14 @@ Example:
               </div>
               
               {/* Splitter Handle */}
-              <div
-                onMouseDown={handleMouseDown}
-                className="w-full h-1.5 bg-transparent cursor-row-resize hover:bg-blue-600/50 dark:hover:bg-blue-500/50 transition-colors duration-200 flex-shrink-0 group flex items-center justify-center my-1"
-                title="Resize panels"
-              >
-                  <div className="h-0.5 w-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
-              </div>
+              <Tooltip text="Resize panels">
+                <div
+                  onMouseDown={handleMouseDown}
+                  className="w-full h-1.5 bg-transparent cursor-row-resize hover:bg-blue-600/50 dark:hover:bg-blue-500/50 transition-colors duration-200 flex-shrink-0 group flex items-center justify-center my-1"
+                >
+                    <div className="h-0.5 w-8 bg-bunker-200 dark:bg-bunker-700 rounded-full group-hover:bg-white/50 transition-colors" />
+                </div>
+              </Tooltip>
               
               {/* Bottom Panel: AI Features */}
               <div className="relative min-h-0 flex flex-col" style={{ height: `calc(${100 - topPanelHeight}% - ${splitterHeight/2}px)` }}>
