@@ -1,5 +1,13 @@
 # Version Log
 
+## v0.13.0 - The Phoenix Update
+
+This release focuses on internal refinement and stability. Like a phoenix, the codebase has been renewed, resulting in a cleaner, more reliable foundation for future features.
+
+### Refinements & Fixes
+-   **Icon Set Refresh:** Replaced corrupted icon sets (Heroicons, Lucide) with fresh copies to ensure they render correctly. The default icon set for new users is now 'Feather'.
+-   **Codebase Cleanup:** Performed a major code cleanup, removing over five obsolete files and unused code to improve performance and maintainability. Global styles were also centralized for better organization.
+
 ## v0.12.0 - The Power User Update
 
 This update introduces a suite of features for advanced users, offering deeper control over application settings and a more refined user experience.
