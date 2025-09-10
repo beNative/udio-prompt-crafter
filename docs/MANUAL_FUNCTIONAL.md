@@ -89,8 +89,12 @@ Click the "Settings" tab in the header to access the configuration page. The pag
     -   You can reset to the application's default presets at any time.
 -   **Application Tab:**
     -   **Icon Set:** Customize the visual style of icons throughout the application. You can choose from Heroicons, Lucide, Feather, and Tabler.
-    -   **UI Scale:** Adjust the overall size of the entire application interface using a slider, from 50% to 400%. Your preference is saved automatically and applied on the next launch.
+    -   **UI Scale:** Adjust the overall size of the entire application interface using a slider, from 50% to 400%. Changes must be confirmed by clicking the "Apply" button. Your preference is saved automatically and applied on the next launch.
     -   **Desktop App Options:** When running as a desktop application, you can configure developer-centric options. This includes enabling notifications for pre-release (beta) versions and automatically opening the DevTools on startup. A restart is required for the pre-release setting to take effect.
+-   **Data Management Tab:**
+    -   **Import & Export:** Buttons to save your entire configuration (settings, presets, UI preferences) to a `.json` file, or load a configuration from a file.
+    -   **Open File Location (Desktop App):** A button to directly open the folder containing your `settings.json` file.
+    -   **Raw Settings Editor:** A powerful JSON editor that allows you to view and modify all application settings directly. A warning is displayed as incorrect edits can break the application.
 
 ## Info Page
 

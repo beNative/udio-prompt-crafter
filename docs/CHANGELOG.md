@@ -1,5 +1,14 @@
 # Version Log
 
+## v0.12.0 - The Power User Update
+
+This update introduces a suite of features for advanced users, offering deeper control over application settings and a more refined user experience.
+
+### Features Added
+-   **Data Management Tab:** A new "Data Management" section has been added to the Settings page. It includes a raw JSON editor for all application settings, along with import/export functionality.
+-   **Open Settings Location:** For the desktop app, a button is now available in the Data Management tab to directly open the folder containing the `settings.json` file.
+-   **UI Scale Apply Button:** The UI Scale slider in the Application settings now has an "Apply" button. The interface will no longer resize in real-time while dragging the slider, providing a more controlled experience.
+
 ## v0.11.0 - The Accessibility & Comfort Update
 
 This major update introduces a much-requested accessibility feature, allowing users to tailor the application's size to their specific needs and preferences.

@@ -21,11 +21,12 @@ Crafting the perfect prompt is key to getting great results from AI music genera
     -   **Tag Suggestions:** Get recommendations for complementary tags.
 -   **Streamlined Taxonomy Editor:** A fully redesigned, inline editor on the Settings page allows for stable and intuitive management of your custom tag library. The buggy modal has been completely replaced.
 -   **Icon Customization:** Choose from four popular icon sets (Heroicons, Lucide, Feather, Tabler) to personalize the application's appearance.
--   **UI Scaling:** Customize the application's size with a simple slider in the settings, ranging from 50% to 400% for improved accessibility and comfort.
+-   **Controlled UI Scaling:** Customize the application's size with a simple slider in the settings, ranging from 50% to 400%. Changes are applied via a dedicated "Apply" button for more control.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").
 -   **Command Palette:** A powerful search tool (`Ctrl+;`) to quickly find and toggle any tag, or execute actions like loading a preset or clearing the board.
+-   **Advanced Data Management:** A dedicated settings tab allows for importing and exporting all application settings, direct editing of the raw settings JSON, and (on desktop) opening the settings file's location.
 -   **Standard Data Location:** In the desktop version, all your data (presets, settings, custom taxonomy, logs) is stored in the standard user application data directory (e.g., `%APPDATA%` on Windows). This makes the application behave like a standard installed program and keeps your data safe during updates.
 
 ## Getting Started
