@@ -88,7 +88,9 @@ Click the "Settings" tab in the header to access the configuration page. The pag
     -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
     -   You can reset to the application's default presets at any time.
 -   **Application Tab:**
-    -   Customize the look and feel of the app. You can choose from multiple icon sets (Heroicons, Lucide, Feather, Tabler). For the desktop app, you can also configure developer-centric options. This includes enabling notifications for pre-release (beta) versions and automatically opening the DevTools on startup. A restart is required for the pre-release setting to take effect.
+    -   **Icon Set:** Customize the visual style of icons throughout the application. You can choose from Heroicons, Lucide, Feather, and Tabler.
+    -   **UI Scale:** Adjust the overall size of the entire application interface using a slider, from 50% to 400%. Your preference is saved automatically and applied on the next launch.
+    -   **Desktop App Options:** When running as a desktop application, you can configure developer-centric options. This includes enabling notifications for pre-release (beta) versions and automatically opening the DevTools on startup. A restart is required for the pre-release setting to take effect.
 
 ## Info Page
 

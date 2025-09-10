@@ -1,6 +1,13 @@
 # Version Log
 
-## v1.0.0 - The Readability & Refinement Update
+## v0.11.0 - The Accessibility & Comfort Update
+
+This major update introduces a much-requested accessibility feature, allowing users to tailor the application's size to their specific needs and preferences.
+
+### Features Added
+-   **UI Scale Slider:** A new slider has been added to the 'Application' settings tab, allowing users to scale the entire user interface from 50% to 400%. This setting is saved and applied on startup, improving accessibility and viewing comfort on different screen sizes.
+
+## v0.10.0 - The Readability & Refinement Update
 
 This release focuses on improving UI clarity and overall user experience with small but impactful refinements.
 

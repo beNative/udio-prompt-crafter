@@ -21,6 +21,7 @@ Crafting the perfect prompt is key to getting great results from AI music genera
     -   **Tag Suggestions:** Get recommendations for complementary tags.
 -   **Streamlined Taxonomy Editor:** A fully redesigned, inline editor on the Settings page allows for stable and intuitive management of your custom tag library. The buggy modal has been completely replaced.
 -   **Icon Customization:** Choose from four popular icon sets (Heroicons, Lucide, Feather, Tabler) to personalize the application's appearance.
+-   **UI Scaling:** Customize the application's size with a simple slider in the settings, ranging from 50% to 400% for improved accessibility and comfort.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
 -   **Presets:** Save and manage your favorite tag combinations as presets for later use.
 -   **Conflict Detection:** The app automatically warns you if you select tags that conflict with each other (e.g., "Minimalist" and "Maximalist").

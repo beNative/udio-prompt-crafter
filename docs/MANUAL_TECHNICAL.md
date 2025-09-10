@@ -33,6 +33,7 @@ Application state is managed primarily through React's built-in hooks:
 -   **`useMemo` & `useCallback`:** Used extensively to optimize performance by memoizing expensive calculations (like generating the tag map or filtering tags) and preventing unnecessary re-renders.
 -   **`useLocalStorage`:** A custom hook (`hooks/useLocalStorage.ts`) provides a simple abstraction for persisting UI state (like theme and panel sizes) to the browser's localStorage.
 -   A new state object, `udioParams`, is managed in `App.tsx` to hold UDIO-specific values like lyrics and instrumental status. This object is passed down to the `PromptPreview` component and is included in saved presets and history entries.
+-   The global `appSettings` object, also managed in `App.tsx`, stores user preferences like the selected icon set and UI scale. An `useEffect` hook listens for changes to these settings and applies them globally—for instance, by setting the non-standard CSS `zoom` property on the `<html>` element to scale the entire interface.
 
 ### Data Flow
 
