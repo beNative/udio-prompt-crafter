@@ -172,6 +172,16 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
     const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
     const [updateCheckStatus, setUpdateCheckStatus] = useState('idle');
 
+    // State for pending UI scale change
+    const [pendingUiScale, setPendingUiScale] = useState(settings?.uiScale || 100);
+
+    // Sync pending scale with global settings when it changes
+    useEffect(() => {
+        if (settings) {
+            setPendingUiScale(settings.uiScale || 100);
+        }
+    }, [settings?.uiScale]);
+
     const handleShowDebugLog = async () => {
         if (isElectron) {
             try {
@@ -197,7 +207,17 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
 
     if (!settings) return null;
     const iconSet = settings.iconSet || 'heroicons';
-    const uiScale = settings.uiScale || 100;
+
+    const handleApplyScale = () => {
+        setSettings(prev => prev ? { ...prev, uiScale: pendingUiScale } : null);
+    };
+
+    const handleResetScale = () => {
+        setPendingUiScale(100);
+        setSettings(prev => prev ? { ...prev, uiScale: 100 } : null);
+    };
+    
+    const isScaleChanged = pendingUiScale !== (settings.uiScale || 100);
 
     return (
         <>
@@ -221,7 +241,7 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
                     <div className="flex flex-col space-y-4 p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
                         <div>
                             <p className="font-medium text-bunker-800 dark:text-bunker-200">UI Scale</p>
-                            <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">Adjust the overall size of the user interface. Changes are applied instantly.</p>
+                            <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">Adjust the overall size of the user interface. Click 'Apply' to see changes.</p>
                         </div>
                         <div className="flex items-center space-x-4">
                             <input
@@ -229,13 +249,20 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
                                 min="50"
                                 max="400"
                                 step="5"
-                                value={uiScale}
-                                onChange={e => setSettings(prev => prev ? { ...prev, uiScale: parseInt(e.target.value, 10) } : null)}
+                                value={pendingUiScale}
+                                onChange={e => setPendingUiScale(parseInt(e.target.value, 10))}
                                 className="w-full h-2 bg-bunker-200 rounded-lg appearance-none cursor-pointer dark:bg-bunker-700"
                             />
-                            <span className="text-sm font-mono w-16 text-center">{uiScale}%</span>
+                            <span className="text-sm font-mono w-16 text-center">{pendingUiScale}%</span>
                             <button 
-                                onClick={() => setSettings(prev => prev ? { ...prev, uiScale: 100 } : null)} 
+                                onClick={handleApplyScale}
+                                disabled={!isScaleChanged}
+                                className="rounded-md border border-transparent px-3 py-1 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            >
+                                Apply
+                            </button>
+                            <button 
+                                onClick={handleResetScale} 
                                 className="rounded-md border border-bunker-300 dark:border-bunker-600 px-3 py-1 bg-white dark:bg-bunker-800 text-xs font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors"
                             >
                                 Reset
