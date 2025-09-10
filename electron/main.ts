@@ -57,6 +57,7 @@ const defaultSettings = {
   iconSet: 'heroicons',
   openDevToolsOnStart: isDev, // Default to true in dev, false in production
   allowPrerelease: false,
+  uiScale: 100,
 };
 
 let currentSettings = defaultSettings;

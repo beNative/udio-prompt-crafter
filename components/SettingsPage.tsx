@@ -196,6 +196,7 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
 
     if (!settings) return null;
     const iconSet = settings.iconSet || 'heroicons';
+    const uiScale = settings.uiScale || 100;
 
     return (
         <>
@@ -215,6 +216,32 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
                             ))}
                         </div>
                     </div>
+
+                    <div className="flex flex-col space-y-4 p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                        <div>
+                            <p className="font-medium text-bunker-800 dark:text-bunker-200">UI Scale</p>
+                            <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1">Adjust the overall size of the user interface. Changes are applied instantly.</p>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <input
+                                type="range"
+                                min="50"
+                                max="400"
+                                step="5"
+                                value={uiScale}
+                                onChange={e => setSettings(prev => prev ? { ...prev, uiScale: parseInt(e.target.value, 10) } : null)}
+                                className="w-full h-2 bg-bunker-200 rounded-lg appearance-none cursor-pointer dark:bg-bunker-700"
+                            />
+                            <span className="text-sm font-mono w-16 text-center">{uiScale}%</span>
+                            <button 
+                                onClick={() => setSettings(prev => prev ? { ...prev, uiScale: 100 } : null)} 
+                                className="rounded-md border border-bunker-300 dark:border-bunker-600 px-3 py-1 bg-white dark:bg-bunker-800 text-xs font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
                     {isElectron && (
                         <>
                             <div className="flex justify-between items-center p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">

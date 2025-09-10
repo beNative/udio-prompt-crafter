@@ -56,6 +56,7 @@ export interface AppSettings {
   openDevToolsOnStart?: boolean;
   iconSet?: 'heroicons' | 'lucide' | 'feather' | 'tabler';
   allowPrerelease?: boolean;
+  uiScale?: number;
 }
 
 // New Logging types

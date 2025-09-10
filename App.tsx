@@ -219,6 +219,7 @@ const App: React.FC = () => {
         const storedAiSettings = localStorage.getItem('ai-settings');
         const storedPromptRatio = localStorage.getItem('prompt-panel-ratio');
         const storedIconSet = localStorage.getItem('icon-set');
+        const storedUiScale = localStorage.getItem('ui-scale');
         setAppSettings({
           presets: storedPresets ? JSON.parse(storedPresets) : starterPresets,
           aiSettings: storedAiSettings ? JSON.parse(storedAiSettings) : {
@@ -228,6 +229,7 @@ const App: React.FC = () => {
           },
           promptPanelRatio: storedPromptRatio ? JSON.parse(storedPromptRatio) : 50,
           iconSet: storedIconSet ? JSON.parse(storedIconSet) : 'heroicons',
+          uiScale: storedUiScale ? JSON.parse(storedUiScale) : 100,
         });
       }
     };
@@ -291,6 +293,9 @@ const App: React.FC = () => {
       if (appSettings.iconSet) {
         localStorage.setItem('icon-set', JSON.stringify(appSettings.iconSet));
       }
+      if (appSettings.uiScale) {
+        localStorage.setItem('ui-scale', JSON.stringify(appSettings.uiScale));
+      }
     }
   }, [appSettings]);
   
@@ -313,6 +318,13 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    const scale = appSettings?.uiScale || 100;
+    // FIX: The 'zoom' property is non-standard and causes a TypeScript error.
+    // Casting to 'any' allows setting it for UI scaling functionality.
+    (document.documentElement.style as any).zoom = `${scale / 100}`;
+  }, [appSettings?.uiScale]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
