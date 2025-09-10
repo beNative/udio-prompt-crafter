@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
 import { logger } from '../utils/logger';
@@ -7,6 +7,7 @@ import { DebugLogModal } from './DebugLogModal';
 import { TaxonomyEditor } from './TaxonomyEditor';
 import { useSettings } from '../index';
 import { AlertModal } from './AlertModal';
+import { ConfirmationModal } from './ConfirmationModal';
 
 const isElectron = !!window.electronAPI;
 
@@ -305,6 +306,183 @@ const ApplicationSettingsPanel: React.FC<ApplicationSettingsPanelProps> = ({ app
     );
 };
 
+const DataManagementPanel: React.FC = () => {
+    const { settings, setSettings } = useSettings();
+    const [settingsText, setSettingsText] = useState('');
+    const [jsonError, setJsonError] = useState<string | null>(null);
+    const [isDirty, setIsDirty] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [confirmation, setConfirmation] = useState<{ title: string; message: React.ReactNode; onConfirm: () => void; variant: 'primary' | 'danger', confirmText: string } | null>(null);
+    const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
+
+
+    useEffect(() => {
+        if (settings) {
+            const currentJson = JSON.stringify(settings, null, 2);
+            setSettingsText(currentJson);
+            setIsDirty(false);
+            setJsonError(null);
+        }
+    }, [settings]);
+
+    const handleTextChange = (text: string) => {
+        setSettingsText(text);
+        setIsDirty(text !== JSON.stringify(settings, null, 2));
+        try {
+            JSON.parse(text);
+            setJsonError(null);
+        } catch (e: any) {
+            setJsonError(e.message);
+        }
+    };
+    
+    const handleSave = () => {
+        if (!jsonError && isDirty) {
+            setSettings(JSON.parse(settingsText));
+            logger.info('Settings saved via raw JSON editor.');
+            setAlert({ title: 'Success', message: 'Settings have been saved successfully.', variant: 'info' });
+        }
+    };
+
+    const handleDiscard = () => {
+        if (settings) {
+            setSettingsText(JSON.stringify(settings, null, 2));
+            setIsDirty(false);
+            setJsonError(null);
+        }
+    };
+
+    const handleExport = () => {
+        if (!settings) return;
+        const jsonString = JSON.stringify(settings, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.download = `udio-crafter-settings-${timestamp}.json`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        logger.info('Settings exported to file.');
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const text = event.target?.result as string;
+                const parsed = JSON.parse(text);
+                if (typeof parsed.aiSettings === 'object' && Array.isArray(parsed.presets)) {
+                    setConfirmation({
+                        title: "Import Settings?",
+                        message: "This will overwrite all your current settings, including presets and AI configuration. Are you sure you want to continue?",
+                        variant: 'primary',
+                        confirmText: "Import & Overwrite",
+                        onConfirm: () => {
+                            setSettings(parsed);
+                            logger.info('Settings imported from file.');
+                            setAlert({ title: 'Success', message: 'Settings have been imported successfully.', variant: 'info' });
+                        }
+                    });
+                } else {
+                    throw new Error("Invalid settings file format.");
+                }
+            } catch (err: any) {
+                logger.error('Failed to import settings file.', { error: err.message });
+                setAlert({ title: 'Import Error', message: `Failed to import settings: ${err.message}`, variant: 'error' });
+            }
+        };
+        reader.onerror = () => {
+            logger.error('Failed to read the selected file.');
+            setAlert({ title: 'Import Error', message: 'Could not read the selected file.', variant: 'error' });
+        }
+        reader.readAsText(file);
+
+        if (e.target) e.target.value = '';
+    };
+
+
+    return (
+        <>
+            <div className="h-full flex flex-col">
+                <div className="p-8 pb-5 border-b border-bunker-200 dark:border-bunker-800 flex-shrink-0">
+                    <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Data Management</h2>
+                    <p className="text-bunker-500 dark:text-bunker-400 mt-1">Import, export, or directly edit all application settings.</p>
+                </div>
+                <div className="px-8 pt-6 pb-8 flex-grow min-h-0 flex flex-col space-y-6 overflow-y-auto">
+                    <div className="p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800">
+                        <h3 className="font-medium text-bunker-800 dark:text-bunker-200">Import & Export</h3>
+                        <p className="text-sm text-bunker-500 dark:text-bunker-400 mt-1 mb-4">
+                            Save your complete configuration to a file or load a configuration from a file. This includes all settings, presets, and UI preferences.
+                        </p>
+                        <div className="flex space-x-4">
+                            <button onClick={handleImportClick} className="flex items-center space-x-2 rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">
+                                <Icon name="upload" className="w-5 h-5"/>
+                                <span>Import from File...</span>
+                            </button>
+                            <button onClick={handleExport} className="flex items-center space-x-2 rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">
+                                <Icon name="load" className="w-5 h-5"/>
+                                <span>Export to File...</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-white dark:bg-bunker-900 rounded-lg border border-bunker-200 dark:border-bunker-800 flex flex-col flex-grow min-h-0">
+                        <h3 className="font-medium text-bunker-800 dark:text-bunker-200">Raw Settings Editor</h3>
+                        <div className="mt-2 p-3 text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-md">
+                            <p><strong>Warning:</strong> Editing this directly can break the application if the structure is incorrect. Proceed with caution.</p>
+                        </div>
+                        <div className="mt-4 flex-grow min-h-0">
+                            <JsonEditor 
+                                id="raw-settings"
+                                value={settingsText}
+                                onChange={handleTextChange}
+                                error={jsonError}
+                                height="100%"
+                            />
+                        </div>
+                        {jsonError && <p className="flex-shrink-0 mt-1 text-xs text-red-500">{jsonError}</p>}
+                        <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 mt-4 border-t border-bunker-200/80 dark:border-bunker-800/80">
+                            <button onClick={handleDiscard} disabled={!isDirty} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors disabled:opacity-50">Discard Changes</button>
+                            <button onClick={handleSave} disabled={!!jsonError || !isDirty} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+                 <input type="file" ref={fileInputRef} onChange={handleFileSelected} style={{ display: 'none' }} accept=".json" />
+            </div>
+            {confirmation && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmation(null)}
+                    onConfirm={confirmation.onConfirm}
+                    title={confirmation.title}
+                    message={confirmation.message}
+                    confirmVariant={confirmation.variant}
+                    confirmText={confirmation.confirmText}
+                />
+            )}
+             {alert && (
+                <AlertModal 
+                    isOpen={true}
+                    onClose={() => setAlert(null)}
+                    title={alert.title}
+                    message={alert.message}
+                    variant={alert.variant}
+                />
+            )}
+        </>
+    );
+};
+
+
 // --- Main Settings Page Component ---
 
 interface SettingsPageProps {
@@ -318,12 +496,13 @@ interface SettingsPageProps {
   onRefresh: () => void;
 }
 
-type SettingsTab = 'ai' | 'taxonomy' | 'presets' | 'application';
+type SettingsTab = 'ai' | 'taxonomy' | 'presets' | 'application' | 'data';
 const TABS: { id: SettingsTab; label: string; icon: string; }[] = [
     { id: 'ai', label: 'AI Configuration', icon: 'wandSparkles' },
     { id: 'taxonomy', label: 'Taxonomy', icon: 'tag' },
     { id: 'presets', label: 'Presets', icon: 'list-bullet' },
     { id: 'application', label: 'Application', icon: 'cog' },
+    { id: 'data', label: 'Data Management', icon: 'folder' },
 ];
 
 const SettingsSidebarButton: React.FC<{
@@ -359,6 +538,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = (props) => {
         return <PresetsSettingsPanel defaultPresets={props.defaultPresets} />;
       case 'application':
         return <ApplicationSettingsPanel appVersion={props.appVersion} />;
+      case 'data':
+        return <DataManagementPanel />;
       default:
         return null;
     }
