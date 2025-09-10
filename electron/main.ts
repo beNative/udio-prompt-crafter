@@ -54,7 +54,7 @@ const defaultSettings = {
   },
   presets: starterPresets,
   promptPanelRatio: 50,
-  iconSet: 'heroicons',
+  iconSet: 'feather',
   openDevToolsOnStart: isDev, // Default to true in dev, false in production
   allowPrerelease: false,
   uiScale: 100,

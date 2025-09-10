@@ -31,20 +31,6 @@ interface ConflictState {
 
 const isElectron = !!window.electronAPI;
 
-// Inject keyframes for animations
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes fade-in-scale {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .animate-fade-in-scale {
-    animation: fade-in-scale 0.2s ease-out forwards;
-  }
-`;
-document.head.appendChild(style);
-
-
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [panelSizes, setPanelSizes] = useLocalStorage('panel-sizes', [20, 45, 35]);
@@ -228,7 +214,7 @@ const App: React.FC = () => {
             model: 'llama3',
           },
           promptPanelRatio: storedPromptRatio ? JSON.parse(storedPromptRatio) : 50,
-          iconSet: storedIconSet ? JSON.parse(storedIconSet) : 'heroicons',
+          iconSet: storedIconSet ? JSON.parse(storedIconSet) : 'feather',
           uiScale: storedUiScale ? JSON.parse(storedUiScale) : 100,
         });
       }
