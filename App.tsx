@@ -24,6 +24,7 @@ import { SettingsContext } from './index';
 import { AlertModal } from './components/AlertModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PresetsGalleryPanel } from './components/PresetsGalleryPanel';
+import { produce } from 'immer';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -514,12 +515,21 @@ const App: React.FC = () => {
       } else {
         const categoryId = taxonomyMap.get(tag.id)?.categoryId;
         if (categoryId) {
-          newSelected[tag.id] = { ...tag, categoryId };
+          newSelected[tag.id] = { ...tag, categoryId, isLocked: false };
         }
       }
       return newSelected;
     });
   }, [selectedTags, taxonomyMap]);
+
+  const handleToggleTagLock = useCallback((tagId: string) => {
+    logger.debug(`Toggling lock for tag: ${tagId}`);
+    setSelectedTags(prev => produce(prev, draft => {
+        if (draft[tagId]) {
+            draft[tagId].isLocked = !draft[tagId].isLocked;
+        }
+    }));
+  }, []);
 
   const handleResolveConflict = (resolution: 'keep_new' | 'cancel' | 'keep_both') => {
     if (!conflictState) return;
@@ -600,7 +610,7 @@ const App: React.FC = () => {
     logger.info(`Saving new preset: ${name}`);
     const selectedTagsForPreset: Preset['selectedTags'] = {};
     Object.entries(selectedTags).forEach(([id, tag]) => {
-        selectedTagsForPreset[id] = { categoryId: tag.categoryId };
+        selectedTagsForPreset[id] = { categoryId: tag.categoryId, isLocked: tag.isLocked };
     });
     
     const now = new Date().toISOString();
@@ -625,7 +635,7 @@ const App: React.FC = () => {
 
     const selectedTagsForPreset: Preset['selectedTags'] = {};
     Object.entries(selectedTags).forEach(([id, tag]) => {
-      selectedTagsForPreset[id] = { categoryId: tag.categoryId };
+      selectedTagsForPreset[id] = { categoryId: tag.categoryId, isLocked: tag.isLocked };
     });
     
     const categoryOrder = categories.map(c => c.id);
@@ -691,19 +701,35 @@ const App: React.FC = () => {
   }
   
   const handleSimpleRandomize = useCallback(() => {
-    logger.info('Randomizing tags.');
+    logger.info('Randomizing tags, respecting locks.');
+    
+    const lockedTags = Object.values(selectedTags).filter(tag => tag.isLocked);
     const newSelected: Record<string, SelectedTag> = {};
+
+    lockedTags.forEach(tag => {
+        newSelected[tag.id] = tag;
+    });
+
+    const lockedCategoryIds = new Set(lockedTags.map(tag => tag.categoryId));
+
     categories.forEach(category => {
-        if(category.tags.length > 0 && category.type !== 'text') {
+        if (lockedCategoryIds.has(category.id)) {
+            return;
+        }
+
+        if (category.tags.length > 0 && category.type !== 'text') {
             const randomTag = category.tags[Math.floor(Math.random() * category.tags.length)];
             const fullTag = taxonomyMap.get(randomTag.id);
-            if(fullTag) newSelected[randomTag.id] = fullTag;
+            if (fullTag) {
+                newSelected[randomTag.id] = { ...fullTag, isLocked: false };
+            }
         }
     });
+
     setSelectedTags(newSelected);
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
-  }, [categories, taxonomyMap]);
+  }, [selectedTags, categories, taxonomyMap]);
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
     logger.info(`Clearing tags for category: ${categoryId}`);
@@ -819,44 +845,48 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   }, [allTags, callLlm, taxonomyMap, handleClear]);
 
   const handleThematicRandomize = useCallback(async (theme: string): Promise<boolean> => {
-    logger.info("Generating tags from theme with AI...", { theme });
+    const lockedTags = Object.values(selectedTags).filter(tag => tag.isLocked);
+    logger.info("Generating tags from theme with AI...", { theme, lockedTagCount: lockedTags.length });
 
-    const systemPrompt = `You are a creative music director AI. Your task is to select a cohesive set of tags from a provided list that best captures a user's theme.
-- You will be given the user's theme and a complete list of available tags.
-- Each tag has a unique 'id' and a 'label'.
+    const systemPrompt = `You are a creative music director AI. Your task is to select a cohesive set of tags from a provided list that best captures a user's theme, while adhering to a set of locked tags that must be included.
+- You will be given the user's theme, a list of locked tags (if any), and a complete list of available tags.
 - Your response MUST be a valid JSON object.
 - The JSON object must have a single key: "tag_ids".
-- The value of "tag_ids" must be an array of strings, where each string is the 'id' of a selected tag from the provided list.
-- Select a reasonable number of tags (e.g., 5-15) that create a well-rounded and interesting musical idea covering different categories like genre, mood, and instruments.
-- Do not include any text, explanations, or markdown formatting outside of the JSON object itself.
+- The value of "tag_ids" must be an array of strings.
+- This array MUST include the IDs of ALL the provided "locked_tags".
+- Select additional tags (for a total of 5-15) that create a well-rounded and interesting musical idea complementing the locked tags and theme.
+- Do not include any text, explanations, or markdown formatting outside of the JSON object itself.`;
 
-Example: If the theme is "80s sci-fi movie car chase" your response might be:
-{
-  "tag_ids": ["g_synthwave", "era_80s", "m_driving", "m_suspenseful", "i_layered_synths", "cs_linndrum"]
-}`;
-
-    const userPrompt = `User Theme: "${theme}"
-
-Available Tags:
-${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, description })), null, 2)}`;
+    const userPromptParts = [`User Theme: "${theme}"`];
+    if (lockedTags.length > 0) {
+        userPromptParts.push(`Locked Tags (must be included in your response):
+${JSON.stringify(lockedTags.map(({ id, label }) => ({ id, label })), null, 2)}`);
+    }
+    userPromptParts.push(`Available Tags:
+${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, description })), null, 2)}`);
+    const userPrompt = userPromptParts.join('\n\n');
 
     try {
         const result = await callLlm(systemPrompt, userPrompt);
         if (result && Array.isArray(result.tag_ids)) {
             logger.info("AI thematic generation successful.", { tag_ids: result.tag_ids });
             const newSelectedTags: Record<string, SelectedTag> = {};
+            
             result.tag_ids.forEach((tagId: string) => {
                 const fullTag = taxonomyMap.get(tagId);
                 if (fullTag) {
-                    newSelectedTags[tagId] = fullTag;
+                    newSelectedTags[tagId] = { ...fullTag, isLocked: false };
                 } else {
                     logger.warn("AI returned a tag ID not found in taxonomy.", { tagId });
                 }
             });
-            
-            handleClear(); 
-            setSelectedTags(newSelectedTags);
 
+            lockedTags.forEach(lockedTag => {
+                newSelectedTags[lockedTag.id] = lockedTag;
+            });
+            
+            setSelectedTags(newSelectedTags);
+            setTextCategoryValues({}); // Clear non-locked text values
             return true;
         } else {
             logger.error("AI returned an invalid response format for thematic generation.", { response: result });
@@ -866,7 +896,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         logger.error("Error during thematic tag generation:", { error: e.message });
         throw e;
     }
-  }, [allTags, callLlm, taxonomyMap, handleClear]);
+  }, [selectedTags, allTags, callLlm, taxonomyMap]);
 
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -935,6 +965,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               category={activeCategory}
               selectedTags={selectedTags}
               onToggleTag={handleToggleTag}
+              onToggleTagLock={handleToggleTagLock}
               textCategoryValues={textCategoryValues}
               onTextCategoryChange={handleTextCategoryChange}
               onClearCategoryTags={handleClearCategoryTags}

@@ -22,6 +22,7 @@ export type Taxonomy = Category[];
 
 export interface SelectedTag extends Tag {
   categoryId: string;
+  isLocked?: boolean;
 }
 
 export interface UdioParams {
@@ -36,7 +37,7 @@ export interface Preset {
   isFavorite?: boolean;
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
-  selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'suggests' | 'color'>>;
+  selectedTags: Record<string, { categoryId: string; isLocked?: boolean; }>;
   categoryOrder: string[];
   udioParams?: UdioParams;
   textCategoryValues?: Record<string, string>;

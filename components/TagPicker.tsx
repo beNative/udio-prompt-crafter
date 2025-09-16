@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
@@ -12,6 +13,7 @@ interface TagPickerProps {
   category: Category | undefined;
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
+  onToggleTagLock: (tagId: string) => void;
   textCategoryValues: Record<string, string>;
   onTextCategoryChange: (categoryId: string, value: string) => void;
   onClearCategoryTags: (categoryId: string) => void;
@@ -22,7 +24,8 @@ interface TagPickerProps {
 export const TagPicker: React.FC<TagPickerProps> = ({ 
     category, 
     selectedTags, 
-    onToggleTag, 
+    onToggleTag,
+    onToggleTagLock,
     textCategoryValues,
     onTextCategoryChange,
     onClearCategoryTags,
@@ -168,7 +171,9 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                             key={tag.id}
                             tag={tag}
                             isSelected={isSelected}
+                            isLocked={!!selectedTags[tag.id]?.isLocked}
                             onToggle={onToggleTag}
+                            onToggleLock={onToggleTagLock}
                         />
                         );
                     })}
@@ -179,6 +184,7 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                         nodes={tagTree}
                         selectedTags={selectedTags}
                         onToggleTag={onToggleTag}
+                        onToggleTagLock={onToggleTagLock}
                         expandAllSignal={expandCounter}
                         collapseAllSignal={collapseCounter}
                     />
@@ -207,7 +213,9 @@ export const TagPicker: React.FC<TagPickerProps> = ({
                 key={tag.id}
                 tag={tag}
                 isSelected={!!selectedTags[tag.id]}
+                isLocked={!!selectedTags[tag.id]?.isLocked}
                 onToggle={onToggleTag}
+                onToggleLock={onToggleTagLock}
                 />
             ))}
             </div>

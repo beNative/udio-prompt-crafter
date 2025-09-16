@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import type { Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
@@ -12,16 +13,18 @@ interface TreeNodeProps {
   node: TreeNodeData;
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
+  onToggleTagLock: (tagId: string) => void;
   level: number;
   expandAllSignal: number;
   collapseAllSignal: number;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, level, expandAllSignal, collapseAllSignal }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, onToggleTagLock, level, expandAllSignal, collapseAllSignal }) => {
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = node.children.length > 0;
 
   const isSelected = !!selectedTags[node.id];
+  const isLocked = !!selectedTags[node.id]?.isLocked;
 
   useEffect(() => {
     if (hasChildren) setIsOpen(true);
@@ -50,7 +53,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
           <TagChip
             tag={node}
             isSelected={isSelected}
+            isLocked={isLocked}
             onToggle={onToggleTag}
+            onToggleLock={onToggleTagLock}
           />
         </div>
 
@@ -65,7 +70,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedTags, onToggleTag, le
         <TagTreeView 
             nodes={node.children} 
             selectedTags={selectedTags} 
-            onToggleTag={onToggleTag} 
+            onToggleTag={onToggleTag}
+            onToggleTagLock={onToggleTagLock}
             level={level + 1}
             expandAllSignal={expandAllSignal}
             collapseAllSignal={collapseAllSignal}
@@ -79,12 +85,13 @@ interface TagTreeViewProps {
   nodes: TreeNodeData[];
   selectedTags: Record<string, SelectedTag>;
   onToggleTag: (tag: Tag) => void;
+  onToggleTagLock: (tagId: string) => void;
   level?: number;
   expandAllSignal: number;
   collapseAllSignal: number;
 }
 
-export const TagTreeView: React.FC<TagTreeViewProps> = ({ nodes, selectedTags, onToggleTag, level = 0, expandAllSignal, collapseAllSignal }) => {
+export const TagTreeView: React.FC<TagTreeViewProps> = ({ nodes, selectedTags, onToggleTag, onToggleTagLock, level = 0, expandAllSignal, collapseAllSignal }) => {
   return (
     <div className="space-y-1">
       {nodes.map(node => (
@@ -92,7 +99,8 @@ export const TagTreeView: React.FC<TagTreeViewProps> = ({ nodes, selectedTags, o
             key={node.id} 
             node={node} 
             selectedTags={selectedTags} 
-            onToggleTag={onToggleTag} 
+            onToggleTag={onToggleTag}
+            onToggleTagLock={onToggleTagLock}
             level={level}
             expandAllSignal={expandAllSignal}
             collapseAllSignal={collapseAllSignal}

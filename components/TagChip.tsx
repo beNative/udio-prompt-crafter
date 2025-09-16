@@ -7,6 +7,8 @@ interface TagChipProps {
   tag: Tag;
   isSelected: boolean;
   onToggle: (tag: Tag) => void;
+  isLocked: boolean;
+  onToggleLock: (tagId: string) => void;
 }
 
 const colorStyles: Record<NonNullable<Tag['color']>, string> = {
@@ -22,10 +24,15 @@ const colorStyles: Record<NonNullable<Tag['color']>, string> = {
   gray:   'border-bunker-500/30 bg-bunker-500/10 text-bunker-700 dark:text-bunker-300 dark:hover:bg-bunker-500/20',
 };
 
-export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle }) => {
+export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle, isLocked, onToggleLock }) => {
 
   const handleToggle = () => {
     onToggle(tag);
+  };
+  
+  const handleToggleLock = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleLock(tag.id);
   };
 
   const baseStyle = "group flex items-center space-x-2 border rounded-full px-3 py-1 text-sm transition-all duration-200 cursor-pointer transform hover:scale-105";
@@ -53,8 +60,17 @@ export const TagChip: React.FC<TagChipProps> = ({ tag, isSelected, onToggle }) =
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(); }}
     >
-      {isSelected && <Icon name="check" className="w-4 h-4 -ml-1 text-white/80" />}
-      {!isSelected && <div className={`w-2 h-2 rounded-full border ${tag.color ? 'border-current opacity-50' : 'border-bunker-300 dark:border-bunker-600' } group-hover:border-blue-500 transition-colors`}/>}
+      {isSelected ? (
+        <button 
+          onClick={handleToggleLock} 
+          className="flex items-center justify-center -ml-1 mr-1 p-0.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white" 
+          aria-label={isLocked ? 'Unlock tag' : 'Lock tag'}
+        >
+          <Icon name="lock-closed" className={`w-4 h-4 transition-colors ${isLocked ? 'text-white' : 'text-white/40'}`} />
+        </button>
+      ) : (
+        <div className={`w-2 h-2 rounded-full border ${tag.color ? 'border-current opacity-50' : 'border-bunker-300 dark:border-bunker-600' } group-hover:border-blue-500 transition-colors`}/>
+      )}
       
       <span>{tag.label}</span>
       
