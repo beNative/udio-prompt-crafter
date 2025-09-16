@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
 import { logger } from '../utils/logger';
@@ -93,71 +93,6 @@ const AiSettingsPanel: React.FC<AiSettingsPanelProps> = ({ detectedProviders, av
                 </div>
             </div>
         </SettingsPanel>
-    );
-};
-
-interface PresetsSettingsPanelProps {
-    defaultPresets: Preset[];
-}
-
-const PresetsSettingsPanel: React.FC<PresetsSettingsPanelProps> = ({ defaultPresets }) => {
-    const { settings, setSettings } = useSettings();
-    const [presetsText, setPresetsText] = useState('');
-    const [jsonError, setJsonError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (settings) {
-            setPresetsText(JSON.stringify(settings.presets, null, 2));
-        }
-    }, [settings?.presets]);
-
-    const handlePresetsChange = (text: string) => {
-        setPresetsText(text);
-        try {
-            JSON.parse(text);
-            setJsonError(null);
-        } catch (error: any) {
-            setJsonError(error.message);
-        }
-    };
-
-    const handleSaveConfigs = () => {
-        if (jsonError) {
-            logger.error("Cannot save presets due to invalid JSON.");
-            return;
-        }
-        logger.info("Saving presets configuration via JSON editor.");
-        setSettings(prev => prev ? { ...prev, presets: JSON.parse(presetsText) } : null);
-    };
-
-    const handleResetPresets = () => {
-        setPresetsText(JSON.stringify(defaultPresets, null, 2));
-        setJsonError(null);
-    };
-
-    return (
-        <div className="h-full flex flex-col">
-            <div className="p-8 pb-5 border-b border-bunker-200 dark:border-bunker-800 flex-shrink-0">
-                <h2 className="text-3xl font-bold text-bunker-900 dark:text-white">Presets</h2>
-                <p className="text-bunker-500 dark:text-bunker-400 mt-1">For advanced users, presets can be edited directly here. For a user-friendly experience, use the 'Manage Presets' button in the header.</p>
-            </div>
-            <div className="px-8 pt-6 pb-8 flex-grow min-h-0 flex flex-col">
-                <div className="flex-grow min-h-0">
-                    <JsonEditor 
-                        id="presets"
-                        value={presetsText}
-                        onChange={handlePresetsChange}
-                        error={jsonError}
-                        height="100%"
-                    />
-                </div>
-                {jsonError && <p className="flex-shrink-0 mt-1 text-xs text-red-500">{jsonError}</p>}
-                <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 mt-4 border-t border-bunker-200/80 dark:border-bunker-800/80">
-                    <button onClick={handleResetPresets} className="rounded-md border border-bunker-300 dark:border-bunker-600 px-4 py-2 bg-white dark:bg-bunker-800 text-sm font-medium text-bunker-700 dark:text-bunker-200 hover:bg-bunker-50 dark:hover:bg-bunker-700 transition-colors">Reset to Defaults</button>
-                    <button onClick={handleSaveConfigs} disabled={!!jsonError} className="rounded-md border border-transparent px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">Save Presets</button>
-                </div>
-            </div>
-        </div>
     );
 };
 
@@ -528,18 +463,16 @@ interface SettingsPageProps {
   appVersion: string;
   taxonomy: Taxonomy;
   onTaxonomyChange: (newTaxonomy: Taxonomy, reset?: boolean) => Promise<void>;
-  defaultPresets: Preset[];
   detectedProviders: ('ollama' | 'lmstudio')[];
   availableModels: { ollama: string[]; lmstudio: string[] };
   isDetecting: boolean;
   onRefresh: () => void;
 }
 
-type SettingsTab = 'ai' | 'taxonomy' | 'presets' | 'application' | 'data';
+type SettingsTab = 'ai' | 'taxonomy' | 'application' | 'data';
 const TABS: { id: SettingsTab; label: string; icon: string; }[] = [
     { id: 'ai', label: 'AI Configuration', icon: 'wandSparkles' },
     { id: 'taxonomy', label: 'Taxonomy', icon: 'tag' },
-    { id: 'presets', label: 'Presets', icon: 'list-bullet' },
     { id: 'application', label: 'Application', icon: 'cog' },
     { id: 'data', label: 'Data Management', icon: 'folder' },
 ];
@@ -573,8 +506,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = (props) => {
         return <AiSettingsPanel {...props} />;
       case 'taxonomy':
         return <TaxonomyEditor taxonomy={props.taxonomy} onSave={props.onTaxonomyChange} />;
-      case 'presets':
-        return <PresetsSettingsPanel defaultPresets={props.defaultPresets} />;
       case 'application':
         return <ApplicationSettingsPanel appVersion={props.appVersion} />;
       case 'data':

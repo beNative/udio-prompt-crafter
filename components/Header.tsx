@@ -5,8 +5,8 @@ import { Tooltip } from './Tooltip';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
-  activeView: 'crafter' | 'settings' | 'info';
-  onSetView: (view: 'crafter' | 'settings' | 'info') => void;
+  activeView: 'crafter' | 'settings' | 'info' | 'presets';
+  onSetView: (view: 'crafter' | 'settings' | 'info' | 'presets') => void;
   onToggleTheme: () => void;
   onOpenSavePresetModal: () => void;
   onOpenPresetManagerModal: () => void;
@@ -55,6 +55,9 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="flex items-center space-x-1 p-1 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg">
               <button onClick={() => onSetView('crafter')} className={`${tabButtonStyles} ${activeView === 'crafter' ? activeTabStyles : inactiveTabStyles}`}>
                   Crafter
+              </button>
+              <button onClick={() => onSetView('presets')} className={`${tabButtonStyles} ${activeView === 'presets' ? activeTabStyles : inactiveTabStyles}`}>
+                  Presets
               </button>
               <button onClick={() => onSetView('settings')} className={`${tabButtonStyles} ${activeView === 'settings' ? activeTabStyles : inactiveTabStyles}`}>
                   Settings

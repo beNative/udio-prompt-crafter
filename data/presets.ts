@@ -1,8 +1,14 @@
 import type { Preset } from '../types';
 
+const now = new Date().toISOString();
+
 export const starterPresets: Preset[] = [
   {
     name: 'Psybient Crossover',
+    description: 'A fusion of psytrance and ambient with evolving melodies.',
+    isFavorite: false,
+    createdAt: now,
+    updatedAt: now,
     categoryOrder: ['genre', 'mood', 'motifs', 'production'],
     selectedTags: {
       'g_psybient': { categoryId: 'genre' },
@@ -18,6 +24,10 @@ export const starterPresets: Preset[] = [
   },
   {
     name: 'Chillwave Dream',
+    description: 'Nostalgic and dreamy 80s synthwave with a bittersweet mood.',
+    isFavorite: true,
+    createdAt: now,
+    updatedAt: now,
     categoryOrder: ['genre', 'era', 'mood', 'instruments', 'production', 'vocals'],
     selectedTags: {
       'g_chillwave': { categoryId: 'genre' },
@@ -33,6 +43,10 @@ export const starterPresets: Preset[] = [
   },
    {
     name: 'ABBA Early-80s Pop',
+    description: 'Cinematic and melancholic pop reminiscent of early 80s ABBA.',
+    isFavorite: false,
+    createdAt: now,
+    updatedAt: now,
     categoryOrder: ['era', 'mood', 'instruments', 'vocals', 'production'],
     selectedTags: {
       'era_early_80s': { categoryId: 'era' },
@@ -49,6 +63,10 @@ export const starterPresets: Preset[] = [
   },
   {
     name: 'Electro Swing / Nu Jazz Blend',
+    description: 'Upbeat and jazzy blend with breakbeats and piano.',
+    isFavorite: false,
+    createdAt: now,
+    updatedAt: now,
     categoryOrder: ['genre', 'instruments', 'rhythm', 'vocals'],
     selectedTags: {
         'g_electro_swing': { categoryId: 'genre' },

@@ -30,7 +30,11 @@ export interface UdioParams {
 }
 
 export interface Preset {
-  name:string;
+  name: string;
+  description?: string;
+  isFavorite?: boolean;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
   selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'suggests' | 'color'>>;
   categoryOrder: string[];
   udioParams?: UdioParams;

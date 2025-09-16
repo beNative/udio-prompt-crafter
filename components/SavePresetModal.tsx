@@ -5,26 +5,28 @@ import { Icon } from './icons';
 interface SavePresetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string) => boolean; // Returns true on success, false on failure (e.g., duplicate name)
+  onSave: (name: string, description: string) => boolean; // Returns true on success, false on failure (e.g., duplicate name)
 }
 
 export const SavePresetModal: React.FC<SavePresetModalProps> = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setName('');
+      setDescription('');
     }
   }, [isOpen]);
 
   const handleSave = () => {
-    if (onSave(name.trim())) {
+    if (onSave(name.trim(), description.trim())) {
       onClose();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter in textarea
         e.preventDefault();
         handleSave();
     }
@@ -43,20 +45,37 @@ export const SavePresetModal: React.FC<SavePresetModalProps> = ({ isOpen, onClos
                 <Icon name="x" className="w-5 h-5 text-bunker-500" />
             </button>
         </div>
-        <div className="mt-4">
-          <label htmlFor="preset-name" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">
-            Preset Name
-          </label>
-          <div className="mt-1">
-            <input
-              type="text"
-              id="preset-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="form-input w-full"
-              autoFocus
-            />
+        <div className="mt-4 space-y-4">
+          <div>
+            <label htmlFor="preset-name" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">
+              Preset Name
+            </label>
+            <div className="mt-1">
+              <input
+                type="text"
+                id="preset-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="form-input w-full"
+                autoFocus
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="preset-description" className="block text-sm font-medium text-bunker-700 dark:text-bunker-300">
+              Description (Optional)
+            </label>
+            <div className="mt-1">
+              <textarea
+                id="preset-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="form-input w-full h-24 resize-y"
+                placeholder="Add some notes about this preset..."
+              />
+            </div>
           </div>
         </div>
         <div className="mt-6 flex justify-end space-x-3">

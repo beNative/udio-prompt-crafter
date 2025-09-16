@@ -23,6 +23,7 @@ import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
 import { SettingsContext } from './index';
 import { AlertModal } from './components/AlertModal';
 import { ToastContainer } from './components/ToastContainer';
+import { PresetsGalleryPanel } from './components/PresetsGalleryPanel';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -50,7 +51,7 @@ const App: React.FC = () => {
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info'>('crafter');
+  const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info' | 'presets'>('crafter');
   
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
   const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
@@ -584,7 +585,7 @@ const App: React.FC = () => {
     });
   }, [taxonomyMap]);
 
-  const handleSavePreset = (name: string): boolean => {
+  const handleSavePreset = (name: string, description: string): boolean => {
     if (!name || !appSettings) return false;
     if (appSettings.presets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
         logger.error(`A preset with the name "${name}" already exists.`);
@@ -601,8 +602,18 @@ const App: React.FC = () => {
     Object.entries(selectedTags).forEach(([id, tag]) => {
         selectedTagsForPreset[id] = { categoryId: tag.categoryId };
     });
-
-    const newPreset: Preset = { name, selectedTags: selectedTagsForPreset, categoryOrder: categories.map(c => c.id), udioParams };
+    
+    const now = new Date().toISOString();
+    const newPreset: Preset = { 
+        name, 
+        description: description || undefined,
+        isFavorite: false,
+        createdAt: now,
+        updatedAt: now,
+        selectedTags: selectedTagsForPreset, 
+        categoryOrder: categories.map(c => c.id), 
+        udioParams 
+    };
     setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
     return true;
   };
@@ -620,7 +631,13 @@ const App: React.FC = () => {
 
     const updatedPresets = appSettings.presets.map(p => {
         if (p.name === presetName) {
-            return { ...p, selectedTags: selectedTagsForPreset, categoryOrder, udioParams };
+            return { 
+                ...p, 
+                selectedTags: selectedTagsForPreset, 
+                categoryOrder, 
+                udioParams,
+                updatedAt: new Date().toISOString()
+            };
         }
         return p;
     });
@@ -641,7 +658,11 @@ const App: React.FC = () => {
       }
 
       logger.info(`Renaming preset "${oldName}" to "${newName}"`);
-      const renamedPresets = appSettings.presets.map(p => p.name === oldName ? { ...p, name: newName } : p);
+      const renamedPresets = appSettings.presets.map(p => 
+        p.name === oldName 
+        ? { ...p, name: newName, updatedAt: new Date().toISOString() } 
+        : p
+      );
       setAppSettings({ ...appSettings, presets: renamedPresets });
       return true;
   };
@@ -652,6 +673,20 @@ const App: React.FC = () => {
     const filteredPresets = appSettings.presets.filter(p => p.name !== presetName);
     setAppSettings({ ...appSettings, presets: filteredPresets });
   };
+  
+  const handleTogglePresetFavorite = (presetName: string) => {
+    logger.debug(`Toggling favorite for preset: ${presetName}`);
+    if (!appSettings) return;
+
+    const updatedPresets = appSettings.presets.map(p => {
+      if (p.name === presetName) {
+        return { ...p, isFavorite: !p.isFavorite };
+      }
+      return p;
+    });
+
+    setAppSettings({ ...appSettings, presets: updatedPresets });
+  }
   
   const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags.');
@@ -924,6 +959,16 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   
   const renderActiveView = () => {
     switch (activeView) {
+      case 'presets':
+        return (
+          <div className="h-full overflow-y-auto">
+            <PresetsGalleryPanel 
+              taxonomy={taxonomy}
+              onLoadPreset={handleLoadPreset}
+              onSetView={setActiveView}
+            />
+          </div>
+        );
       case 'settings':
         return (
           <div className="h-full overflow-y-auto">
@@ -931,7 +976,6 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               appVersion={appVersion}
               taxonomy={taxonomy}
               onTaxonomyChange={handleTaxonomyChange}
-              defaultPresets={starterPresets}
               detectedProviders={detectedProviders}
               availableModels={availableModels}
               isDetecting={isDetecting}
@@ -1025,6 +1069,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           onUpdatePreset={handleUpdatePreset}
           onDeletePreset={handleDeletePreset}
           onRenamePreset={handleRenamePreset}
+          onToggleFavorite={handleTogglePresetFavorite}
         />
         <PromptHistoryModal
           isOpen={isHistoryModalOpen}
