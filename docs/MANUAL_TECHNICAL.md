@@ -27,7 +27,7 @@ The user interface is a single-page application (SPA) built with React.
 
 Application state is managed primarily through React's built-in hooks:
 
--   **`App.tsx`:** This root component acts as the primary state container, holding the most critical pieces of state like `selectedTags`, `categories`, `appSettings`, etc.
+-   **`App.tsx`:** This root component acts as the primary state container, holding the most critical pieces of state like `selectedTags`, `categories`, `appSettings`, etc. The `selectedTags` object also stores metadata for each tag, such as its `categoryId` and its `isLocked` boolean state.
 -   **`useState`:** Used for managing local component state.
 -   **`useEffect`:** Used for side effects, such as loading data on startup, responding to state changes, and managing event listeners.
 -   **`useMemo` & `useCallback`:** Used extensively to optimize performance by memoizing expensive calculations (like generating the tag map or filtering tags) and preventing unnecessary re-renders.

@@ -23,6 +23,7 @@ This panel lists all the available tag categories.
 This is where you choose the building blocks of your prompt.
 
 -   **Selecting Tags:** Simply click on a tag to add it to your prompt. Click it again to deselect it. Selected tags are highlighted in blue.
+-   **Locking Tags:** When a tag is selected, a lock icon appears on it. Click this icon to "lock" the tag. Locked tags (solid white lock) will be preserved during both simple and thematic randomization. This is a powerful way to fix certain elements (like genre or mood) while exploring variations for other categories. The lock state is saved with presets and history.
 -   **Tag Info:** Hover over the small `(i)` icon on any tag to see a tooltip with its description and an example snippet, if available.
 -   **Searching:** Use the search bar at the top to filter tags within the current category by name or synonym.
 -   **Tree View:** For complex categories, tags are organized in a hierarchical tree view. You can expand or collapse branches to navigate.
@@ -58,7 +59,7 @@ The "Presets" tab provides a beautiful and highly functional gallery for all you
 -   **Card Actions:** Each card has a footer with quick actions:
     -   **Copy:** Instantly copies the preset's full prompt string to your clipboard.
     -   **Load:** Loads the preset into the Crafter view.
-    -   **Rename:** Allows you to edit the preset's name inline.
+    -   **Rename:** Allows you to edit the preset's name inline. A "magic wand" icon appears when renaming, which uses AI to suggest new names based on the preset's tags.
     -   **Delete:** Removes the preset (with a confirmation step).
     -   **Favorite:** Toggles the preset's favorite status.
 
@@ -66,12 +67,12 @@ The "Presets" tab provides a beautiful and highly functional gallery for all you
 
 These buttons provide quick access to powerful features.
 
--   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and toggle any tag or execute commands like "Clear All," "Randomize Tags," "Save as Preset...," or "Load Preset."
+-   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and execute commands like "Clear All," "Randomize Tags" (which respects locked tags), or "Load Preset."
 -   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter. History entries also save the UDIO Parameters that were active when the prompt was generated.
 -   **Manage Presets:** Opens a modal to manage your presets. You can load a preset, update it with your current selection, rename it via an inline editor (with duplicate name prevention), or delete it. Deleting a preset now requires confirmation to prevent accidents.
--   **Save as Preset:** Save your current selections and category order as a new preset.
+-   **Save as Preset:** Save your current selections and category order as a new preset. The save dialog includes a "magic wand" icon that uses AI to suggest creative names based on your selected tags.
 -   **Deconstruct Prompt with AI:** (Magic wand icon) Opens a modal where you can paste a descriptive, text-based prompt. The AI will analyze it and attempt to select all the matching tags from the taxonomy, replacing your current selection. This is a powerful way to reverse-engineer prompts you find elsewhere.
--   **Thematic Randomizer:** (Sparkles icon) Opens a modal where you can enter a theme (e.g., 'magical forest'). The AI will then generate a cohesive set of tags that match the theme, replacing your current selection.
+-   **Thematic Randomizer:** (Sparkles icon) Opens a modal where you can enter a theme (e.g., 'magical forest'). The AI will then generate a cohesive set of tags that match the theme. This process respects any tags you have "locked," building the new theme around your fixed selections.
 -   **Clear All:** Deselects all tags and clears all text inputs.
 -   **Toggle Logs:** Opens or closes the log panel at the bottom of the screen.
 -   **Toggle Theme:** Switches between light and dark mode.

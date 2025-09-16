@@ -1,5 +1,13 @@
 # Version Log
 
+## v0.16.0 - The Creative Control Update
+
+This release introduces powerful new features for fine-tuning the creative process, offering more control over randomization and assistance in naming presets.
+
+### Features Added
+-   **Tag Locking:** Selected tags in the Crafter view now feature a lock icon. Locked tags are preserved during both Simple and Thematic Randomization, allowing users to fix core concepts (like genre or mood) while exploring variations. The lock state is also saved with presets and history.
+-   **AI Preset Naming:** A "magic wand" icon now appears in the "Save Preset" and "Rename Preset" dialogs. Clicking it uses AI to analyze the preset's tags and suggest several creative names, streamlining the saving workflow.
+
 ## v0.15.0 - The Visualizer Update
 
 This release brings a major user experience enhancement by creating a beautiful, dedicated gallery for presets, making them a central and highly visual part of the creative workflow.

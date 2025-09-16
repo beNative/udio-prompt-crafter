@@ -16,11 +16,13 @@ Crafting the perfect prompt is key to getting great results from AI music genera
     -   **Drag-and-Drop Ordering:** Easily reorder presets in the gallery view to organize your workflow.
     -   **Preset Manager:** A list-based manager (in the header) allows you to load, update, rename, and safely delete presets.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
+-   **Tag Locking for Randomization:** "Lock" your favorite tags to keep them in place while randomizing everything else. This provides powerful creative constraints for exploring variations on a core theme.
 -   **AI-Powered Assistance:**
+    -   **AI Preset Naming:** Get creative name suggestions for your new or existing presets based on their tags.
     -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
     -   **AI Song Title Generation:** Brainstorm creative song title ideas based on your prompt.
     -   **AI Prompt Deconstruction:** Paste in an existing prompt, and the AI will analyze it and select the matching tags for you.
-    -   **Thematic Randomizer:** An AI-powered tool to generate a cohesive set of tags based on a simple theme (e.g., "cyberpunk rainy night").
+    -   **Thematic Randomizer:** An AI-powered tool to generate a cohesive set of tags based on a simple theme (e.g., "cyberpunk rainy night"). Respects any tags you have locked.
     -   **AI-Powered Songwriting:** Generate creative lyrical theme ideas based on keywords and then expand them into full song lyrics with verses and choruses.
     -   **Tag Suggestions:** Get recommendations for complementary tags.
 -   **Streamlined Taxonomy Editor:** A fully redesigned, inline editor on the Settings page allows for stable and intuitive management of your custom tag library. The buggy modal has been completely replaced.
