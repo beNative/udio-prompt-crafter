@@ -4,6 +4,7 @@
     {
       "id": "genre",
       "name": "Genre & Crossover",
+      "color": "blue",
       "tags": [
         { "id": "g_electronic", "label": "Electronic", "description": "Music primarily created with electronic instruments like synthesizers and drum machines.", "color": "blue" },
         { "id": "g_trance", "label": "Trance", "description": "Driving, melodic electronic music, typically around 130-140 BPM. Examples: \"For an Angel\" by Paul van Dyk, \"Adagio for Strings\" by Tiësto.", "suggests": ["g_electronic"], "color": "blue" },
@@ -113,6 +114,7 @@
     {
       "id": "era",
       "name": "Era/Vibe",
+      "color": "pink",
       "tags": [
         { "id": "era_60s", "label": "60s", "description": "Vibes of early rock, soul, and psychedelic music.", "color": "orange" },
         { "id": "era_psychedelic_era", "label": "Psychedelic Era", "description": "The late 60s and early 70s, characterized by psychedelic rock, mind-expanding sounds, and studio experimentation.", "suggests": ["era_60s"], "color": "orange" },
@@ -138,6 +140,7 @@
     {
       "id": "mood",
       "name": "Mood/Energy",
+      "color": "purple",
       "tags": [
         { "id": "m_cosmic", "label": "Cosmic", "description": "Evokes a sense of outer space, vastness, and wonder.", "suggests": ["m_atmospheric"], "color": "purple" },
         { "id": "m_atmospheric", "label": "Atmospheric", "description": "Creates a distinct and pervasive mood or feeling.", "suggests": ["m_spacious"], "color": "purple" },
@@ -192,6 +195,7 @@
     {
       "id": "rhythm",
       "name": "Rhythm/Beat",
+      "color": "red",
       "tags": [
         { "id": "t_slow_tempo", "label": "Slow Tempo", "description": "A relaxed, unhurried pace.", "conflictsWith": ["t_high_tempo", "t_medium_tempo"], "color": "gray" },
         { "id": "t_medium_tempo", "label": "Medium Tempo", "description": "A moderate, walking pace.", "conflictsWith": ["t_high_tempo", "t_slow_tempo"], "color": "gray" },
@@ -220,6 +224,7 @@
     {
       "id": "harmony_melody",
       "name": "Harmony, Melody & Development",
+      "color": "yellow",
       "tags": [
         { "id": "hm_melodic", "label": "Melodic", "description": "The music features a prominent melody or tune.", "color": "yellow" },
         { "id": "hm_anthemic", "label": "Anthemic", "description": "A powerful, uplifting track meant to be sung by a crowd.", "suggests": ["hm_melodic"], "color": "yellow" },
@@ -284,6 +289,7 @@
     {
       "id": "structure",
       "name": "Structure/Transitions",
+      "color": "teal",
       "tags": [
         { "id": "s_intro", "label": "Intro", "description": "The beginning of the track, often building energy.", "color": "teal" },
         { "id": "s_fadein", "label": "Fade-in", "description": "A gradual increase in volume at the beginning of the track.", "color": "teal" },
@@ -307,6 +313,7 @@
     {
       "id": "sound_texture",
       "name": "Sound & Texture",
+      "color": "indigo",
       "tags": [
         { "id": "st_warm", "label": "Warm", "description": "A sound texture that is pleasant, rich in low-mid frequencies, and often associated with analog equipment.", "suggests": ["m_warm"], "conflictsWith": ["st_cold"], "color": "orange" },
         { "id": "st_cold", "label": "Cold", "description": "Lacks warmth, often with more emphasis on high frequencies; can sound clinical or digital.", "conflictsWith": ["st_warm"], "color": "blue" },
@@ -350,6 +357,7 @@
     {
       "id": "instruments",
       "name": "Instrumentation",
+      "color": "green",
       "tags": [
         { "id": "i_synthesizer", "label": "Synthesizer", "description": "The core of electronic music.", "color": "blue" },
         { "id": "i_layered_synths", "label": "Layered Synths", "description": "Multiple synthesizer sounds combined to create a rich, complex texture.", "color": "blue" },
@@ -386,6 +394,7 @@
     {
       "id": "classics",
       "name": "Classic Synths/Drums",
+      "color": "orange",
       "tags": [
         { "id": "cs_minimoog", "label": "Minimoog", "description": "The archetypal analog monosynth, famous for its fat bass and lead sounds. Examples: Parliament-Funkadelic, Kraftwerk.", "suggests": ["i_synthesizer"], "color": "blue" },
         { "id": "cs_prophet", "label": "Prophet-5", "description": "Legendary synth with a powerful, distinctly American sound. Examples: Radiohead, Talking Heads.", "suggests": ["i_synthesizer"], "color": "blue" },
@@ -410,6 +419,7 @@
     {
       "id": "production",
       "name": "Production & Mix",
+      "color": "gray",
       "tags": [
         { "id": "p_minimalist", "label": "Minimalist", "description": "A sparse arrangement with few elements.", "conflictsWith": ["p_maximalist", "p_layered"], "color": "gray" },
         { "id": "p_maximalist", "label": "Maximalist", "description": "A dense, layered arrangement with many elements.", "conflictsWith": ["p_minimalist"], "color": "gray" },
@@ -445,6 +455,7 @@
     {
       "id": "vocals",
       "name": "Vocals",
+      "color": "pink",
       "tags": [
         { "id": "v_instrumental", "label": "Instrumental", "description": "No vocals.", "conflictsWith": ["v_female", "v_male", "v_duet", "v_soft", "v_powerful", "v_harmony", "v_background", "v_intimate", "v_falsetto", "v_spoken", "v_rapping", "v_chanting", "v_chopped", "v_adlibs", "v_echo_lyrics", "v_belting", "v_growling"], "color": "gray" },
         { "id": "v_female", "label": "Female Vocals", "description": "Lead vocals by a female singer.", "conflictsWith": ["v_instrumental"], "color": "pink" },
@@ -475,6 +486,7 @@
     {
       "id": "usecase",
       "name": "Use-case",
+      "color": "teal",
       "tags": [
         { "id": "u_chilling", "label": "Music for chilling and falling asleep", "description": "Designed for relaxation and sleep.", "suggests": ["m_chill", "m_relaxing"], "color": "blue" },
         { "id": "u_studying", "label": "Music for studying / focus", "description": "Background music that aids concentration and deep work.", "suggests": ["m_calm", "v_instrumental"], "color": "green" },

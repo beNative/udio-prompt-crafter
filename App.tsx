@@ -575,7 +575,7 @@ const App: React.FC = () => {
     });
 
     setSelectedTags(newSelectedTags);
-    setTextCategoryValues({});
+    setTextCategoryValues(preset.textCategoryValues || {});
     setUdioParams(preset.udioParams || { instrumental: false });
     setCategories(prevCategories => {
         const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
@@ -612,7 +612,8 @@ const App: React.FC = () => {
         updatedAt: now,
         selectedTags: selectedTagsForPreset, 
         categoryOrder: categories.map(c => c.id), 
-        udioParams 
+        udioParams,
+        textCategoryValues
     };
     setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
     return true;
@@ -636,6 +637,7 @@ const App: React.FC = () => {
                 selectedTags: selectedTagsForPreset, 
                 categoryOrder, 
                 udioParams,
+                textCategoryValues,
                 updatedAt: new Date().toISOString()
             };
         }

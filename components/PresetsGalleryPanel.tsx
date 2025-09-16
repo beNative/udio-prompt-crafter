@@ -1,17 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import type { Preset, Taxonomy, Tag } from '../types';
+import type { Preset, Taxonomy, Tag, Category } from '../types';
 import { useSettings } from '../index';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
 import { AlertModal } from './AlertModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { produce } from 'immer';
+import { normalizeTagLabels } from '../utils/normalization';
 
 // --- Types ---
 type SortBy = 'order' | 'name_asc' | 'name_desc' | 'updated_desc' | 'updated_asc';
 
 // --- Color Styles ---
-const tagColorStyles: Record<NonNullable<Tag['color']>, string> = {
+const tagChipColorStyles: Record<NonNullable<Tag['color']>, string> = {
   red:    'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
   orange: 'border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400',
   yellow: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
@@ -22,6 +23,13 @@ const tagColorStyles: Record<NonNullable<Tag['color']>, string> = {
   purple: 'border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-400',
   pink:   'border-pink-500/30 bg-pink-500/10 text-pink-700 dark:text-pink-400',
   gray:   'border-bunker-300 dark:border-bunker-600 bg-bunker-100 dark:bg-bunker-800 text-bunker-700 dark:text-bunker-300',
+};
+
+const categoryDotColorStyles: Record<NonNullable<Tag['color']>, string> = {
+  red: 'bg-red-500', orange: 'bg-orange-500', yellow: 'bg-yellow-500',
+  green: 'bg-green-500', teal: 'bg-teal-500', blue: 'bg-blue-500',
+  indigo: 'bg-indigo-500', purple: 'bg-purple-500', pink: 'bg-pink-500',
+  gray: 'bg-bunker-500',
 };
 
 
@@ -41,22 +49,21 @@ export const PresetsGalleryPanel: React.FC<PresetsGalleryPanelProps> = ({ taxono
   const [draggedPresetName, setDraggedPresetName] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
 
-  const categoryIdToNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    taxonomy.forEach(cat => map.set(cat.id, cat.name));
-    return map;
-  }, [taxonomy]);
-  
-  const tagIdToTagMap = useMemo(() => {
-    const map = new Map<string, Tag>();
+  const categoryMaps = useMemo(() => {
+    const idToNameMap = new Map<string, string>();
+    const idToColorMap = new Map<string, NonNullable<Tag['color']>>();
+    const tagIdToTagMap = new Map<string, Tag>();
+
     taxonomy.forEach(cat => {
+        idToNameMap.set(cat.id, cat.name);
+        if (cat.color) idToColorMap.set(cat.id, cat.color);
         cat.tags.forEach(tag => {
-            map.set(tag.id, tag);
+            tagIdToTagMap.set(tag.id, tag);
         });
     });
-    return map;
+    return { idToNameMap, idToColorMap, tagIdToTagMap };
   }, [taxonomy]);
-
+  
   const filteredAndSortedPresets = useMemo(() => {
     if (!settings) return [];
     
@@ -161,8 +168,10 @@ export const PresetsGalleryPanel: React.FC<PresetsGalleryPanelProps> = ({ taxono
                 <PresetCard 
                     key={preset.name}
                     preset={preset}
-                    categoryIdToNameMap={categoryIdToNameMap}
-                    tagIdToTagMap={tagIdToTagMap}
+                    taxonomy={taxonomy}
+                    categoryIdToNameMap={categoryMaps.idToNameMap}
+                    categoryIdToColorMap={categoryMaps.idToColorMap}
+                    tagIdToTagMap={categoryMaps.tagIdToTagMap}
                     onLoadPreset={() => { onLoadPreset(preset); onSetView('crafter'); }}
                     isDragged={draggedPresetName === preset.name}
                     onDragStart={(e) => handleDragStart(e, preset.name)}
@@ -187,7 +196,9 @@ export const PresetsGalleryPanel: React.FC<PresetsGalleryPanelProps> = ({ taxono
 
 interface PresetCardProps {
     preset: Preset;
+    taxonomy: Taxonomy;
     categoryIdToNameMap: Map<string, string>;
+    categoryIdToColorMap: Map<string, NonNullable<Tag['color']>>;
     tagIdToTagMap: Map<string, Tag>;
     onLoadPreset: () => void;
     isDragged: boolean;
@@ -196,13 +207,14 @@ interface PresetCardProps {
     onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
-const PresetCard: React.FC<PresetCardProps> = ({ preset, categoryIdToNameMap, tagIdToTagMap, onLoadPreset, isDragged, onDragStart, onDragEnd, onDrop }) => {
+const PresetCard: React.FC<PresetCardProps> = ({ preset, taxonomy, categoryIdToNameMap, categoryIdToColorMap, tagIdToTagMap, onLoadPreset, isDragged, onDragStart, onDragEnd, onDrop }) => {
     const { setSettings } = useSettings();
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(preset.name);
     const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
     const [confirmation, setConfirmation] = useState<{ title: string; message: React.ReactNode; onConfirm: () => void; variant: 'primary' | 'danger', confirmText: string } | null>(null);
     const editInputRef = useRef<HTMLInputElement>(null);
+    const [isCopied, setIsCopied] = useState(false);
 
     useEffect(() => {
         if (isEditing) {
@@ -211,43 +223,60 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, categoryIdToNameMap, ta
         }
     }, [isEditing]);
 
-    const groupedTags = useMemo(() => {
-        const groups: { categoryName: string; tags: Tag[] }[] = [];
-        const categoryMap = new Map<string, Tag[]>();
+    const promptString = useMemo(() => {
+        const orderedCategoryInfo = preset.categoryOrder
+            .map(catId => taxonomy.find(c => c.id === catId))
+            .filter((c): c is Category => !!c);
+        
+        const tagObjects = orderedCategoryInfo.flatMap(category => 
+            Object.keys(preset.selectedTags)
+                .filter(tagId => preset.selectedTags[tagId].categoryId === category.id)
+                .map(tagId => tagIdToTagMap.get(tagId))
+                .filter((t): t is Tag => !!t)
+        );
 
-        // Group tags by category ID
-        Object.keys(preset.selectedTags).forEach(tagId => {
-            const fullTag = tagIdToTagMap.get(tagId);
-            const tagData = preset.selectedTags[tagId];
-            if (fullTag && tagData) {
-                if (!categoryMap.has(tagData.categoryId)) {
-                    categoryMap.set(tagData.categoryId, []);
-                }
-                categoryMap.get(tagData.categoryId)!.push(fullTag);
-            }
-        });
+        const tagLabels = tagObjects.map(tag => tag.label);
+        const normalizedLabels = normalizeTagLabels(tagLabels);
+        
+        const textInputs = orderedCategoryInfo
+            .filter(cat => cat.type === 'text' && preset.textCategoryValues?.[cat.id])
+            .map(cat => preset.textCategoryValues![cat.id]);
 
-        // Order the groups based on the preset's category order
+        return [...normalizedLabels, ...textInputs].join(', ');
+    }, [preset, taxonomy, tagIdToTagMap]);
+
+    const orderedTags = useMemo(() => {
+        const flatTags: { tag: Tag; categoryId: string }[] = [];
+        const addedTagIds = new Set<string>();
+
+        // Use preset's category order first
         preset.categoryOrder.forEach(catId => {
-            if (categoryMap.has(catId)) {
-                const categoryName = categoryIdToNameMap.get(catId) || 'Unknown Category';
-                groups.push({
-                    categoryName,
-                    tags: categoryMap.get(catId)!
-                });
+            Object.keys(preset.selectedTags).forEach(tagId => {
+                const tagData = preset.selectedTags[tagId];
+                if (tagData.categoryId === catId && !addedTagIds.has(tagId)) {
+                    const fullTag = tagIdToTagMap.get(tagId);
+                    if (fullTag) {
+                        flatTags.push({ tag: fullTag, categoryId: catId });
+                        addedTagIds.add(tagId);
+                    }
+                }
+            });
+        });
+
+        // Add any tags from categories not in the order list (for legacy presets)
+        Object.keys(preset.selectedTags).forEach(tagId => {
+            if (!addedTagIds.has(tagId)) {
+                const tagData = preset.selectedTags[tagId];
+                const fullTag = tagIdToTagMap.get(tagId);
+                if (fullTag) {
+                    flatTags.push({ tag: fullTag, categoryId: tagData.categoryId });
+                    addedTagIds.add(tagId);
+                }
             }
         });
 
-        // Add any categories that might not be in the order (e.g., from older presets)
-        categoryMap.forEach((tags, catId) => {
-            if (!preset.categoryOrder.includes(catId)) {
-                const categoryName = categoryIdToNameMap.get(catId) || 'Unknown Category';
-                 groups.push({ categoryName, tags });
-            }
-        });
-
-        return groups;
-    }, [preset, tagIdToTagMap, categoryIdToNameMap]);
+        return flatTags;
+    }, [preset, tagIdToTagMap]);
 
     const handleToggleFavorite = () => {
         setSettings(prev => produce(prev, draft => {
@@ -300,6 +329,13 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, categoryIdToNameMap, ta
         });
     };
 
+    const handleCopy = () => {
+        navigator.clipboard.writeText(promptString).then(() => {
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        });
+    };
+
     return (
         <>
             <div 
@@ -338,24 +374,31 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, categoryIdToNameMap, ta
                 </p>
 
                 {/* Tags Display */}
-                <div className="my-4 space-y-3 flex-grow min-h-[60px]">
-                    {groupedTags.map(({ categoryName, tags }) => (
-                        <div key={categoryName}>
-                            <h5 className="text-xs font-semibold text-bunker-500 dark:text-bunker-400 mb-1.5 uppercase tracking-wider">{categoryName}</h5>
-                            <div className="flex flex-wrap gap-1.5">
-                                {tags.map(tag => (
-                                    <div key={tag.id} className={`border rounded-full px-2.5 py-0.5 text-xs font-medium ${tagColorStyles[tag.color || 'gray']}`}>
-                                        {tag.label}
+                <div className="my-4 flex-grow min-h-[60px]">
+                    {orderedTags.length > 0 ? (
+                        <div className="flex flex-wrap gap-x-3 gap-y-2">
+                            {orderedTags.map(({ tag, categoryId }) => {
+                                const categoryName = categoryIdToNameMap.get(categoryId) || 'Unknown';
+                                const categoryColor = categoryIdToColorMap.get(categoryId) || 'gray';
+                                const categoryDotClass = categoryDotColorStyles[categoryColor];
+                                const tagChipClass = tag.color ? tagChipColorStyles[tag.color] : tagChipColorStyles.gray;
+
+                                return (
+                                    <div key={tag.id} className="flex items-center space-x-1.5">
+                                        <Tooltip text={categoryName}>
+                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${categoryDotClass}`} />
+                                        </Tooltip>
+                                        <div className={`border rounded-full px-2 py-0.5 text-xs font-medium ${tagChipClass}`}>
+                                            {tag.label}
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
-                    ))}
-                    {groupedTags.length === 0 && (
+                    ) : (
                         <div className="text-sm text-bunker-500 dark:text-bunker-400 italic flex items-center h-full">No tags selected.</div>
                     )}
                 </div>
-
 
                 {/* Footer */}
                 <div className="pt-3 border-t border-bunker-200/80 dark:border-bunker-700/80 flex justify-between items-center text-xs">
@@ -365,6 +408,11 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, categoryIdToNameMap, ta
                         </span>
                     </Tooltip>
                     <div className="flex items-center space-x-1">
+                        <Tooltip text="Copy prompt string">
+                            <button onClick={handleCopy} className="p-1.5 rounded text-bunker-500 hover:bg-bunker-200 dark:hover:bg-bunker-700 hover:text-green-500">
+                                {isCopied ? <Icon name="check" className="w-4 h-4 text-green-500" /> : <Icon name="copy" className="w-4 h-4" />}
+                            </button>
+                        </Tooltip>
                         <Tooltip text="Load preset">
                             <button onClick={onLoadPreset} className="p-1.5 rounded text-bunker-500 hover:bg-bunker-200 dark:hover:bg-bunker-700 hover:text-blue-500"><Icon name="load" className="w-4 h-4" /></button>
                         </Tooltip>

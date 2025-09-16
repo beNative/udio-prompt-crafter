@@ -15,6 +15,7 @@ export interface Category {
   description?: string;
   type?: 'tags' | 'text' | 'helper_input';
   tags: Tag[];
+  color?: 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'blue' | 'indigo' | 'purple' | 'pink' | 'gray';
 }
 
 export type Taxonomy = Category[];
@@ -38,6 +39,7 @@ export interface Preset {
   selectedTags: Record<string, Omit<SelectedTag, 'id' | 'label' | 'description' | 'synonyms' | 'example_snippet' | 'conflictsWith' | 'suggests' | 'color'>>;
   categoryOrder: string[];
   udioParams?: UdioParams;
+  textCategoryValues?: Record<string, string>;
 }
 
 export interface Conflict {
