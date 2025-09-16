@@ -968,6 +968,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               taxonomy={taxonomy}
               onLoadPreset={handleLoadPreset}
               onSetView={setActiveView}
+              callLlm={callLlm}
             />
           </div>
         );
@@ -1059,6 +1060,11 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           isOpen={isSavePresetModalOpen}
           onClose={() => setIsSavePresetModalOpen(false)}
           onSave={handleSavePreset}
+          selectedTags={selectedTags}
+          textCategoryValues={textCategoryValues}
+          orderedCategories={categories}
+          taxonomy={taxonomy}
+          callLlm={callLlm}
         />
         <PresetManagerModal
           isOpen={isPresetManagerModalOpen}
