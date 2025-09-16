@@ -11,6 +11,10 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 -   **Expanded Taxonomy:** Browse a massively expanded, curated library of tags across categories like Genre, Mood, Era, Instrumentation, and Production. Each tag includes a description to help you understand its meaning.
 -   **Live Prompt Preview:** See your prompt string update in real-time. A resizable panel allows you to view and copy your prompt, generate an AI-powered prose description, and brainstorm AI-generated song titles.
 -   **UDIO-Specific Parameters:** A dedicated panel to control instrumental toggles, provide custom lyrics, and set track duration, which are saved with presets and history.
+-   **Comprehensive Preset Management:**
+    -   **Visual Preset Gallery:** Browse your creations in a dedicated "Presets" tab. Cards feature a compact, color-coded display of tags and quick actions like 'load' and 'copy prompt'.
+    -   **Drag-and-Drop Ordering:** Easily reorder presets in the gallery view to organize your workflow.
+    -   **Preset Manager:** A list-based manager (in the header) allows you to load, update, rename, and safely delete presets.
 -   **Draggable Category Ordering:** Easily re-order categories to control the structure and emphasis of your final prompt.
 -   **AI-Powered Assistance:**
     -   **AI Prompt Description:** Generate an evocative, prose-style prompt from your tags.
@@ -23,7 +27,6 @@ Crafting the perfect prompt is key to getting great results from AI music genera
 -   **Icon Customization:** Choose from four popular icon sets (Heroicons, Lucide, Feather, Tabler) to personalize the application's appearance.
 -   **Controlled UI Scaling:** Customize the application's size with a simple slider in the settings, ranging from 50% to 400%. Changes are applied via a dedicated "Apply" button for more control.
 -   **Prompt History:** Automatically saves your last 50 prompts. Revisit and load any past creation with a single click from the new history modal.
--   **Presets:** Save your favorite tag combinations as presets. The preset manager allows you to load, update, rename, and safely delete presets with a confirmation step.
 -   **Conflict Detection:** The app detects tag conflicts and presents a modal with flexible resolution options, allowing you to keep the new tag, keep both, or cancel.
 -   **Command Palette:** A powerful search tool (`Ctrl+;`) to quickly find and toggle any tag, or execute actions like loading a preset or clearing the board.
 -   **Advanced Data Management:** A dedicated settings tab allows for importing and exporting all application settings, direct editing of the raw settings JSON, and (on desktop) opening the settings file's location.

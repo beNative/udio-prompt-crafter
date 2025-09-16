@@ -1,5 +1,15 @@
 # Version Log
 
+## v0.15.0 - The Visualizer Update
+
+This release brings a major user experience enhancement by creating a beautiful, dedicated gallery for presets, making them a central and highly visual part of the creative workflow.
+
+### Features Added
+-   **Preset Gallery Tab:** Presets have been moved from a settings modal to a dedicated, top-level "Presets" tab in the main UI for easier access.
+-   **Visual Preset Cards:** Preset cards have been completely redesigned to be more informative and space-efficient. Instead of a simple tag count, they now display the actual tags, prefixed with a colored dot corresponding to their category.
+-   **Copy Prompt from Card:** A new "Copy" button has been added to each preset card, allowing users to copy the full prompt string to their clipboard with a single click.
+-   **Cohesive UI Coloring:** The selected category in the "Crafter" view now uses its assigned color as its background, creating a more consistent and intuitive visual language throughout the app.
+
 ## v0.14.0 - The Conductor's Baton Update
 
 This release gives users finer control over their creative process, much like a conductor guiding an orchestra. It introduces more flexible conflict resolution and robust preset management.

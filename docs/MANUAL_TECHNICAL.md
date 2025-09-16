@@ -19,7 +19,7 @@ The user interface is a single-page application (SPA) built with React.
 
 ### Core Libraries & Concepts
 
--   **React:** The entire UI is composed of React components. Key components include `App.tsx` (the root), `Header.tsx`, `CategoryList.tsx`, `TagPicker.tsx`, and `PromptPreview.tsx`.
+-   **React:** The entire UI is composed of React components. Key components include `App.tsx` (the root), `Header.tsx`, `CategoryList.tsx`, `TagPicker.tsx`, `PromptPreview.tsx`, and `PresetsGalleryPanel.tsx`.
 -   **TypeScript:** Provides static typing for improved code quality and maintainability. All core application logic and component props are strongly typed, with definitions located in `types.ts`.
 -   **Tailwind CSS:** A utility-first CSS framework used for all styling. A base configuration with a custom color palette is defined directly in `index.html`.
 

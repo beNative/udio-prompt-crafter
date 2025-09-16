@@ -2,19 +2,23 @@
 
 This manual provides a detailed overview of all the features available in the UDIO Prompt Crafter.
 
-## Main Interface (Crafter View)
+## Main Interface
+
+The application is organized into several main views, accessible via tabs in the header: **Crafter**, **Presets**, **Settings**, and **Info**.
+
+### Crafter View
 
 The primary "Crafter" view is split into three resizable panels.
 
-### 1. Categories Panel (Left)
+#### 1. Categories Panel (Left)
 
 This panel lists all the available tag categories.
 
--   **Selecting a Category:** Click on a category name to view its tags in the middle panel. The active category is highlighted in blue.
+-   **Selecting a Category:** Click on a category name to view its tags in the middle panel. The active category is highlighted with its assigned color.
 -   **Re-ordering Categories:** Click and drag a category using the grip icon (`⠿`) to change its position. The order of categories here determines the order of tags in the final prompt string, which can influence the AI's focus.
 -   **Selection Indicator:** The green dot on the right side of a category indicates that you have at least one tag selected from it.
 
-### 2. Tag Picker Panel (Middle)
+#### 2. Tag Picker Panel (Middle)
 
 This is where you choose the building blocks of your prompt.
 
@@ -28,7 +32,7 @@ This is where you choose the building blocks of your prompt.
     1.  **Generate Ideas:** Enter keywords (e.g., "summer, nostalgia, road trip") into the text box. The helper will also consider any selected "Genre" and "Mood" tags. Click "Generate Lyric Ideas," and the AI will produce several distinct themes for a song.
     2.  **Generate Full Lyrics:** Once the ideas appear, each one will have a "Generate Lyrics" button next to it. Clicking this button will take that specific theme and use the AI to write a complete song with a conventional structure (verses, chorus, bridge, etc.).
 
-### 3. Live Preview Panel (Right)
+#### 3. Live Preview Panel (Right)
 
 This panel shows you the output of your selections in real-time.
 
@@ -41,6 +45,22 @@ This panel shows you the output of your selections in real-time.
 -   **UDIO Params Tab:** This tab provides a dedicated form to specify parameters for UDIO. You can toggle if the track is instrumental, provide custom lyrics, and set a target duration in seconds.
 -   **JSON Output Tab:** This tab provides a structured JSON object containing your selected tags, text inputs, category order, and UDIO parameters. This is useful for saving, sharing, or for use in other tools.
 -   **Conflict Warnings:** When you select a tag that conflicts with one or more already selected tags, a modal will appear. It clearly lists all conflicts and gives you three options: keep the new tag (which deselects all conflicting tags), keep both (allowing you to override the conflict rule), or cancel the selection.
+
+### Presets Gallery View
+
+The "Presets" tab provides a beautiful and highly functional gallery for all your saved presets.
+
+-   **Card Layout:** Each preset is displayed as a card, showing its name, description, and a visual breakdown of its tags.
+-   **Color-Coded Tags:** Instead of just a tag count, each tag is shown with a small, colored dot next to it. The color of the dot corresponds to the tag's category color, providing an at-a-glance summary of the preset's composition. Hovering over a dot reveals the category name.
+-   **Search & Filter:** Use the search bar to find presets by name or description. You can also toggle a filter to show only your "favorite" presets.
+-   **Sorting:** A dropdown menu allows you to sort your presets by Custom Order, Last Modified, or Name (A-Z, Z-A).
+-   **Drag-and-Drop Reordering:** When the sort mode is set to "Custom Order," you can click and drag the cards to arrange them in any order you like. This order is saved automatically.
+-   **Card Actions:** Each card has a footer with quick actions:
+    -   **Copy:** Instantly copies the preset's full prompt string to your clipboard.
+    -   **Load:** Loads the preset into the Crafter view.
+    -   **Rename:** Allows you to edit the preset's name inline.
+    -   **Delete:** Removes the preset (with a confirmation step).
+    -   **Favorite:** Toggles the preset's favorite status.
 
 ## Header Controls (Crafter View Only)
 
@@ -84,9 +104,6 @@ Click the "Settings" tab in the header to access the configuration page. The pag
     -   **Tags List (Right):** When a category is selected, this area shows all of its tags. You can drag and drop tags to reorder them or create parent-child relationships (for suggestions). Click "Add Tag" or the pencil icon on an existing tag to open the inline editor.
     -   **Inline Tag Editor:** When adding or editing a tag, a panel appears directly on the page. Here you can edit the tag's label, ID, description, color, and manage its "Suggests" and "Conflicts With" relationships using a powerful search-and-select combobox.
     -   **Saving:** Changes are not applied until you click the "Save Taxonomy" button at the top. You can also discard all your changes or reset the entire taxonomy to the application's default. *All destructive actions like deleting or resetting will prompt for confirmation using a themed, in-app dialog.*
--   **Presets Tab:**
-    -   Here you can directly edit the JSON data for your custom presets in a code editor that provides syntax highlighting. This allows for advanced editing, re-ordering, and sharing.
-    -   You can reset to the application's default presets at any time.
 -   **Application Tab:**
     -   **Icon Set:** Customize the visual style of icons throughout the application. You can choose from Heroicons, Lucide, Feather, and Tabler. The default icon set is 'Feather'.
     -   **UI Scale:** Adjust the overall size of the entire application interface using a slider, from 50% to 400%. Changes must be confirmed by clicking the "Apply" button. Your preference is saved automatically and applied on the next launch.
@@ -94,7 +111,7 @@ Click the "Settings" tab in the header to access the configuration page. The pag
 -   **Data Management Tab:**
     -   **Import & Export:** Buttons to save your entire configuration (settings, presets, UI preferences) to a `.json` file, or load a configuration from a file.
     -   **Open File Location (Desktop App):** A button to directly open the folder containing your `settings.json` file.
-    -   **Raw Settings Editor:** A powerful JSON editor that allows you to view and modify all application settings directly. A warning is displayed as incorrect edits can break the application.
+    -   **Raw Settings Editor:** A powerful JSON editor that allows you to view and modify all application settings directly, including the raw data for your presets. A warning is displayed as incorrect edits can break the application.
 
 ## Info Page
 
