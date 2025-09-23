@@ -2,6 +2,17 @@
 
 This manual provides a detailed overview of all the features available in the UDIO Prompt Crafter.
 
+## Custom Title Bar (Desktop App)
+
+When running as a desktop application, the standard operating system title bar is replaced with a custom, integrated bar that includes several key functions:
+
+-   **Application Title:** On the far left, the application name is displayed. The entire bar (except for interactive elements) can be clicked and dragged to move the window.
+-   **Integrated Search / Command Palette:** The central element is a powerful search bar.
+    -   Clicking on it or using the `Ctrl + ;` shortcut will focus the input.
+    -   As you type, a dropdown panel appears directly below it, showing filtered tags and actions in real-time.
+    -   You can navigate the results with the arrow keys and press `Enter` to select, or click on an item with your mouse.
+-   **Window Controls:** On the far right are standard window controls to minimize, maximize/restore, and close the application.
+
 ## Main Interface
 
 The application is organized into several main views, accessible via tabs in the header: **Crafter**, **Presets**, **Settings**, and **Info**.
@@ -67,7 +78,6 @@ The "Presets" tab provides a beautiful and highly functional gallery for all you
 
 These buttons provide quick access to powerful features.
 
--   **Command Palette (`Ctrl+;`):** A pop-up search bar that lets you instantly find and execute commands like "Clear All," "Randomize Tags" (which respects locked tags), or "Load Preset."
 -   **Prompt History:** Opens a modal showing your last 50 unique prompts. You can click any entry to load it back into the crafter. History entries also save the UDIO Parameters that were active when the prompt was generated.
 -   **Manage Presets:** Opens a modal to manage your presets. You can load a preset, update it with your current selection, rename it via an inline editor (with duplicate name prevention), or delete it. Deleting a preset now requires confirmation to prevent accidents.
 -   **Save as Preset:** Save your current selections and category order as a new preset. The save dialog includes a "magic wand" icon that uses AI to suggest creative names based on your selected tags.

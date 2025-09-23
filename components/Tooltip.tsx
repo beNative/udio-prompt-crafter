@@ -59,6 +59,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
     // Define fallback order for each placement
     // FIX: Using `as const` ensures that the array values are inferred as literal types (`'top'`, `'bottom'`, etc.)
     // rather than the wider `string` type. This fixes the error where a `string` was not assignable to `Placement`.
+    // FIX: Added 'as const' to correctly infer literal types for the fallback order array, resolving the type error.
     const fallbackOrder = {
       bottom: ['bottom', 'top', 'right', 'left'],
       top: ['top', 'bottom', 'right', 'left'],

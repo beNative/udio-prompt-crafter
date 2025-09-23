@@ -1,5 +1,17 @@
 # Version Log
 
+## v0.17.0 - The Integrated Experience Update
+
+This major release overhauls the application's look and feel by introducing a custom title bar and fully integrating the command palette, creating a more modern and seamless user experience similar to VS Code.
+
+### Features Added
+-   **Custom Title Bar:** The native OS title bar has been replaced with a custom, frameless window that matches the application's theme.
+-   **Integrated Search Palette:** The command palette search is now built directly into the title bar. Results appear in a dropdown panel directly below the search input, replacing the old centered modal.
+-   **Custom Window Controls:** The title bar includes custom-drawn minimize, maximize, and close buttons for a seamless cross-platform experience.
+
+### Bug Fixes
+-   **Tooltip Scaling Fix:** Corrected a positioning bug where tooltips would appear in the wrong location when the UI scale was set to anything other than 100%.
+
 ## v0.16.0 - The Creative Control Update
 
 This release introduces powerful new features for fine-tuning the creative process, offering more control over randomization and assistance in naming presets.

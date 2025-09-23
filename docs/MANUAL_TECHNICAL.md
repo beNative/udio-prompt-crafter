@@ -19,7 +19,7 @@ The user interface is a single-page application (SPA) built with React.
 
 ### Core Libraries & Concepts
 
--   **React:** The entire UI is composed of React components. Key components include `App.tsx` (the root), `Header.tsx`, `CategoryList.tsx`, `TagPicker.tsx`, `PromptPreview.tsx`, and `PresetsGalleryPanel.tsx`.
+-   **React:** The entire UI is composed of React components. Key components include `App.tsx` (the root), `TitleBar.tsx`, `Header.tsx`, `CategoryList.tsx`, `TagPicker.tsx`, `PromptPreview.tsx`, and `PresetsGalleryPanel.tsx`.
 -   **TypeScript:** Provides static typing for improved code quality and maintainability. All core application logic and component props are strongly typed, with definitions located in `types.ts`.
 -   **Tailwind CSS:** A utility-first CSS framework used for all styling. A base configuration with a custom color palette is defined directly in `index.html`.
 
@@ -27,7 +27,7 @@ The user interface is a single-page application (SPA) built with React.
 
 Application state is managed primarily through React's built-in hooks:
 
--   **`App.tsx`:** This root component acts as the primary state container, holding the most critical pieces of state like `selectedTags`, `categories`, `appSettings`, etc. The `selectedTags` object also stores metadata for each tag, such as its `categoryId` and its `isLocked` boolean state.
+-   **`App.tsx`:** This root component acts as the primary state container, holding the most critical pieces of state like `selectedTags`, `categories`, `appSettings`, etc. The `selectedTags` object also stores metadata for each tag, such as its `categoryId` and its `isLocked` boolean state. The state for the command palette (`commandSearchTerm`, `isCommandPaletteOpen`) has been lifted to this component to allow the `TitleBar.tsx` and `CommandPalette.tsx` components to share and control it.
 -   **`useState`:** Used for managing local component state.
 -   **`useEffect`:** Used for side effects, such as loading data on startup, responding to state changes, and managing event listeners.
 -   **`useMemo` & `useCallback`:** Used extensively to optimize performance by memoizing expensive calculations (like generating the tag map or filtering tags) and preventing unnecessary re-renders.
@@ -53,7 +53,8 @@ When running as a desktop app, a Node.js environment managed by Electron runs in
 
 The main process is responsible for tasks that the sandboxed renderer (browser) process cannot do for security reasons.
 
--   Creating and managing the application window (`BrowserWindow`).
+-   Creating and managing the application window (`BrowserWindow`), which is configured as a frameless window (`frame: false`).
+-   Handling native window operations like minimize, maximize, and close, which are triggered by the custom title bar.
 -   Accessing the native file system to read and write settings and logs.
 -   Handling inter-process communication (IPC) with the renderer process.
 
@@ -61,8 +62,8 @@ The main process is responsible for tasks that the sandboxed renderer (browser) 
 
 Secure communication between the frontend and backend is achieved via Electron's `contextBridge`.
 
--   **`electron/main.ts`:** This file contains the main process logic. It uses `ipcMain.handle` and `ipcMain.on` to listen for events from the frontend.
--   **`electron/preload.ts`:** This script runs in a privileged environment. It uses `contextBridge.exposeInMainWorld` to securely expose specific functions (e.g., `readSettings`, `writeLog`) to the renderer process under the `window.electronAPI` global object. This avoids exposing the full `ipcRenderer` and Node.js APIs to the frontend.
+-   **`electron/main.ts`:** This file contains the main process logic. It uses `ipcMain.handle` and `ipcMain.on` to listen for events from the frontend, including new handlers for window controls (`minimize-window`, `maximize-window`, `close-window`).
+-   **`electron/preload.ts`:** This script runs in a privileged environment. It uses `contextBridge.exposeInMainWorld` to securely expose specific functions to the renderer process under the `window.electronAPI` global object. Newly exposed functions include `minimizeWindow`, `maximizeWindow`, `closeWindow`, and a listener `onWindowStateChange`. This avoids exposing the full `ipcRenderer` and Node.js APIs to the frontend.
 
 ### Settings & Data Persistence
 
