@@ -151,7 +151,8 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
 
   useEffect(() => {
     const sortedTags = orderedCategories.flatMap(category => 
-      Object.values(selectedTags).filter(tag => tag.categoryId === category.id)
+      // FIX: Cast tag to SelectedTag to fix type inference issue.
+      Object.values(selectedTags).filter(tag => (tag as SelectedTag).categoryId === category.id)
     );
 
     const tagLabels = sortedTags.map(tag => tag.label);
@@ -177,8 +178,9 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     setJsonOutput(JSON.stringify(json, null, 2));
 
     const selectedTagsForHistory: Preset['selectedTags'] = {};
+    // FIX: Cast tag to SelectedTag to fix type inference issue.
     Object.entries(selectedTags).forEach(([id, tag]) => {
-        selectedTagsForHistory[id] = { categoryId: tag.categoryId };
+        selectedTagsForHistory[id] = { categoryId: (tag as SelectedTag).categoryId };
     });
 
     onPromptGenerated({

@@ -97,6 +97,7 @@ function createWindow() {
     height: 900,
     show: false, // Create the window hidden
     backgroundColor: '#101828', // Match the app's dark background
+    frame: false, // Make the window frameless
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
@@ -104,7 +105,15 @@ function createWindow() {
     },
     title: "UDIO Prompt Crafter"
   });
-  logToFile('BrowserWindow created with show:false.');
+  logToFile('BrowserWindow created with show:false and frame:false.');
+
+  // Listen for window maximize/unmaximize events and forward them to the renderer
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window-state-change', true);
+  });
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window-state-change', false);
+  });
 
   // Show the window only when the content is ready to be displayed.
   mainWindow.once('ready-to-show', () => {
@@ -150,6 +159,17 @@ try {
     logToFile(`Settings loaded. openDevToolsOnStart: ${currentSettings.openDevToolsOnStart}, allowPrerelease: ${currentSettings.allowPrerelease}`);
     
     logToFile('Setting up IPC handlers...');
+
+    // --- Custom Window Controls ---
+    ipcMain.on('minimize-window', () => mainWindow?.minimize());
+    ipcMain.on('maximize-window', () => {
+      if (mainWindow?.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow?.maximize();
+      }
+    });
+    ipcMain.on('close-window', () => mainWindow?.close());
 
     // --- Debug Log IPC ---
     ipcMain.handle('read-debug-log', () => {

@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   const inactiveTabStyles = "text-bunker-500 dark:text-bunker-400 hover:bg-white/60 dark:hover:bg-bunker-700/50";
 
   return (
-    <header className="bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200/80 dark:border-bunker-800/80 shrink-0 sticky top-0 z-30">
+    <header className="bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200/80 dark:border-bunker-800/80 shrink-0">
       <div className="flex items-center">
           <nav className="flex items-center space-x-1 p-1 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg">
               <button onClick={() => onSetView('crafter')} className={`${tabButtonStyles} ${activeView === 'crafter' ? activeTabStyles : inactiveTabStyles}`}>
@@ -71,12 +71,6 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center space-x-2">
         {activeView === 'crafter' && (
             <>
-                <Tooltip text={<>Open Command Palette <kbd className="ml-2 px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">Ctrl</kbd>+<kbd className="px-1.5 py-0.5 text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded">;</kbd></>}>
-                  <button onClick={onOpenCommandPalette} aria-label="Open Command Palette" className="px-3 py-2 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg text-bunker-600 dark:text-bunker-300 hover:bg-bunker-200 hover:text-bunker-800 dark:hover:bg-bunker-700/80 dark:hover:text-white transition-colors">
-                      <Icon name="search" className="w-5 h-5" />
-                  </button>
-                </Tooltip>
-                
                 <HeaderButton onClick={onOpenHistoryModal} title="Prompt History" icon="history" />
                 <HeaderButton onClick={onOpenPresetManagerModal} title="Manage Presets" icon="list-bullet" />
                 <HeaderButton onClick={onOpenSavePresetModal} title="Save Current as Preset..." icon="save" />

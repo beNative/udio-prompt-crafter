@@ -110,6 +110,12 @@ export interface UpdateInfo {
 
 // New Electron API types
 export interface IElectronAPI {
+  // Window Controls
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  closeWindow: () => void;
+  onWindowStateChange: (callback: (isMaximized: boolean) => void) => () => void;
+  // App Data & Settings
   writeLog: (logEntry: LogEntry) => void;
   showLogInFolder: () => void;
   showSettingsInFolder: () => void;

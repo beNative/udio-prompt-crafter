@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import type { Category, SelectedTag } from '../types';
 import { Icon } from './icons';
@@ -28,7 +29,8 @@ export const AiFeatures: React.FC<AiFeaturesProps> = ({ category, selectedTags, 
     const [generatedLyrics, setGeneratedLyrics] = useState('');
     const [copiedLyrics, setCopiedLyrics] = useState(false);
     
-    const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes(t.categoryId));
+    // FIX: Cast t to SelectedTag to access categoryId.
+    const relevantTags = Object.values(selectedTags).filter(t => ['genre', 'mood'].includes((t as SelectedTag).categoryId));
 
     const handleGenerateIdeas = useCallback(async () => {
         setIsLoadingIdeas(true);
@@ -55,7 +57,8 @@ Here is a perfect example of the required response format:
 }`;
         const userPromptParts = [];
         if (relevantTags.length > 0) {
-            userPromptParts.push(`Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`);
+            // FIX: Cast t to SelectedTag to access label.
+            userPromptParts.push(`Music Styles: ${JSON.stringify(relevantTags.map(t => (t as SelectedTag).label))}.`);
         }
         if (lyricKeywords) {
             userPromptParts.push(`Keywords: "${lyricKeywords}".`);
@@ -94,7 +97,8 @@ Here is a perfect example of the required response format:
         
         const userPromptParts = [`Theme: "${themeIdea}"`];
          if (relevantTags.length > 0) {
-            userPromptParts.push(`Music Styles: ${JSON.stringify(relevantTags.map(t => t.label))}.`);
+            // FIX: Cast t to SelectedTag to access label.
+            userPromptParts.push(`Music Styles: ${JSON.stringify(relevantTags.map(t => (t as SelectedTag).label))}.`);
         }
         
         const userPrompt = userPromptParts.join('\n\n');

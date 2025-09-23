@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useMemo } from 'react';
 import type { Category, Tag, SelectedTag } from '../types';
 import { TagChip } from './TagChip';
@@ -49,7 +50,8 @@ export const TagPicker: React.FC<TagPickerProps> = ({
 
   const hasSelectedTagsInCategory = useMemo(() => {
     if (!category || category.type === 'text') return false;
-    return Object.values(selectedTags).some(tag => tag.categoryId === category.id);
+    // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
+    return (Object.values(selectedTags) as SelectedTag[]).some(tag => tag.categoryId === category.id);
   }, [selectedTags, category]);
 
   const tagTree = useMemo((): TreeNodeData[] => {
@@ -80,11 +82,13 @@ export const TagPicker: React.FC<TagPickerProps> = ({
   const suggestions = useMemo(() => {
     if (!category || category.type === 'text') return [];
 
-    const selectedInCategory = Object.values(selectedTags).filter(t => t.categoryId === category.id);
+    // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
+    const selectedInCategory = (Object.values(selectedTags) as SelectedTag[]).filter(t => t.categoryId === category.id);
     
     const suggestedIds = new Set<string>();
     selectedInCategory.forEach(tag => {
-        tag.suggests?.forEach(id => {
+        // FIX: Cast tag to SelectedTag to access suggests property.
+        (tag as SelectedTag).suggests?.forEach(id => {
             if (!selectedTags[id]) { // don't suggest already selected tags
                 suggestedIds.add(id);
             }

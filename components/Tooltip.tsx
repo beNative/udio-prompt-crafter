@@ -53,7 +53,8 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
     };
 
     // Define fallback order for each placement
-    const fallbackOrder: Record<Placement, Placement[]> = {
+    // FIX: Changed Placement[] to readonly Placement[] to preserve literal types and fix assignment error.
+    const fallbackOrder: Record<Placement, readonly Placement[]> = {
       bottom: ['bottom', 'top', 'right', 'left'],
       top: ['top', 'bottom', 'right', 'left'],
       right: ['right', 'left', 'top', 'bottom'],

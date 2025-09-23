@@ -65,7 +65,8 @@ export const SavePresetModal: React.FC<SavePresetModalProps> = ({
     setAiTitles([]);
 
     const sortedTags = orderedCategories.flatMap(category => 
-      Object.values(selectedTags).filter(tag => tag.categoryId === category.id)
+      // FIX: Cast tag to SelectedTag to access categoryId.
+      Object.values(selectedTags).filter(tag => (tag as SelectedTag).categoryId === category.id)
     );
     const tagLabels = sortedTags.map(tag => tag.label);
     const normalizedLabels = normalizeTagLabels(tagLabels);

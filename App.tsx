@@ -25,6 +25,7 @@ import { AlertModal } from './components/AlertModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PresetsGalleryPanel } from './components/PresetsGalleryPanel';
 import { produce } from 'immer';
+import { TitleBar } from './components/TitleBar';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -496,7 +497,8 @@ const App: React.FC = () => {
     const isCurrentlySelected = !!selectedTags[tag.id];
 
     if (!isCurrentlySelected) {
-      const conflicts = tag.conflictsWith
+      // FIX: Cast tag to Tag to access conflictsWith property.
+      const conflicts = (tag as Tag).conflictsWith
         ?.map(id => selectedTags[id])
         .filter((t): t is SelectedTag => !!t);
 
@@ -549,7 +551,7 @@ const App: React.FC = () => {
             delete newSelected[tag.id];
           });
           const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
-          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
+          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId, isLocked: false };
           return newSelected;
         });
         break;
@@ -558,7 +560,7 @@ const App: React.FC = () => {
         setSelectedTags(prev => {
           const newSelected = { ...prev };
           const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
-          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId };
+          if (categoryId) newSelected[newlySelectedTag.id] = { ...newlySelectedTag, categoryId, isLocked: false };
           return newSelected;
         });
         break;
@@ -609,8 +611,9 @@ const App: React.FC = () => {
     
     logger.info(`Saving new preset: ${name}`);
     const selectedTagsForPreset: Preset['selectedTags'] = {};
+    // FIX: Cast tag to SelectedTag to fix type inference issue.
     Object.entries(selectedTags).forEach(([id, tag]) => {
-        selectedTagsForPreset[id] = { categoryId: tag.categoryId, isLocked: tag.isLocked };
+        selectedTagsForPreset[id] = { categoryId: (tag as SelectedTag).categoryId, isLocked: (tag as SelectedTag).isLocked };
     });
     
     const now = new Date().toISOString();
@@ -634,8 +637,9 @@ const App: React.FC = () => {
     if (!appSettings) return;
 
     const selectedTagsForPreset: Preset['selectedTags'] = {};
+    // FIX: Cast tag to SelectedTag to fix type inference issue.
     Object.entries(selectedTags).forEach(([id, tag]) => {
-      selectedTagsForPreset[id] = { categoryId: tag.categoryId, isLocked: tag.isLocked };
+      selectedTagsForPreset[id] = { categoryId: (tag as SelectedTag).categoryId, isLocked: (tag as SelectedTag).isLocked };
     });
     
     const categoryOrder = categories.map(c => c.id);
@@ -703,7 +707,8 @@ const App: React.FC = () => {
   const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags, respecting locks.');
     
-    const lockedTags = Object.values(selectedTags).filter(tag => tag.isLocked);
+    // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
+    const lockedTags = (Object.values(selectedTags) as SelectedTag[]).filter(tag => tag.isLocked);
     const newSelected: Record<string, SelectedTag> = {};
 
     lockedTags.forEach(tag => {
@@ -721,7 +726,8 @@ const App: React.FC = () => {
             const randomTag = category.tags[Math.floor(Math.random() * category.tags.length)];
             const fullTag = taxonomyMap.get(randomTag.id);
             if (fullTag) {
-                newSelected[randomTag.id] = { ...fullTag, isLocked: false };
+                // FIX: Cast fullTag to SelectedTag to satisfy newSelected type.
+                newSelected[randomTag.id] = { ...(fullTag as SelectedTag), isLocked: false };
             }
         }
     });
@@ -824,7 +830,8 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             result.tag_ids.forEach((tagId: string) => {
                 const fullTag = taxonomyMap.get(tagId);
                 if (fullTag) {
-                    newSelectedTags[tagId] = fullTag;
+                    // FIX: Cast fullTag to SelectedTag.
+                    newSelectedTags[tagId] = fullTag as SelectedTag;
                 } else {
                     logger.warn("AI returned a tag ID not found in taxonomy.", { tagId });
                 }
@@ -845,7 +852,8 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   }, [allTags, callLlm, taxonomyMap, handleClear]);
 
   const handleThematicRandomize = useCallback(async (theme: string): Promise<boolean> => {
-    const lockedTags = Object.values(selectedTags).filter(tag => tag.isLocked);
+    // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
+    const lockedTags = (Object.values(selectedTags) as SelectedTag[]).filter(tag => tag.isLocked);
     logger.info("Generating tags from theme with AI...", { theme, lockedTagCount: lockedTags.length });
 
     const systemPrompt = `You are a creative music director AI. Your task is to select a cohesive set of tags from a provided list that best captures a user's theme, while adhering to a set of locked tags that must be included.
@@ -875,7 +883,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             result.tag_ids.forEach((tagId: string) => {
                 const fullTag = taxonomyMap.get(tagId);
                 if (fullTag) {
-                    newSelectedTags[tagId] = { ...fullTag, isLocked: false };
+                    newSelectedTags[tagId] = { ...(fullTag as SelectedTag), isLocked: false };
                 } else {
                     logger.warn("AI returned a tag ID not found in taxonomy.", { tagId });
                 }
@@ -902,8 +910,9 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
 
   const selectedTagCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+    // FIX: Cast tag to SelectedTag to fix type inference issue.
     Object.values(selectedTags).forEach(tag => {
-      counts[tag.categoryId] = (counts[tag.categoryId] || 0) + 1;
+      counts[(tag as SelectedTag).categoryId] = (counts[(tag as SelectedTag).categoryId] || 0) + 1;
     });
      Object.entries(textCategoryValues).forEach(([catId, value]) => {
         if(value) counts[catId] = (counts[catId] || 0) + 1;
@@ -913,14 +922,16 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
 
   const conflicts = useMemo(() => {
     const newConflicts: Conflict[] = [];
-    const selectedList = Object.values(selectedTags);
+    const selectedList = Object.values(selectedTags) as SelectedTag[];
 
     for (const tagA of selectedList) {
-        if (tagA.conflictsWith) {
-            for (const conflictId of tagA.conflictsWith) {
+        // FIX: Cast tagA to SelectedTag to access its properties.
+        if ((tagA as SelectedTag).conflictsWith) {
+            for (const conflictId of (tagA as SelectedTag).conflictsWith!) {
                 if (selectedTags[conflictId]) {
                     const tagB = selectedTags[conflictId];
-                    if (tagA.id < tagB.id) newConflicts.push({ tagA, tagB });
+                    // FIX: Cast tagA to SelectedTag to access its properties.
+                    if ((tagA as SelectedTag).id < tagB.id) newConflicts.push({ tagA, tagB });
                 }
             }
         }
@@ -1047,6 +1058,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   return (
     <SettingsContext.Provider value={{ settings: appSettings, setSettings: setAppSettings }}>
       <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
+        {isElectron && <TitleBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />}
         <Header 
           theme={theme} 
           activeView={activeView}

@@ -3,6 +3,19 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // Window Controls
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  maximizeWindow: () => ipcRenderer.send('maximize-window'),
+  closeWindow: () => ipcRenderer.send('close-window'),
+  onWindowStateChange: (callback) => {
+    const listener = (event, isMaximized) => callback(isMaximized);
+    ipcRenderer.on('window-state-change', listener);
+    return () => {
+      ipcRenderer.removeListener('window-state-change', listener);
+    };
+  },
+  
+  // App Data & Settings
   writeLog: (logEntry) => ipcRenderer.send('write-log', logEntry),
   showLogInFolder: () => ipcRenderer.send('show-log-in-folder'),
   showSettingsInFolder: () => ipcRenderer.send('show-settings-in-folder'),
