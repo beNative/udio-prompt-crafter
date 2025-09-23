@@ -1,5 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useSettings } from '../index';
 
 type Placement = 'top' | 'bottom' | 'left' | 'right';
 
@@ -15,10 +16,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [opacity, setOpacity] = useState(0);
+  const { settings } = useSettings();
+  const scale = (settings?.uiScale || 100) / 100;
 
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
+    // These values are in "visual" pixels, affected by the zoom level
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
     const { innerWidth: vpWidth, innerHeight: vpHeight } = window;
@@ -53,13 +57,14 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
     };
 
     // Define fallback order for each placement
-    // FIX: Changed Placement[] to readonly Placement[] to preserve literal types and fix assignment error.
-    const fallbackOrder: Record<Placement, readonly Placement[]> = {
+    // FIX: Using `as const` ensures that the array values are inferred as literal types (`'top'`, `'bottom'`, etc.)
+    // rather than the wider `string` type. This fixes the error where a `string` was not assignable to `Placement`.
+    const fallbackOrder = {
       bottom: ['bottom', 'top', 'right', 'left'],
       top: ['top', 'bottom', 'right', 'left'],
       right: ['right', 'left', 'top', 'bottom'],
       left: ['left', 'right', 'top', 'bottom'],
-    };
+    } as const;
 
     let bestPlacement: Placement | null = null;
     for (const p of fallbackOrder[placement]) {
@@ -76,7 +81,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
 
     let { top, left } = placements[bestPlacement];
     
-    // Final boundary checks to clamp the position
+    // Final boundary checks to clamp the position (still in visual pixels)
     if (left < margin) left = margin;
     if (left + tooltipRect.width > vpWidth - margin) {
       left = vpWidth - tooltipRect.width - margin;
@@ -86,9 +91,11 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
       top = vpHeight - tooltipRect.height - margin;
     }
 
-    setPosition({ top, left });
+    // Convert the final visual coordinates to layout coordinates by dividing by the scale factor.
+    // The browser will then apply the zoom to these layout coordinates, putting the tooltip in the correct visual spot.
+    setPosition({ top: top / scale, left: left / scale });
     setOpacity(1); // Make it visible after positioning
-  }, [placement]);
+  }, [placement, scale]);
 
   const showTooltip = () => setVisible(true);
   const hideTooltip = () => {
