@@ -26,6 +26,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { PresetsGalleryPanel } from './components/PresetsGalleryPanel';
 import { produce } from 'immer';
 import { TitleBar } from './components/TitleBar';
+import { useDebounce } from './hooks/useDebounce';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -51,7 +52,12 @@ const App: React.FC = () => {
   const [textCategoryValues, setTextCategoryValues] = useState<Record<string, string>>({});
   const [udioParams, setUdioParams] = useState<UdioParams>({ instrumental: false });
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
+  
+  const [commandSearchTerm, setCommandSearchTerm] = useState('');
+  const debouncedCommandSearchTerm = useDebounce(commandSearchTerm, 100);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [paletteStyle, setPaletteStyle] = useState({});
+  
   const [isLogPanelOpen, setIsLogPanelOpen] = useState(false);
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info' | 'presets'>('crafter');
   
@@ -61,6 +67,9 @@ const App: React.FC = () => {
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
+
+  const commandInputRef = useRef<HTMLInputElement>(null);
+  const commandPaletteRef = useRef<HTMLDivElement>(null);
 
   // State for global features
   const [appVersion, setAppVersion] = useState('');
@@ -315,18 +324,50 @@ const App: React.FC = () => {
     (document.documentElement.style as any).zoom = `${scale / 100}`;
   }, [appSettings?.uiScale]);
 
+  const handleCommandPaletteClose = useCallback(() => {
+    setIsCommandPaletteOpen(false);
+  }, []);
+
+  const handleTitleBarFocus = useCallback(() => {
+      if (commandInputRef.current) {
+          const rect = commandInputRef.current.getBoundingClientRect();
+          setPaletteStyle({
+              position: 'fixed',
+              top: `${rect.bottom + 4}px`,
+              left: `${rect.left}px`,
+              width: `${rect.width}px`,
+          });
+      }
+      setIsCommandPaletteOpen(true);
+  }, []);
+  
+  const handleTitleBarBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+      // If focus is moving to an element within the command palette, don't close it.
+      if (commandPaletteRef.current?.contains(e.relatedTarget as Node)) {
+          return;
+      }
+      handleCommandPaletteClose();
+  }, [handleCommandPaletteClose]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+          handleCommandPaletteClose();
+      }
       if ((event.ctrlKey || event.metaKey) && event.key === ';') {
         event.preventDefault();
-        setIsCommandPaletteOpen(prev => !prev);
+        if (isCommandPaletteOpen) {
+            handleCommandPaletteClose();
+        } else {
+            commandInputRef.current?.focus();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isCommandPaletteOpen, handleCommandPaletteClose]);
   
   useEffect(() => {
     if (!isElectron) return;
@@ -1058,7 +1099,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
   return (
     <SettingsContext.Provider value={{ settings: appSettings, setSettings: setAppSettings }}>
       <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
-        {isElectron && <TitleBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />}
+        {isElectron && <TitleBar inputRef={commandInputRef} searchTerm={commandSearchTerm} onSearchTermChange={setCommandSearchTerm} onFocus={handleTitleBarFocus} onBlur={handleTitleBarBlur} />}
         <Header 
           theme={theme} 
           activeView={activeView}
@@ -1070,7 +1111,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
           onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
           onClear={handleClear}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenCommandPalette={() => commandInputRef.current?.focus()}
           onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
         />
         <main className="flex-grow flex flex-col min-h-0">
@@ -1088,17 +1129,22 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             onResolve={handleResolveConflict}
           />
         )}
-        <CommandPalette 
-          isOpen={isCommandPaletteOpen}
-          onClose={() => setIsCommandPaletteOpen(false)}
-          tags={allTags}
-          presets={appSettings.presets}
-          onToggleTag={handleToggleTag}
-          onLoadPreset={handleLoadPreset}
-          onSavePreset={() => setIsSavePresetModalOpen(true)}
-          onRandomize={handleSimpleRandomize}
-          onClear={handleClear}
-        />
+        {isCommandPaletteOpen && (
+          <CommandPalette 
+            ref={commandPaletteRef}
+            style={paletteStyle}
+            isOpen={isCommandPaletteOpen}
+            onClose={handleCommandPaletteClose}
+            searchTerm={debouncedCommandSearchTerm}
+            tags={allTags}
+            presets={appSettings.presets}
+            onToggleTag={(tag) => { handleToggleTag(tag); setCommandSearchTerm(''); commandInputRef.current?.focus(); }}
+            onLoadPreset={(preset) => { handleLoadPreset(preset); handleCommandPaletteClose(); }}
+            onSavePreset={() => { handleCommandPaletteClose(); setIsSavePresetModalOpen(true); }}
+            onRandomize={() => { handleSimpleRandomize(); handleCommandPaletteClose(); }}
+            onClear={() => { handleClear(); handleCommandPaletteClose(); }}
+          />
+        )}
         <SavePresetModal
           isOpen={isSavePresetModalOpen}
           onClose={() => setIsSavePresetModalOpen(false)}

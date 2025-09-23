@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import type { Tag, Preset } from '../types';
 import { Icon } from './icons';
 
@@ -11,6 +10,7 @@ type Command =
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
+  searchTerm: string;
   tags: Tag[];
   presets: Preset[];
   onToggleTag: (tag: Tag) => void;
@@ -18,11 +18,13 @@ interface CommandPaletteProps {
   onSavePreset: () => void;
   onRandomize: () => void;
   onClear: () => void;
+  style: React.CSSProperties;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({
+export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(({
   isOpen,
   onClose,
+  searchTerm,
   tags,
   presets,
   onToggleTag,
@@ -30,10 +32,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSavePreset,
   onRandomize,
   onClear,
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  style,
+}, ref) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLUListElement>(null);
 
   // Memoize the list of commands to avoid re-creating on every render
@@ -57,8 +58,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     if (!searchTerm) {
         // Show actions first when there's no search term
         const actions = allCommands.filter(c => c.type === 'action');
-        const tags = allCommands.filter(c => c.type === 'tag');
-        return [...actions, ...tags];
+        const presets = allCommands.filter(c => c.type === 'action' && c.data.name.startsWith('Preset:'));
+        const otherActions = actions.filter(a => !a.data.name.startsWith('Preset:'));
+        return [...otherActions, ...presets];
     }
 
     const lowerCaseSearch = searchTerm.toLowerCase();
@@ -71,45 +73,35 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     });
   }, [searchTerm, allCommands]);
 
-  // Reset state when opening/closing
   useEffect(() => {
-    if (isOpen) {
-      setSearchTerm('');
       setActiveIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
+  }, [searchTerm]);
   
   // Handle keyboard navigation for the palette itself
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+    if (!isOpen) return;
 
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex(prev => (prev + 1) % filteredCommands.length);
+        setActiveIndex(prev => (prev + 1) % (filteredCommands.length || 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+        setActiveIndex(prev => (prev - 1 + (filteredCommands.length || 1)) % (filteredCommands.length || 1));
       } else if (e.key === 'Enter') {
         e.preventDefault();
         const activeCommand = filteredCommands[activeIndex];
         if (activeCommand) {
-          if (activeCommand.type === 'tag') {
-            onToggleTag(activeCommand.data);
-          } else {
-            activeCommand.data.handler();
-          }
-          onClose();
+          handleExecute(activeCommand);
         }
-      } else if (e.key === 'Escape') {
-        onClose();
       }
     };
 
+    // We listen on the input field in the TitleBar, but need to control the palette
+    // Let's attach this to window while the palette is open
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, activeIndex, filteredCommands, onToggleTag, onClose]);
+  }, [isOpen, activeIndex, filteredCommands, onClose]);
   
   // Scroll active item into view
   useEffect(() => {
@@ -117,8 +109,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           block: 'nearest',
       });
   }, [activeIndex]);
-
-  if (!isOpen) return null;
 
   const handleExecute = (command: Command) => {
     if (command.type === 'tag') {
@@ -128,27 +118,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
     onClose();
   };
+  
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-[15vh]" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="bg-white dark:bg-bunker-900/95 border border-bunker-200 dark:border-bunker-700 rounded-lg shadow-2xl w-full max-w-2xl transform transition-all opacity-0 animate-fade-in-scale" onClick={e => e.stopPropagation()}>
-        <div className="relative">
-           <Icon name="search" className="absolute top-3.5 left-4 w-5 h-5 text-bunker-400" />
-           <input
-            ref={inputRef}
-            type="text"
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setActiveIndex(0); }}
-            placeholder="Search for tags or commands..."
-            className="w-full bg-transparent p-3 pl-12 text-bunker-800 dark:text-white border-b border-bunker-200 dark:border-bunker-700 focus:outline-none"
-           />
-        </div>
+      <div 
+        ref={ref} 
+        style={style}
+        className="fixed bg-white dark:bg-bunker-900/95 border border-bunker-200 dark:border-bunker-700 rounded-lg shadow-2xl z-50 animate-fade-in-scale" 
+        onClick={e => e.stopPropagation()}
+      >
         <ul ref={resultsRef} className="max-h-[50vh] overflow-y-auto p-2">
             {filteredCommands.length > 0 ? filteredCommands.map((command, index) => (
                 <li key={command.type === 'tag' ? command.data.id : command.data.id}
                     className={`flex items-center space-x-3 p-2.5 rounded-md cursor-pointer transition-colors ${index === activeIndex ? 'bg-blue-600 text-white' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'}`}
                     onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => handleExecute(command)}
+                    onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input blur
+                        handleExecute(command);
+                    }}
                 >
                     {command.type === 'action' ? (
                         <>
@@ -164,10 +152,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     )}
                 </li>
             )) : (
-                <li className="p-4 text-center text-bunker-500">No results found.</li>
+                <li className="p-4 text-center text-sm text-bunker-500">No results found for "{searchTerm}".</li>
             )}
         </ul>
       </div>
-    </div>
   );
-};
+});

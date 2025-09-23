@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from './icons';
 
 interface TitleBarProps {
-  onOpenCommandPalette: () => void;
+  inputRef: React.RefObject<HTMLInputElement>;
+  searchTerm: string;
+  onSearchTermChange: (value: string) => void;
+  onFocus: () => void;
+  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const isElectron = !!window.electronAPI;
 
-export const TitleBar: React.FC<TitleBarProps> = ({ onOpenCommandPalette }) => {
+export const TitleBar: React.FC<TitleBarProps> = ({ inputRef, searchTerm, onSearchTermChange, onFocus, onBlur }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [appTitle, setAppTitle] = useState('UDIO Prompt Crafter');
 
@@ -39,16 +43,25 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenCommandPalette }) => {
       </div>
       
       <div className="flex-grow flex items-center justify-center h-full">
-         <div 
-           className="no-drag w-full max-w-md h-8 flex items-center bg-bunker-100 dark:bg-bunker-800/80 rounded-md px-3 cursor-text text-bunker-400 hover:bg-bunker-200 dark:hover:bg-bunker-700/80 transition-colors"
-           onClick={onOpenCommandPalette}
-           title="Open Command Palette (Ctrl + ;)"
-         >
-            <Icon name="search" className="w-4 h-4 mr-2" />
-            <span className="text-sm">Search tags and commands...</span>
-            <kbd className="ml-auto text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded px-1.5 py-0.5">Ctrl</kbd>
-            <span className="mx-0.5">+</span>
-            <kbd className="text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded px-1.5 py-0.5">;</kbd>
+         <div className="no-drag w-full max-w-md h-8 relative">
+            <Icon name="search" className="absolute top-1/2 -translate-y-1/2 left-3 w-4 h-4 text-bunker-400 pointer-events-none" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={searchTerm}
+              onChange={e => onSearchTermChange(e.target.value)}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              placeholder="Search tags and commands..."
+              className="w-full h-full bg-bunker-100 dark:bg-bunker-800/80 rounded-md pl-9 pr-24 text-sm text-bunker-800 dark:text-white placeholder-bunker-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {!searchTerm && (
+              <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center pointer-events-none text-bunker-400">
+                 <kbd className="text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded px-1.5 py-0.5">Ctrl</kbd>
+                 <span className="mx-0.5">+</span>
+                 <kbd className="text-xs font-sans border bg-bunker-200 dark:bg-bunker-600 border-bunker-300 dark:border-bunker-500 rounded px-1.5 py-0.5">;</kbd>
+              </div>
+            )}
          </div>
       </div>
 
