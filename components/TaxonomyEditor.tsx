@@ -153,7 +153,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
     },
   });
 
-  const categoryFocusRingClasses = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+  const categoryFocusRingClasses = 'focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus:ring-0';
 
   useEffect(() => {
     setEditedTaxonomy(JSON.parse(JSON.stringify(taxonomy)));

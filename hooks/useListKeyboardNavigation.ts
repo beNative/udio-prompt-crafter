@@ -73,7 +73,7 @@ export const useListKeyboardNavigation = <T,>({
   const focusItem = useCallback((index: number) => {
     const element = itemRefs.current[index];
     if (element) {
-      element.focus();
+      element.focus({ preventScroll: true });
     }
   }, []);
 
@@ -98,7 +98,7 @@ export const useListKeyboardNavigation = <T,>({
       setFocusedIndex(index);
       const element = itemRefs.current[index];
       if (element) {
-        element.focus();
+        element.focus({ preventScroll: true });
       }
       onSelect?.(items[index], index);
     },
