@@ -22,7 +22,7 @@ The `package.json` file is already configured with the necessary scripts and set
     -   `npm run package-win`: Creates a Windows installer (`.exe`).
 -   **`build`**: This section configures `electron-builder`.
 
-*Note: For custom application icons, you can create an `assets` directory with `icon.ico` (Windows), `icon.icns` (Mac), and `icon.png` (Linux), then add an `icon` property to the respective OS settings in the `build` section of `package.json`.*
+*Icon pipeline:* place a single SVG (e.g. `assets/app-icon.svg`) in the project. The build script validates the SVG and rasterises it into platform assets automatically. If the SVG is missing or cannot be processed, a procedural fallback icon is generated. The resulting Windows (`.ico`), macOS (`.icns`), and Linux (`.png`) assets are saved to `dist/icons` and referenced by the Electron Builder configuration.
 
 ## 3. How to Run
 

@@ -43,20 +43,25 @@
       }
     ],
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "dist/icons"
     },
+    "icon": "dist/icons/icon.png",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "dist/icons/ico/app-icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "dist/icons/icns/app-icon.icns"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "dist/icons/icon.png"
     }
   }
 }
