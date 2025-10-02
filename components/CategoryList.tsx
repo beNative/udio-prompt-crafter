@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Category, Tag } from '../types';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
+import { useListKeyboardNavigation } from '../hooks/useListKeyboardNavigation';
 
 interface CategoryListProps {
   categories: Category[];
@@ -46,6 +47,15 @@ export const CategoryList: React.FC<CategoryListProps> = ({
 }) => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
 
+  const { listProps, getItemProps } = useListKeyboardNavigation({
+    items: categories,
+    getId: category => category.id,
+    activeId: activeCategoryId,
+    onSelect: (category) => onSelectCategory(category.id),
+  });
+
+  const focusRingClasses = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+
   const handleDragStart = (e: React.DragEvent<HTMLLIElement>, id: string) => {
     setDraggedItemId(id);
     e.dataTransfer.effectAllowed = 'move';
@@ -77,25 +87,25 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   return (
     <nav className="p-4 bg-bunker-50/50 dark:bg-bunker-900/50 text-bunker-500 dark:text-bunker-300 h-full overflow-y-auto">
       <h2 className="text-lg font-semibold mb-4 px-2 text-bunker-900 dark:text-white">Categories</h2>
-      <ul>
-        {categories.map((category) => {
+      <ul {...listProps}>
+        {categories.map((category, index) => {
           const isActive = activeCategoryId === category.id;
-          
+
           const activeClasses = activeColorClasses[category.color || 'gray'];
           const inactiveClasses = `${category.color ? inactiveColorClasses[category.color] : 'border-transparent'} hover:bg-bunker-100 dark:hover:bg-bunker-800/50`;
-          
+
           return (
             <li
               key={category.id}
               draggable
+              {...getItemProps(category, index)}
               onDragStart={(e) => handleDragStart(e, category.id)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, category.id)}
               onDragEnd={handleDragEnd}
-              onClick={() => onSelectCategory(category.id)}
               className={`group flex items-center justify-between pl-3 pr-2 py-2 rounded-r-lg cursor-pointer transition-all duration-200 mb-1 border-l-4 ${
                 isActive ? activeClasses : inactiveClasses
-              } ${draggedItemId === category.id ? 'opacity-50 scale-95' : ''}`}
+              } ${draggedItemId === category.id ? 'opacity-50 scale-95' : ''} ${focusRingClasses}`}
             >
               <div className="flex items-center">
                 <Icon name="grip" className={`w-5 h-5 mr-2 transition-opacity duration-200 ${isActive ? 'opacity-60' : 'text-bunker-300 dark:text-bunker-600 opacity-0 group-hover:opacity-100'} cursor-grab`} />
