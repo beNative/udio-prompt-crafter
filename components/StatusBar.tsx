@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AiStatus } from '../types';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 
 interface StatusBarProps {
   appVersion: string;
@@ -18,10 +19,12 @@ const AiStatusIndicator: React.FC<{ status: AiStatus }> = ({ status }) => {
   const { color, text } = statusMap[status];
 
   return (
-    <div className="flex items-center space-x-2" title={text}>
-      <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
-      <span className="text-xs hidden sm:inline">{text}</span>
-    </div>
+    <Tooltip text={text}>
+      <div className="flex items-center space-x-2">
+        <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+        <span className="text-xs hidden sm:inline">{text}</span>
+      </div>
+    </Tooltip>
   );
 };
 
@@ -34,14 +37,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({ appVersion, tagCount, conf
         <span>Designed by Tim Sinaeve</span>
       </div>
       <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-1.5" title="Selected Tags">
-          <Icon name="tag" className="w-4 h-4" />
-          <span>{tagCount}</span>
-        </div>
-        <div className={`flex items-center space-x-1.5 transition-colors ${conflictCount > 0 ? 'text-red-500 dark:text-red-400' : ''}`} title="Tag Conflicts">
-          <Icon name="warning" className="w-4 h-4" />
-          <span>{conflictCount}</span>
-        </div>
+        <Tooltip text="Selected Tags">
+          <div className="flex items-center space-x-1.5">
+            <Icon name="tag" className="w-4 h-4" />
+            <span>{tagCount}</span>
+          </div>
+        </Tooltip>
+        <Tooltip text="Tag Conflicts">
+          <div className={`flex items-center space-x-1.5 transition-colors ${conflictCount > 0 ? 'text-red-500 dark:text-red-400' : ''}`}>
+            <Icon name="warning" className="w-4 h-4" />
+            <span>{conflictCount}</span>
+          </div>
+        </Tooltip>
         <AiStatusIndicator status={aiStatus} />
       </div>
     </footer>

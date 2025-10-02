@@ -136,8 +136,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
     <div
       ref={tooltipRef}
       role="tooltip"
-      style={{ top: `${position.top}px`, left: `${position.left}px`, opacity: opacity }}
-      className="fixed w-max max-w-xs p-2.5 bg-white dark:bg-bunker-900 border border-bunker-200 dark:border-bunker-800 text-bunker-900 dark:text-bunker-100 text-xs rounded-lg shadow-lg z-50 transition-opacity duration-200"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        opacity,
+        transform: `scale(${0.96 + opacity * 0.04})`,
+      }}
+      className="fixed pointer-events-none w-max max-w-sm px-3 py-2 bg-white/95 dark:bg-bunker-900/95 border border-bunker-200/70 dark:border-bunker-700/70 text-bunker-800 dark:text-bunker-100 text-sm font-medium leading-snug rounded-xl shadow-2xl backdrop-blur-sm whitespace-pre-line z-50 transition-all duration-200"
     >
       {text}
     </div>,
@@ -146,13 +151,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
 
   return (
     <>
-      <div 
-        ref={triggerRef} 
-        onMouseEnter={handleMouseEnter} 
-        onMouseLeave={hideTooltip} 
-        onFocus={handleMouseEnter} 
-        onBlur={hideTooltip} 
-        className="flex items-center"
+      <div
+        ref={triggerRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={hideTooltip}
+        onFocus={handleMouseEnter}
+        onBlur={hideTooltip}
+        className="inline-flex items-center"
       >
         {children}
       </div>

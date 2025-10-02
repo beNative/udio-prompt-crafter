@@ -403,9 +403,16 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, taxonomy, callLlm, cate
                                     onBlur={handleRename}
                                     className="form-input w-full text-sm py-1 pr-9"
                                 />
-                                <button onClick={handleGenerateTitles} disabled={isGeneratingTitles} className="absolute inset-y-0 right-0 flex items-center pr-2 text-bunker-400 hover:text-blue-500 disabled:opacity-50" title="Generate names with AI">
-                                    {isGeneratingTitles ? <LoadingSpinner /> : <Icon name="wandSparkles" className="w-4 h-4" />}
-                                </button>
+                                <Tooltip text={isGeneratingTitles ? 'Generating names…' : 'Generate names with AI'}>
+                                    <button
+                                        onClick={handleGenerateTitles}
+                                        disabled={isGeneratingTitles}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-2 text-bunker-400 hover:text-blue-500 disabled:opacity-50"
+                                        aria-label="Generate names with AI"
+                                    >
+                                        {isGeneratingTitles ? <LoadingSpinner /> : <Icon name="wandSparkles" className="w-4 h-4" />}
+                                    </button>
+                                </Tooltip>
                             </div>
                             {titleError && <p className="text-xs text-red-500 mt-1">{titleError}</p>}
                             {aiTitles.length > 0 && (
