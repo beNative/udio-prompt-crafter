@@ -424,7 +424,7 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   }, [selectedCategory]);
 
   return (
-    <div className="bg-white/50 dark:bg-bunker-900/50 backdrop-blur-sm rounded-xl border border-bunker-200/80 dark:border-bunker-800/80 shadow-sm h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="p-4 border-b border-bunker-200/80 dark:border-bunker-800/80 flex justify-between items-center flex-shrink-0">
         <div>
           <h3 className="text-lg font-semibold">Taxonomy Editor</h3>
