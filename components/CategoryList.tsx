@@ -54,7 +54,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     onSelect: (category) => onSelectCategory(category.id),
   });
 
-  const focusRingClasses = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+  const focusRingClasses = 'focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus:ring-0';
 
   const handleDragStart = (e: React.DragEvent<HTMLLIElement>, id: string) => {
     setDraggedItemId(id);
