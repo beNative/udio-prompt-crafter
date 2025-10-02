@@ -5,6 +5,7 @@ import { produce } from 'immer';
 import { CategoryEditModal } from './CategoryEditModal';
 import { TagEditor } from './TagEditor';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useListKeyboardNavigation } from '../hooks/useListKeyboardNavigation';
 
 interface TaxonomyEditorProps {
   taxonomy: Taxonomy;
@@ -141,6 +142,18 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
   // Drag state for tags
   const [draggedTagId, setDraggedTagId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; position: 'top' | 'bottom' | 'on' } | null>(null);
+
+  const { listProps: categoryListProps, getItemProps: getCategoryItemProps } = useListKeyboardNavigation({
+    items: editedTaxonomy,
+    getId: category => category.id,
+    activeId: selectedCategoryId,
+    onSelect: (category) => {
+      setSelectedCategoryId(category.id);
+      setEditingTag(null);
+    },
+  });
+
+  const categoryFocusRingClasses = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
 
   useEffect(() => {
     setEditedTaxonomy(JSON.parse(JSON.stringify(taxonomy)));
@@ -439,10 +452,18 @@ export const TaxonomyEditor: React.FC<TaxonomyEditorProps> = ({ taxonomy, onSave
       <div className="p-4 flex space-x-4 flex-grow min-h-0">
         <div className="w-1/3 flex flex-col">
           <h4 className="font-semibold mb-2 px-2 flex-shrink-0">Categories</h4>
-          <ul className="flex-grow space-y-1 pr-2 overflow-y-auto">
-            {editedTaxonomy.map(cat => (
-              <li key={cat.id} onClick={() => { setSelectedCategoryId(cat.id); setEditingTag(null); }} draggable onDragStart={() => setDraggedCategory(cat.id)} onDragOver={(e) => e.preventDefault()} onDrop={() => handleDropCategory(cat.id)} onDragEnd={() => setDraggedCategory(null)}
-                className={`group flex justify-between items-center p-2 rounded-md cursor-pointer transition-all ${selectedCategoryId === cat.id ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'} ${draggedCategory === cat.id ? 'opacity-30' : ''}`}>
+          <ul {...categoryListProps} className="flex-grow space-y-1 pr-2 overflow-y-auto">
+            {editedTaxonomy.map((cat, index) => (
+              <li
+                key={cat.id}
+                draggable
+                {...getCategoryItemProps(cat, index)}
+                onDragStart={() => setDraggedCategory(cat.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDropCategory(cat.id)}
+                onDragEnd={() => setDraggedCategory(null)}
+                className={`group flex justify-between items-center p-2 rounded-md cursor-pointer transition-all ${selectedCategoryId === cat.id ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-bunker-100 dark:hover:bg-bunker-800'} ${draggedCategory === cat.id ? 'opacity-30' : ''} ${categoryFocusRingClasses}`}
+              >
                 <div className="flex items-center">
                   <Icon name="grip" className="w-5 h-5 mr-2 text-bunker-400 dark:text-bunker-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
                   <span>{cat.name}</span>
