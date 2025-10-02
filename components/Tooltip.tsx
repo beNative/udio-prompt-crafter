@@ -15,7 +15,6 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [opacity, setOpacity] = useState(0);
   const { settings } = useSettings();
   const scale = (settings?.uiScale || 100) / 100;
 
@@ -95,30 +94,12 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
     // Convert the final visual coordinates to layout coordinates by dividing by the scale factor.
     // The browser will then apply the zoom to these layout coordinates, putting the tooltip in the correct visual spot.
     setPosition({ top: top / scale, left: left / scale });
-    setOpacity(1); // Make it visible after positioning
   }, [placement, scale]);
 
-  const showTooltip = () => setVisible(true);
-  const hideTooltip = () => {
-    // Start fade out transition
-    setOpacity(0);
-    // After transition, hide the element from DOM, but only if the mouse isn't re-entering
-    const timer = setTimeout(() => {
-        setVisible(false);
-    }, 200); // must match transition duration
-    
-    if (triggerRef.current) {
-        triggerRef.current.dataset.tooltipTimer = String(timer);
-    }
-  };
-  
-  const handleMouseEnter = () => {
-      if (triggerRef.current?.dataset.tooltipTimer) {
-          clearTimeout(Number(triggerRef.current.dataset.tooltipTimer));
-      }
-      setVisible(true);
-  }
-  
+  const hideTooltip = () => setVisible(false);
+
+  const handleMouseEnter = () => setVisible(true);
+
   useLayoutEffect(() => {
     if (visible) {
       // The position is calculated once the tooltip is rendered (and has dimensions)
@@ -139,10 +120,8 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, placement = 'b
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
-        opacity,
-        transform: `scale(${0.96 + opacity * 0.04})`,
       }}
-      className="fixed pointer-events-none w-max max-w-sm px-3 py-2 bg-white/95 dark:bg-bunker-900/95 border border-bunker-200/70 dark:border-bunker-700/70 text-bunker-800 dark:text-bunker-100 text-sm font-medium leading-snug rounded-xl shadow-2xl backdrop-blur-sm whitespace-pre-line z-50 transition-all duration-200"
+      className="fixed pointer-events-none w-max max-w-sm px-3 py-2 bg-white/95 dark:bg-bunker-900/95 border border-bunker-200/70 dark:border-bunker-700/70 text-bunker-800 dark:text-bunker-100 text-sm font-medium leading-snug rounded-xl shadow-2xl backdrop-blur-sm whitespace-pre-line z-50"
     >
       {text}
     </div>,
