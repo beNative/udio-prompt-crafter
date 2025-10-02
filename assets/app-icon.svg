@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">UDIO Prompt Crafter Icon</title>
+  <desc id="desc">Geometric sound wave emblem with layered gradients representing creative audio prompts.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1B1F3B" />
+      <stop offset="50%" stop-color="#2E2F66" />
+      <stop offset="100%" stop-color="#3A88F4" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#8FE7FF" stop-opacity="0.9" />
+      <stop offset="55%" stop-color="#3778FF" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#050B2E" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9A9E" />
+      <stop offset="50%" stop-color="#FAD0C4" />
+      <stop offset="100%" stop-color="#F6D365" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <circle cx="256" cy="220" r="200" fill="url(#glow)" />
+  <g transform="translate(96 180)">
+    <path d="M16 152c32-48 64-72 96-72s64 24 96 24 64-24 96-72l0 128c-32 48-64 72-96 72s-64-24-96-24-64 24-96 72z" fill="#0B1029" opacity="0.35" />
+    <path d="M0 140c28-44 56-66 84-66s56 22 84 22 56-22 84-66l0 116c-28 44-56 66-84 66s-56-22-84-22-56 22-84 66z" fill="url(#wave)" />
+  </g>
+  <g transform="translate(140 180)" fill="#ffffff" opacity="0.9">
+    <rect x="12" y="0" width="28" height="152" rx="14" />
+    <rect x="72" y="32" width="28" height="152" rx="14" />
+    <rect x="132" y="16" width="28" height="152" rx="14" />
+    <rect x="192" y="48" width="28" height="152" rx="14" />
+  </g>
+  <path d="M156 356c26 24 60 36 100 36s74-12 100-36" fill="none" stroke="#8FE7FF" stroke-width="18" stroke-linecap="round" opacity="0.6" />
+  <circle cx="256" cy="180" r="32" fill="#FDF2FF" opacity="0.85" />
+  <circle cx="256" cy="180" r="18" fill="#FF7A7A" />
+</svg>
