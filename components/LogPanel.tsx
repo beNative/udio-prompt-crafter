@@ -5,6 +5,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { logger } from '../utils/logger';
 import type { LogLevel, LogEntry } from '../types';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 
 interface LogPanelProps {
   onClose: () => void;
@@ -86,17 +87,35 @@ export const LogPanel: React.FC<LogPanelProps> = ({ onClose }) => {
                     <input type="checkbox" checked={logToFile} onChange={e => setLogToFile(e.target.checked)} className="h-4 w-4 rounded border-bunker-300 text-blue-600 focus:ring-blue-500" />
                     <span>Log to File</span>
                 </label>
-                <button onClick={handleOpenLocation} className="flex items-center space-x-1 text-sm px-2 py-1 rounded-md bg-bunker-100 dark:bg-bunker-800 hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Open Log Location">
+                <Tooltip text="Open log location">
+                  <button
+                    onClick={handleOpenLocation}
+                    className="flex items-center space-x-1 text-sm px-2 py-1 rounded-md bg-bunker-100 dark:bg-bunker-800 hover:bg-bunker-200 dark:hover:bg-bunker-700"
+                    aria-label="Open log location"
+                  >
                     <Icon name="folder" className="w-4 h-4" />
-                </button>
+                  </button>
+                </Tooltip>
             </>
           )}
-          <button onClick={handleClear} className="flex items-center space-x-1 text-sm px-2 py-1 rounded-md bg-bunker-100 dark:bg-bunker-800 hover:bg-bunker-200 dark:hover:bg-bunker-700" title="Clear Logs">
-             <Icon name="trash" className="w-4 h-4" />
-          </button>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-bunker-100 dark:hover:bg-bunker-800" title="Close Panel">
-            <Icon name="x" className="w-5 h-5 text-bunker-500" />
-          </button>
+          <Tooltip text="Clear logs">
+            <button
+              onClick={handleClear}
+              className="flex items-center space-x-1 text-sm px-2 py-1 rounded-md bg-bunker-100 dark:bg-bunker-800 hover:bg-bunker-200 dark:hover:bg-bunker-700"
+              aria-label="Clear logs"
+            >
+              <Icon name="trash" className="w-4 h-4" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Close panel">
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full hover:bg-bunker-100 dark:hover:bg-bunker-800"
+              aria-label="Close panel"
+            >
+              <Icon name="x" className="w-5 h-5 text-bunker-500" />
+            </button>
+          </Tooltip>
         </div>
       </header>
       <div ref={logContainerRef} className="flex-grow p-2 overflow-y-auto font-mono text-xs">

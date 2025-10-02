@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 import { normalizeTagLabels } from '../utils/normalization';
 import type { SelectedTag, Category, Taxonomy, Tag } from '../types';
 
@@ -134,9 +135,16 @@ export const SavePresetModal: React.FC<SavePresetModalProps> = ({
                 className="form-input w-full pr-10"
                 autoFocus
               />
-              <button onClick={handleGenerateTitles} disabled={isGenerating} className="absolute inset-y-0 right-0 flex items-center pr-3 text-bunker-400 hover:text-blue-500 disabled:opacity-50" title="Generate names with AI">
+              <Tooltip text={isGenerating ? 'Generating names…' : 'Generate names with AI'}>
+                <button
+                  onClick={handleGenerateTitles}
+                  disabled={isGenerating}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-bunker-400 hover:text-blue-500 disabled:opacity-50"
+                  aria-label="Generate names with AI"
+                >
                   {isGenerating ? <LoadingSpinner /> : <Icon name="wandSparkles" className="w-5 h-5" />}
-              </button>
+                </button>
+              </Tooltip>
             </div>
             {generationError && <p className="text-xs text-red-500 mt-1">{generationError}</p>}
             {aiTitles.length > 0 && (

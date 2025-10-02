@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import type { Category, SelectedTag } from '../types';
 import { Icon } from './icons';
+import { Tooltip } from './Tooltip';
 
 interface AiFeaturesProps {
     category: Category;
@@ -161,17 +162,19 @@ Here is a perfect example of the required response format:
                                 >
                                     Generate Lyrics
                                 </button>
-                                <button 
-                                    onClick={() => handleCopy(idea, 'idea', i)} 
-                                    className="p-1.5 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 transition-colors"
-                                    title="Copy idea to clipboard"
-                                >
-                                    {copiedIdeaIndex === i ? (
-                                        <Icon name="check" className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                        <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-400" />
-                                    )}
-                                </button>
+                                <Tooltip text={copiedIdeaIndex === i ? 'Copied!' : 'Copy idea to clipboard'}>
+                                    <button
+                                        onClick={() => handleCopy(idea, 'idea', i)}
+                                        className="p-1.5 rounded-md hover:bg-bunker-200 dark:hover:bg-bunker-700 transition-colors"
+                                        aria-label="Copy idea to clipboard"
+                                    >
+                                        {copiedIdeaIndex === i ? (
+                                            <Icon name="check" className="w-4 h-4 text-green-500" />
+                                        ) : (
+                                            <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-400" />
+                                        )}
+                                    </button>
+                                </Tooltip>
                             </div>
                         </div>
                     ))}
@@ -195,17 +198,19 @@ Here is a perfect example of the required response format:
                                 value={generatedLyrics}
                                 className="w-full h-64 p-3 bg-white dark:bg-bunker-900 border border-bunker-200 dark:border-bunker-700 rounded-lg text-bunker-900 dark:text-white placeholder-bunker-400 dark:placeholder-bunker-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y font-mono text-xs"
                             />
-                             <button 
-                                onClick={() => handleCopy(generatedLyrics, 'full')} 
-                                className="absolute top-2 right-2 p-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors"
-                                title="Copy lyrics to clipboard"
-                            >
-                                {copiedLyrics ? (
-                                    <Icon name="check" className="w-4 h-4 text-green-500" />
-                                ) : (
-                                    <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-400" />
-                                )}
-                            </button>
+                             <Tooltip text={copiedLyrics ? 'Copied!' : 'Copy lyrics to clipboard'}>
+                                <button
+                                    onClick={() => handleCopy(generatedLyrics, 'full')}
+                                    className="absolute top-2 right-2 p-1.5 rounded-md bg-bunker-100 hover:bg-bunker-200 dark:bg-bunker-800 dark:hover:bg-bunker-700 transition-colors"
+                                    aria-label="Copy lyrics to clipboard"
+                                >
+                                    {copiedLyrics ? (
+                                        <Icon name="check" className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                        <Icon name="copy" className="w-4 h-4 text-bunker-500 dark:text-bunker-400" />
+                                    )}
+                                </button>
+                             </Tooltip>
                         </div>
                     )}
                 </div>
