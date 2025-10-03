@@ -1,5 +1,16 @@
 # Version Log
 
+## v0.17.1 - The Release Prep Patch
+
+This maintenance release focuses on polishing the release workflow so that the desktop builds and documentation stay in sync.
+
+### Documentation
+-   Refreshed the Electron packaging guide with cross-platform commands and publishing guidance so new contributors can ship builds without guesswork.
+-   Added a dedicated release workflow checklist covering version bumps, changelog updates, and GitHub release preparation.
+
+### Bug Fixes
+-   Corrected outdated references in the packaging instructions that could lead to incomplete installers on macOS and Linux.
+
 ## v0.17.0 - The Integrated Experience Update
 
 This major release overhauls the application's look and feel by introducing a custom title bar and fully integrating the command palette, creating a more modern and seamless user experience similar to VS Code.
