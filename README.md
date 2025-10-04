@@ -70,9 +70,9 @@ The `package.json` file is already configured with the necessary scripts and set
 Before cutting a release (manual or via CI), run through this checklist:
 
 1.  **Update versioning:** Bump the `version` field in `package.json` and align any in-app references if needed.
-2.  **Refresh documentation:** Review `README.md` and the docs in `docs/` to ensure new features and workflow tweaks are captured.
-3.  **Write release notes:** Add a new entry to `docs/CHANGELOG.md` summarizing key fixes and enhancements.
+2.  **Refresh documentation & changelog:** Review `README.md`, the docs in `docs/`, and add a new entry to `docs/CHANGELOG.md` summarizing key fixes and enhancements.
+3.  **Draft GitHub release copy:** Use the latest changelog entry as the basis for the release notes you will paste into the GitHub release form.
 4.  **Verify builds:** Run `npm run build` locally and spot-check platform packages as required.
-5.  **Tag & publish:** Push the changes, create a Git tag (e.g. `git tag vX.Y.Z && git push --tags`), and then run `npm run publish` or draft the GitHub release with the changelog entry.
+5.  **Tag & publish:** Push the changes, create a Git tag (e.g. `git tag vX.Y.Z && git push --tags`), and then run `npm run publish` or draft the GitHub release with the prepared notes.
 
 Keeping this list handy ensures that every GitHub release has consistent binaries, documentation, and notes.

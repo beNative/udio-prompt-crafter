@@ -1,5 +1,16 @@
 # Version Log
 
+## v0.17.2 - The Documentation Sync Patch
+
+This patch release focuses on polishing the release packaging workflow and documentation so maintainers can confidently ship new builds without last-minute surprises.
+
+### Documentation
+-   Clarified the Electron release checklist with explicit steps for verifying changelog updates and GitHub release copy.
+-   Tightened language across the desktop packaging guide to reflect the current automated icon pipeline and publish command.
+
+### Maintenance
+-   Bumped the application version to `0.17.2` in preparation for the GitHub release tag.
+
 ## v0.17.1 - The Release Prep Patch
 
 This maintenance release focuses on polishing the release workflow so that the desktop builds and documentation stay in sync.
