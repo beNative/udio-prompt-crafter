@@ -70,28 +70,6 @@ export const useListKeyboardNavigation = <T,>({
     });
   }, [items, activeIndex]);
 
-  const focusItem = useCallback((index: number) => {
-    const element = itemRefs.current[index];
-    if (element) {
-      element.focus({ preventScroll: true });
-    }
-  }, []);
-
-  const moveFocus = useCallback(
-    (index: number) => {
-      if (!items.length) return;
-      const clampedIndex = Math.min(Math.max(index, 0), items.length - 1);
-      setFocusedIndex(clampedIndex);
-      const schedule = () => focusItem(clampedIndex);
-      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-        window.requestAnimationFrame(schedule);
-      } else {
-        setTimeout(schedule, 0);
-      }
-    },
-    [items.length, focusItem]
-  );
-
   const handleItemSelect = useCallback(
     (index: number) => {
       if (index < 0 || index >= items.length) return;
@@ -113,22 +91,22 @@ export const useListKeyboardNavigation = <T,>({
         case 'ArrowDown':
         case 'ArrowRight':
           event.preventDefault();
-          moveFocus(index + 1);
+          handleItemSelect(Math.min(index + 1, items.length - 1));
           break;
         case 'ArrowUp':
         case 'ArrowLeft':
           event.preventDefault();
-          moveFocus(index - 1);
+          handleItemSelect(Math.max(index - 1, 0));
           break;
         case 'Home':
         case 'PageUp':
           event.preventDefault();
-          moveFocus(0);
+          handleItemSelect(0);
           break;
         case 'End':
         case 'PageDown':
           event.preventDefault();
-          moveFocus(items.length - 1);
+          handleItemSelect(items.length - 1);
           break;
         case 'Enter':
         case ' ': // Space
@@ -139,7 +117,7 @@ export const useListKeyboardNavigation = <T,>({
           break;
       }
     },
-    [items.length, moveFocus, handleItemSelect]
+    [items.length, handleItemSelect]
   );
 
   const listProps = useMemo<HTMLAttributes<HTMLUListElement>>(
