@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '../utils/logger';
 import { MarkdownViewer } from './MarkdownViewer';
+import { useListKeyboardNavigation } from '../hooks/useListKeyboardNavigation';
 
 const isElectron = !!window.electronAPI;
 
@@ -16,6 +17,13 @@ export const InfoPage: React.FC = () => {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { listProps, getItemProps } = useListKeyboardNavigation({
+    items: DOCS,
+    getId: doc => doc.id,
+    activeId: activeDoc.id,
+    onSelect: doc => setActiveDoc(doc),
+  });
 
   useEffect(() => {
     const loadContent = async () => {
@@ -53,12 +61,15 @@ export const InfoPage: React.FC = () => {
     <div className="flex h-full bg-white dark:bg-bunker-900">
       <nav className="w-64 border-r border-bunker-200 dark:border-bunker-800 p-4 shrink-0 bg-bunker-50/50 dark:bg-bunker-900/50">
         <h2 className="text-lg font-semibold mb-4 text-bunker-900 dark:text-white px-2">Information</h2>
-        <ul className="space-y-1">
-          {DOCS.map(doc => (
+        <ul className="space-y-1" {...listProps}>
+          {DOCS.map((doc, index) => (
             <li key={doc.id}>
               <button
-                onClick={() => setActiveDoc(doc)}
-                className={`w-full text-left ${navButtonStyles} ${activeDoc.id === doc.id ? activeNavStyles : inactiveNavStyles}`}
+                type="button"
+                {...getItemProps(doc, index, {
+                  onClick: () => setActiveDoc(doc),
+                })}
+                className={`w-full text-left ${navButtonStyles} ${activeDoc.id === doc.id ? activeNavStyles : inactiveNavStyles} focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500`}
               >
                 {doc.title}
               </button>

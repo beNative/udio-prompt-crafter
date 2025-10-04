@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type { ButtonHTMLAttributes } from 'react';
 import type { AppSettings, Preset, Taxonomy } from '../types';
 import { Icon } from './icons';
 import { logger } from '../utils/logger';
@@ -8,6 +9,7 @@ import { TaxonomyEditor } from './TaxonomyEditor';
 import { useSettings } from '../index';
 import { AlertModal } from './AlertModal';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useListKeyboardNavigation } from '../hooks/useListKeyboardNavigation';
 
 const isElectron = !!window.electronAPI;
 
@@ -481,24 +483,37 @@ const SettingsSidebarButton: React.FC<{
     label: string;
     icon: string;
     isActive: boolean;
-    onClick: () => void;
-}> = ({ label, icon, isActive, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-            isActive
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-bunker-600 dark:text-bunker-300 hover:bg-bunker-100 dark:hover:bg-bunker-800'
-        }`}
-    >
-        <Icon name={icon} className="w-5 h-5" />
-        <span>{label}</span>
-    </button>
-);
+    buttonProps: ButtonHTMLAttributes<HTMLButtonElement> & { ref?: (element: HTMLButtonElement | null) => void };
+}> = ({ label, icon, isActive, buttonProps }) => {
+    const { className, ref, ...rest } = buttonProps;
+
+    return (
+        <button
+            type="button"
+            ref={ref}
+            className={`w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                isActive
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-bunker-600 dark:text-bunker-300 hover:bg-bunker-100 dark:hover:bg-bunker-800'
+            } focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${className ?? ''}`}
+            {...rest}
+        >
+            <Icon name={icon} className="w-5 h-5" />
+            <span>{label}</span>
+        </button>
+    );
+};
 
 export const SettingsPage: React.FC<SettingsPageProps> = (props) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('ai');
   const { settings } = useSettings();
+
+  const { listProps, getItemProps } = useListKeyboardNavigation({
+    items: TABS,
+    getId: tab => tab.id,
+    activeId: activeTab,
+    onSelect: tab => setActiveTab(tab.id),
+  });
 
   const renderContent = () => {
     switch (activeTab) {
@@ -521,14 +536,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = (props) => {
     <div className="h-full flex bg-bunker-50 dark:bg-bunker-950 text-bunker-800 dark:text-bunker-200">
       <nav className="w-64 border-r border-bunker-200 dark:border-bunker-800 p-4 shrink-0 bg-white dark:bg-bunker-900">
         <h2 className="text-lg font-semibold mb-6 text-bunker-900 dark:text-white px-2">Settings</h2>
-        <ul className="space-y-1">
-          {TABS.map(tab => (
+        <ul className="space-y-1" {...listProps}>
+          {TABS.map((tab, index) => (
             <li key={tab.id}>
               <SettingsSidebarButton
                 label={tab.label}
                 icon={tab.icon}
                 isActive={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                buttonProps={getItemProps(tab, index, {
+                  onClick: () => setActiveTab(tab.id),
+                })}
               />
             </li>
           ))}
