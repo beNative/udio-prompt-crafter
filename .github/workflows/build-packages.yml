@@ -25,43 +25,35 @@ jobs:
           - display-name: macOS x64
             os: macos-latest
             build-script: package-mac-x64
-            npm-arch: x64
             electron-builder-arch: x64
             electron-builder-cache: ~/Library/Caches/electron-builder
           - display-name: Windows x64
             os: windows-latest
             build-script: package-win-x64
-            npm-arch: x64
             electron-builder-arch: x64
             electron-builder-cache: ~/AppData/Local/electron-builder/Cache
           - display-name: Windows ia32
             os: windows-latest
             build-script: package-win-ia32
-            npm-arch: ia32
             electron-builder-arch: ia32
             electron-builder-cache: ~/AppData/Local/electron-builder/Cache
           - display-name: Linux x64
             os: ubuntu-latest
             build-script: package-linux-x64
-            npm-arch: x64
             electron-builder-arch: x64
             electron-builder-cache: ~/.cache/electron-builder
           - display-name: Linux arm64
             os: ubuntu-latest
             build-script: package-linux-arm64
-            npm-arch: arm64
             electron-builder-arch: arm64
             electron-builder-cache: ~/.cache/electron-builder
           - display-name: Linux armv7l
             os: ubuntu-latest
             build-script: package-linux-armv7l
-            npm-arch: armv7l
             electron-builder-arch: armv7l
             electron-builder-cache: ~/.cache/electron-builder
     env:
       CI: true
-      npm_config_arch: ${{ matrix.npm-arch }}
-      npm_config_target_arch: ${{ matrix.npm-arch }}
       ELECTRON_BUILDER_ARCH: ${{ matrix.electron-builder-arch }}
       ELECTRON_BUILDER_CACHE: ${{ matrix.electron-builder-cache }}
       ELECTRON_CACHE: ${{ matrix.electron-builder-cache }}
