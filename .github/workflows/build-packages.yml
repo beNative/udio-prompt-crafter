@@ -1,0 +1,116 @@
+name: Build Release Packages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build ${{ matrix.display-name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - display-name: macOS x64
+            os: macos-latest
+            build-script: package-mac-x64
+            npm-arch: x64
+            electron-builder-arch: x64
+            electron-builder-cache: ~/Library/Caches/electron-builder
+          - display-name: Windows x64
+            os: windows-latest
+            build-script: package-win-x64
+            npm-arch: x64
+            electron-builder-arch: x64
+            electron-builder-cache: ~/AppData/Local/electron-builder/Cache
+          - display-name: Windows ia32
+            os: windows-latest
+            build-script: package-win-ia32
+            npm-arch: ia32
+            electron-builder-arch: ia32
+            electron-builder-cache: ~/AppData/Local/electron-builder/Cache
+          - display-name: Linux x64
+            os: ubuntu-latest
+            build-script: package-linux-x64
+            npm-arch: x64
+            electron-builder-arch: x64
+            electron-builder-cache: ~/.cache/electron-builder
+          - display-name: Linux arm64
+            os: ubuntu-latest
+            build-script: package-linux-arm64
+            npm-arch: arm64
+            electron-builder-arch: arm64
+            electron-builder-cache: ~/.cache/electron-builder
+          - display-name: Linux armv7l
+            os: ubuntu-latest
+            build-script: package-linux-armv7l
+            npm-arch: armv7l
+            electron-builder-arch: armv7l
+            electron-builder-cache: ~/.cache/electron-builder
+    env:
+      CI: true
+      npm_config_arch: ${{ matrix.npm-arch }}
+      npm_config_target_arch: ${{ matrix.npm-arch }}
+      ELECTRON_BUILDER_ARCH: ${{ matrix.electron-builder-arch }}
+      ELECTRON_BUILDER_CACHE: ${{ matrix.electron-builder-cache }}
+      ELECTRON_CACHE: ${{ matrix.electron-builder-cache }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Ensure required directories exist
+        run: mkdir -p "$ELECTRON_BUILDER_CACHE"
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      - name: Restore electron-builder cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.electron-builder-cache }}
+          key: electron-builder-${{ runner.os }}-${{ matrix.electron-builder-arch }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            electron-builder-${{ runner.os }}-${{ matrix.electron-builder-arch }}-
+            electron-builder-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+
+      - name: Build package (${{ matrix.display-name }})
+        run: |
+          set -euo pipefail
+          npm run ${{ matrix.build-script }}
+
+      - name: Archive build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.display-name }}-logs
+          path: |
+            release/**/*.log
+            dist/**/*.log
+          if-no-files-found: ignore
