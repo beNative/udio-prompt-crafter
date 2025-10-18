@@ -1,0 +1,256 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate tag and version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag matches package version
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME="${GITHUB_REF_NAME}"
+          echo "Detected tag: ${TAG_NAME}"
+          echo "package.json version: ${PACKAGE_VERSION}"
+
+          if [[ ! "${TAG_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+            echo "::error::Release tags must start with 'v' followed by a semantic version (e.g. v1.2.3)."
+            exit 1
+          fi
+
+          STRIPPED_TAG="${TAG_NAME#v}"
+          if [[ "${STRIPPED_TAG}" != "${PACKAGE_VERSION}" ]]; then
+            echo "::error::Tag version '${STRIPPED_TAG}' does not match package.json version '${PACKAGE_VERSION}'."
+            exit 1
+          fi
+
+          echo "::notice::Validated release tag ${TAG_NAME} for version ${PACKAGE_VERSION}."
+          {
+            echo "version=${PACKAGE_VERSION}"
+            echo "tag=${TAG_NAME}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify lockfile integrity
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: npm ci --ignore-scripts
+
+  build:
+    name: Build release artifacts (${{ matrix.platform }})
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-latest
+            npm-script: package-linux
+            archive-extension: tar.gz
+          - platform: mac
+            os: macos-latest
+            npm-script: package-mac
+            archive-extension: zip
+          - platform: win
+            os: windows-latest
+            npm-script: package-win
+            archive-extension: zip
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build application
+        run: npm run build
+
+      - name: Package ${{ matrix.platform }} binaries
+        run: npm run ${{ matrix.npm-script }}
+
+      - name: Collect artifacts
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="release"
+          if [ ! -d "${RELEASE_DIR}" ]; then
+            echo "::error::Expected ${RELEASE_DIR} directory was not generated."
+            exit 1
+          fi
+
+          mkdir -p artifacts
+          ARCHIVE_NAME="udio-prompt-crafter-${{ matrix.platform }}-${PACKAGE_VERSION}.${{ matrix.archive-extension }}"
+
+          if [ "${{ matrix.archive-extension }}" = "tar.gz" ]; then
+            tar -czf "artifacts/${ARCHIVE_NAME}" -C "${RELEASE_DIR}" .
+          else
+            cd "${RELEASE_DIR}"
+            zip -r "../artifacts/${ARCHIVE_NAME}" .
+            cd - >/dev/null
+          fi
+
+          echo "::notice::Packaged artifact artifacts/${ARCHIVE_NAME}."
+          echo "archive-name=${ARCHIVE_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: artifacts/${{ steps.package.outputs.archive-name }}
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs:
+      - validate
+      - build
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+      OWNER: ${{ github.repository_owner }}
+      REPO: ${{ github.event.repository.name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist-artifacts
+
+      - name: Prepare release asset directory
+        id: assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          shopt -s nullglob
+          for file in dist-artifacts/*/*; do
+            cp "$file" release/
+            echo "::notice::Prepared $(basename "$file") for release upload."
+          done
+          ls -al release
+
+      - name: Generate changelog
+        id: changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_TAG="${RELEASE_TAG}"
+          git fetch --tags --force
+          PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -B1 "^${CURRENT_TAG}$" | head -n1)
+          if [[ -z "${PREVIOUS_TAG}" || "${PREVIOUS_TAG}" == "${CURRENT_TAG}" ]]; then
+            echo "::notice::No previous tag found. Generating changelog from initial commit."
+            git log --pretty=format:'- %s (%h)' > CHANGELOG.md
+          else
+            echo "::notice::Generating changelog from ${PREVIOUS_TAG} to ${CURRENT_TAG}."
+            git log "${PREVIOUS_TAG}..${CURRENT_TAG}" --pretty=format:'- %s (%h)' > CHANGELOG.md
+          fi
+          if [[ ! -s CHANGELOG.md ]]; then
+            echo "- Initial release" > CHANGELOG.md
+          fi
+
+      - name: Generate download page
+        id: download_page
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat <<'MARKDOWN' > DOWNLOADS.md
+          ## Downloads
+
+          | Platform | Binary |
+          | --- | --- |
+          MARKDOWN
+
+          for artifact in release/*; do
+            FILENAME=$(basename "$artifact")
+            case "$FILENAME" in
+              *linux*) PLATFORM="Linux" ;;
+              *mac*) PLATFORM="macOS" ;;
+              *win*) PLATFORM="Windows" ;;
+              *) PLATFORM="Download" ;;
+            esac
+            echo "| ${PLATFORM} | [${FILENAME}](https://github.com/${OWNER}/${REPO}/releases/download/${RELEASE_TAG}/${FILENAME}) |" >> DOWNLOADS.md
+          done
+
+      - name: Compose release notes
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "# UDIO Prompt Crafter ${PACKAGE_VERSION}"
+            echo
+            echo "## Summary"
+            echo "- Automated release generated for tag ${RELEASE_TAG}."
+            echo
+            echo "## Changelog"
+            cat CHANGELOG.md
+            echo
+            cat DOWNLOADS.md
+          } > release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: UDIO Prompt Crafter ${{ env.PACKAGE_VERSION }}
+          body_path: release-notes.md
+          files: release/*
+          draft: false
+          prerelease: ${{ contains(env.RELEASE_TAG, '-rc') || contains(env.RELEASE_TAG, '-beta') || contains(env.RELEASE_TAG, '-alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload download page artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-download-page
+          path: DOWNLOADS.md
+
+      - name: Upload changelog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-changelog
+          path: CHANGELOG.md
