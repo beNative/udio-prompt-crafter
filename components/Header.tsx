@@ -14,7 +14,10 @@ interface HeaderProps {
   onClear: () => void;
   onOpenCommandPalette: () => void;
   onToggleLogPanel: () => void;
-  loadedPresetName: string | null;
+  activePresetName: string | null;
+  isActivePresetDirty: boolean;
+  onUpdateActivePreset: () => void;
+  onSaveActivePresetAsNew: () => void;
 }
 
 const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; children?: React.ReactNode; className?: string;}> = ({onClick, title, icon, children, className=""}) => (
@@ -41,7 +44,10 @@ export const Header: React.FC<HeaderProps> = ({
     onClear,
     onOpenCommandPalette,
     onToggleLogPanel,
-    loadedPresetName
+    activePresetName,
+    isActivePresetDirty,
+    onUpdateActivePreset,
+    onSaveActivePresetAsNew,
 }) => {
   
   const tabButtonStyles = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors";
@@ -65,15 +71,50 @@ export const Header: React.FC<HeaderProps> = ({
                   Info
               </button>
           </nav>
-          {loadedPresetName && (
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 rounded-lg max-w-[11rem] sm:max-w-[14rem]">
+          {activePresetName && (
+              <div className="flex items-center gap-3 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 rounded-lg max-w-[15rem] sm:max-w-[20rem]">
                   <Icon name="bookmark" className="w-4 h-4 flex-shrink-0" />
                   <div className="min-w-0">
                       <p className="text-[11px] uppercase tracking-wide text-blue-600/80 dark:text-blue-200/80">Active Preset</p>
-                      <span className="block text-xs sm:text-sm font-medium truncate" title={loadedPresetName}>
-                          {loadedPresetName}
-                      </span>
+                      <div className="flex items-center gap-2 min-w-0">
+                          <span className="block text-xs sm:text-sm font-medium truncate" title={activePresetName}>
+                              {activePresetName}
+                          </span>
+                          {isActivePresetDirty ? (
+                              <span className="text-[10px] uppercase tracking-wide bg-blue-100 dark:bg-blue-500/40 text-blue-700 dark:text-blue-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                  Modified
+                              </span>
+                          ) : (
+                              <Tooltip text="No unsaved changes">
+                                  <span className="flex items-center justify-center text-blue-500 dark:text-blue-200">
+                                      <Icon name="check" className="w-3.5 h-3.5" />
+                                  </span>
+                              </Tooltip>
+                          )}
+                      </div>
                   </div>
+                  {isActivePresetDirty && (
+                      <div className="flex items-center gap-1 ml-auto">
+                          <Tooltip text="Update preset with current changes">
+                              <button
+                                  onClick={onUpdateActivePreset}
+                                  className="p-1 rounded-md text-blue-600 dark:text-blue-100 hover:bg-blue-100/80 dark:hover:bg-blue-500/30 transition-colors"
+                                  aria-label="Update preset"
+                              >
+                                  <Icon name="save" className="w-4 h-4" />
+                              </button>
+                          </Tooltip>
+                          <Tooltip text="Save changes as a new preset">
+                              <button
+                                  onClick={onSaveActivePresetAsNew}
+                                  className="p-1 rounded-md text-blue-600 dark:text-blue-100 hover:bg-blue-100/80 dark:hover:bg-blue-500/30 transition-colors"
+                                  aria-label="Save as new preset"
+                              >
+                                  <Icon name="copy" className="w-4 h-4" />
+                              </button>
+                          </Tooltip>
+                      </div>
+                  )}
               </div>
           )}
       </div>
