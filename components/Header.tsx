@@ -15,6 +15,8 @@ interface HeaderProps {
   onOpenCommandPalette: () => void;
   onToggleLogPanel: () => void;
   loadedPresetName: string | null;
+  isActivePresetDirty?: boolean;
+  onEditActivePreset?: () => void;
 }
 
 const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; children?: React.ReactNode; className?: string;}> = ({onClick, title, icon, children, className=""}) => (
@@ -41,7 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
     onClear,
     onOpenCommandPalette,
     onToggleLogPanel,
-    loadedPresetName
+    loadedPresetName,
+    isActivePresetDirty = false,
+    onEditActivePreset,
 }) => {
   
   const tabButtonStyles = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors";
@@ -70,10 +74,28 @@ export const Header: React.FC<HeaderProps> = ({
                   <Icon name="bookmark" className="w-4 h-4 flex-shrink-0" />
                   <div className="min-w-0">
                       <p className="text-[11px] uppercase tracking-wide text-blue-600/80 dark:text-blue-200/80">Active Preset</p>
-                      <span className="block text-xs sm:text-sm font-medium truncate" title={loadedPresetName}>
-                          {loadedPresetName}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                          <span className="block text-xs sm:text-sm font-medium truncate" title={loadedPresetName}>
+                              {loadedPresetName}
+                          </span>
+                          {isActivePresetDirty && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-700 text-[10px] font-semibold uppercase tracking-wide">
+                                  Modified
+                              </span>
+                          )}
+                      </div>
                   </div>
+                  {onEditActivePreset && (
+                      <Tooltip text="Edit active preset">
+                          <button
+                              onClick={onEditActivePreset}
+                              className="p-1 rounded-md text-blue-600 dark:text-blue-200 hover:bg-blue-100/80 dark:hover:bg-blue-500/30 transition-colors"
+                              aria-label="Edit active preset"
+                          >
+                              <Icon name="pencil" className="w-4 h-4" />
+                          </button>
+                      </Tooltip>
+                  )}
               </div>
           )}
       </div>

@@ -26,6 +26,7 @@ import { PresetsGalleryPanel } from './components/PresetsGalleryPanel';
 import { produce } from 'immer';
 import { TitleBar } from './components/TitleBar';
 import { useDebounce } from './hooks/useDebounce';
+import { ActivePresetBanner } from './components/ActivePresetBanner';
 
 interface ConflictState {
   newlySelectedTag: Tag;
@@ -61,11 +62,16 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info' | 'presets'>('crafter');
   
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
-  const [loadedPresetName, setLoadedPresetName] = useState<string | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'info' | 'warning' | 'error' } | null>(null);
+
+  const [activePresetState, setActivePresetState] = useState<{ preset: Preset; mergedCategoryOrder: string[] } | null>(null);
+  const [activePresetDraftName, setActivePresetDraftName] = useState('');
+  const [activePresetDraftDescription, setActivePresetDraftDescription] = useState('');
+  const [isActivePresetEditing, setIsActivePresetEditing] = useState(false);
+  const [currentPromptPreview, setCurrentPromptPreview] = useState('');
 
   const commandInputRef = useRef<HTMLInputElement>(null);
   const commandPaletteRef = useRef<HTMLDivElement>(null);
@@ -93,6 +99,70 @@ const App: React.FC = () => {
   const updateToast = (id: number, updates: Partial<Omit<Toast, 'id'>>) => {
       setToasts(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
   }
+
+  const clearActivePreset = useCallback(() => {
+    setActivePresetState(null);
+    setActivePresetDraftName('');
+    setActivePresetDraftDescription('');
+    setIsActivePresetEditing(false);
+  }, []);
+
+  const applyActivePresetContext = useCallback((preset: Preset, mergedCategoryOrder: string[]) => {
+    setActivePresetState({ preset, mergedCategoryOrder });
+    setActivePresetDraftName(preset.name);
+    setActivePresetDraftDescription(preset.description ?? '');
+    setIsActivePresetEditing(false);
+  }, []);
+
+  const buildPresetFromState = useCallback((name: string, description: string, base?: Preset): Preset => {
+    const selectedTagsForPreset: Preset['selectedTags'] = {};
+    Object.entries(selectedTags).forEach(([id, tag]) => {
+      const selectedTag = tag as SelectedTag;
+      selectedTagsForPreset[id] = {
+        categoryId: selectedTag.categoryId,
+        isLocked: selectedTag.isLocked,
+      };
+    });
+
+    const now = new Date().toISOString();
+
+    return {
+      name,
+      description: description ? description : undefined,
+      isFavorite: base?.isFavorite ?? false,
+      createdAt: base?.createdAt ?? now,
+      updatedAt: now,
+      selectedTags: selectedTagsForPreset,
+      categoryOrder: categories.map(c => c.id),
+      udioParams,
+      textCategoryValues: { ...textCategoryValues },
+    };
+  }, [selectedTags, categories, udioParams, textCategoryValues]);
+
+  const buildSelectedTagsSignature = (record: Record<string, { categoryId: string; isLocked?: boolean }>) => {
+    const sortedKeys = Object.keys(record).sort();
+    return sortedKeys
+      .map(key => {
+        const entry = record[key];
+        return `${key}:${entry.categoryId}:${entry.isLocked ? '1' : '0'}`;
+      })
+      .join('|');
+  };
+
+  const buildTextValuesSignature = (values: Record<string, string>) => {
+    const sortedKeys = Object.keys(values).sort();
+    return sortedKeys.map(key => `${key}:${values[key] ?? ''}`).join('|');
+  };
+
+  const buildUdioSignature = (params?: UdioParams) => {
+    const normalized = params || { instrumental: false };
+    const instrumental = normalized.instrumental ? '1' : '0';
+    const duration = normalized.duration != null ? String(normalized.duration) : '';
+    const lyrics = normalized.lyrics ?? '';
+    return `${instrumental}|${duration}|${lyrics}`;
+  };
+
+  const buildCategoryOrderSignature = (order: string[]) => order.join('|');
   
   const detectServicesAndFetchModels = useCallback(async () => {
     logger.info("Detecting local LLM services...");
@@ -148,8 +218,8 @@ const App: React.FC = () => {
     setSelectedTags({});
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
-    setLoadedPresetName(null);
-  }, []);
+    clearActivePreset();
+  }, [clearActivePreset]);
 
   const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
     logger.info(reset ? "Resetting taxonomy to default." : "Saving custom taxonomy.");
@@ -296,6 +366,28 @@ const App: React.FC = () => {
       }
     }
   }, [appSettings]);
+
+  useEffect(() => {
+    if (!activePresetState || !appSettings) return;
+
+    const latest = appSettings.presets.find(p => p.createdAt === activePresetState.preset.createdAt);
+    if (!latest) {
+      clearActivePreset();
+      return;
+    }
+
+    if (
+      latest.updatedAt !== activePresetState.preset.updatedAt ||
+      latest.name !== activePresetState.preset.name ||
+      (latest.description ?? '') !== (activePresetState.preset.description ?? '')
+    ) {
+      setActivePresetState(prev => (prev ? { ...prev, preset: latest } : null));
+      if (!isActivePresetEditing) {
+        setActivePresetDraftName(latest.name);
+        setActivePresetDraftDescription(latest.description ?? '');
+      }
+    }
+  }, [activePresetState, appSettings, clearActivePreset, isActivePresetEditing]);
   
   const { taxonomyMap, allTags } = useMemo(() => {
     if (!taxonomy) {
@@ -551,7 +643,6 @@ const App: React.FC = () => {
     }
 
     logger.debug(`Toggling tag: ${tag.label}`, { selected: !isCurrentlySelected });
-    setLoadedPresetName(null);
     setSelectedTags(prev => {
       const newSelected = { ...prev };
       if (newSelected[tag.id]) {
@@ -568,7 +659,6 @@ const App: React.FC = () => {
 
   const handleToggleTagLock = useCallback((tagId: string) => {
     logger.debug(`Toggling lock for tag: ${tagId}`);
-    setLoadedPresetName(null);
     setSelectedTags(prev => produce(prev, draft => {
         if (draft[tagId]) {
             draft[tagId].isLocked = !draft[tagId].isLocked;
@@ -588,7 +678,6 @@ const App: React.FC = () => {
 
     switch (resolution) {
       case 'keep_new':
-        setLoadedPresetName(null);
         setSelectedTags(prev => {
           const newSelected = { ...prev };
           conflictingTags.forEach(tag => {
@@ -601,7 +690,6 @@ const App: React.FC = () => {
         break;
 
       case 'keep_both':
-        setLoadedPresetName(null);
         setSelectedTags(prev => {
           const newSelected = { ...prev };
           const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
@@ -619,7 +707,6 @@ const App: React.FC = () => {
   };
   
   const handleTextCategoryChange = (categoryId: string, value: string) => {
-      setLoadedPresetName(null);
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
   
@@ -635,54 +722,182 @@ const App: React.FC = () => {
     setSelectedTags(newSelectedTags);
     setTextCategoryValues(preset.textCategoryValues || {});
     setUdioParams(preset.udioParams || { instrumental: false });
-    setCategories(prevCategories => {
-        const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
-        const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter((c): c is Category => !!c);
-        const remaining = prevCategories.filter(c => !preset.categoryOrder.includes(c.id));
-        return [...ordered, ...remaining];
-    });
-    setLoadedPresetName(preset.name);
-  }, [taxonomyMap]);
+
+    const presetCategoryMap = new Map(categories.map(c => [c.id, c]));
+    const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter((c): c is Category => !!c);
+    const remaining = categories.filter(c => !preset.categoryOrder.includes(c.id));
+    const mergedCategoryOrder = [...ordered, ...remaining];
+
+    setCategories(mergedCategoryOrder);
+    applyActivePresetContext(preset, mergedCategoryOrder.map(c => c.id));
+  }, [taxonomyMap, categories, applyActivePresetContext]);
 
   const handleUdioParamsChange = useCallback((params: UdioParams) => {
-    setLoadedPresetName(null);
     setUdioParams(params);
   }, []);
 
   const handleSavePreset = (name: string, description: string): boolean => {
-    if (!name || !appSettings) return false;
-    if (appSettings.presets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        logger.error(`A preset with the name "${name}" already exists.`);
+    if (!appSettings) return false;
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedName) {
         setAlert({
-            title: "Duplicate Preset Name",
-            message: `A preset with the name "${name}" already exists. Please choose a different name.`,
+            title: 'Preset Name Required',
+            message: 'Please provide a name before saving your preset.',
+            variant: 'warning',
+        });
+        return false;
+    }
+
+    if (appSettings.presets.some(p => p.name.toLowerCase() === trimmedName.toLowerCase())) {
+        logger.error(`A preset with the name "${trimmedName}" already exists.`);
+        setAlert({
+            title: 'Duplicate Preset Name',
+            message: `A preset with the name "${trimmedName}" already exists. Please choose a different name.`,
             variant: 'error',
         });
         return false;
     }
-    
-    logger.info(`Saving new preset: ${name}`);
-    const selectedTagsForPreset: Preset['selectedTags'] = {};
-    // FIX: Cast tag to SelectedTag to fix type inference issue.
-    Object.entries(selectedTags).forEach(([id, tag]) => {
-        selectedTagsForPreset[id] = { categoryId: (tag as SelectedTag).categoryId, isLocked: (tag as SelectedTag).isLocked };
-    });
-    
-    const now = new Date().toISOString();
-    const newPreset: Preset = { 
-        name, 
-        description: description || undefined,
-        isFavorite: false,
-        createdAt: now,
-        updatedAt: now,
-        selectedTags: selectedTagsForPreset, 
-        categoryOrder: categories.map(c => c.id), 
-        udioParams,
-        textCategoryValues
-    };
+
+    logger.info(`Saving new preset: ${trimmedName}`);
+    const newPreset = buildPresetFromState(trimmedName, trimmedDescription);
     setAppSettings(prev => prev ? { ...prev, presets: [...prev.presets, newPreset] } : null);
+    applyActivePresetContext(newPreset, categories.map(c => c.id));
+    addToast({
+        type: 'success',
+        title: 'Preset Saved',
+        message: `Created a new preset named "${trimmedName}".`,
+    });
     return true;
   };
+
+  const handleUpdateActivePreset = useCallback(() => {
+    if (!appSettings || !activePresetState) return;
+
+    if (!trimmedActivePresetName) {
+        setAlert({
+            title: 'Preset Name Required',
+            message: 'Enter a name before updating this preset.',
+            variant: 'warning',
+        });
+        return;
+    }
+
+    const lowered = trimmedActivePresetName.toLowerCase();
+    const hasConflict = appSettings.presets.some(
+        p => p.name.toLowerCase() === lowered && p.createdAt !== activePresetState.preset.createdAt
+    );
+    if (hasConflict) {
+        setAlert({
+            title: 'Duplicate Preset Name',
+            message: 'Another preset already uses this name. Choose a unique name before updating.',
+            variant: 'error',
+        });
+        return;
+    }
+
+    logger.info(`Updating active preset: ${trimmedActivePresetName}`);
+    const updatedPreset = buildPresetFromState(trimmedActivePresetName, trimmedActivePresetDescription, activePresetState.preset);
+
+    setAppSettings(prev => prev ? produce(prev, draft => {
+        const index = draft.presets.findIndex(p => p.createdAt === activePresetState.preset.createdAt);
+        if (index !== -1) {
+            draft.presets[index] = updatedPreset;
+        }
+    }) : null);
+
+    applyActivePresetContext(updatedPreset, categories.map(c => c.id));
+    addToast({
+        type: 'success',
+        title: 'Preset Updated',
+        message: `Saved changes to "${trimmedActivePresetName}".`,
+    });
+  }, [
+    appSettings,
+    activePresetState,
+    trimmedActivePresetName,
+    trimmedActivePresetDescription,
+    buildPresetFromState,
+    setAppSettings,
+    applyActivePresetContext,
+    categories,
+    addToast,
+  ]);
+
+  const handleSaveActivePresetAsNew = useCallback(() => {
+    if (!appSettings) return;
+
+    if (!trimmedActivePresetName) {
+        setAlert({
+            title: 'Preset Name Required',
+            message: 'Enter a name before saving a new preset.',
+            variant: 'warning',
+        });
+        return;
+    }
+
+    const lowered = trimmedActivePresetName.toLowerCase();
+    const hasConflict = appSettings.presets.some(p => p.name.toLowerCase() === lowered);
+    if (hasConflict) {
+        setAlert({
+            title: 'Duplicate Preset Name',
+            message: 'A preset with this name already exists. Please choose a different name.',
+            variant: 'error',
+        });
+        return;
+    }
+
+    logger.info(`Saving active preset as new: ${trimmedActivePresetName}`);
+    const newPreset = buildPresetFromState(trimmedActivePresetName, trimmedActivePresetDescription);
+    setAppSettings(prev => prev ? produce(prev, draft => {
+        draft.presets.push(newPreset);
+    }) : null);
+    applyActivePresetContext(newPreset, categories.map(c => c.id));
+    addToast({
+        type: 'success',
+        title: 'Preset Saved',
+        message: `Saved your changes as "${trimmedActivePresetName}".`,
+    });
+  }, [
+    appSettings,
+    trimmedActivePresetName,
+    trimmedActivePresetDescription,
+    buildPresetFromState,
+    setAppSettings,
+    applyActivePresetContext,
+    categories,
+    addToast,
+  ]);
+
+  const handleRevertActivePreset = useCallback(() => {
+    if (!activePresetState) return;
+    logger.info(`Reverting preset to last saved state: ${activePresetState.preset.name}`);
+    handleLoadPreset(activePresetState.preset);
+    addToast({
+        type: 'info',
+        title: 'Changes Reverted',
+        message: `Restored "${activePresetState.preset.name}" to its last saved version.`,
+    });
+  }, [activePresetState, handleLoadPreset, addToast]);
+
+  const handleOpenActivePresetEditing = useCallback(() => {
+    if (activePresetState) {
+        setIsActivePresetEditing(true);
+    }
+  }, [activePresetState]);
+
+  const handleCloseActivePresetEditing = useCallback(() => {
+    setIsActivePresetEditing(false);
+  }, []);
+
+  const handleCancelActivePresetEditing = useCallback(() => {
+    if (activePresetState) {
+        setActivePresetDraftName(activePresetState.preset.name);
+        setActivePresetDraftDescription(activePresetState.preset.description ?? '');
+    }
+    setIsActivePresetEditing(false);
+  }, [activePresetState]);
 
   const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags, respecting locks.');
@@ -715,12 +930,11 @@ const App: React.FC = () => {
     setSelectedTags(newSelected);
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
-    setLoadedPresetName(null);
-  }, [selectedTags, categories, taxonomyMap]);
+    clearActivePreset();
+  }, [selectedTags, categories, taxonomyMap, clearActivePreset]);
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
     logger.info(`Clearing tags for category: ${categoryId}`);
-    setLoadedPresetName(null);
     setSelectedTags(prev => {
         const newSelected = { ...prev };
         Object.keys(newSelected).forEach(tagId => {
@@ -754,6 +968,7 @@ const App: React.FC = () => {
         const newHistory = [newEntry, ...prevHistory].slice(0, 50);
         return newHistory;
     });
+    setCurrentPromptPreview(data.promptString);
   }, [setHistory]);
 
   const handleLoadFromHistory = useCallback((entry: HistoryEntry) => {
@@ -767,7 +982,7 @@ const App: React.FC = () => {
       setSelectedTags(newSelectedTags);
       setTextCategoryValues(entry.textCategoryValues);
       setUdioParams(entry.udioParams || { instrumental: false });
-      setLoadedPresetName(null);
+      clearActivePreset();
       setCategories(prevCategories => {
           const historyCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
           const ordered = entry.categoryOrder.map(id => historyCategoryMap.get(id)).filter((c): c is Category => !!c);
@@ -775,7 +990,7 @@ const App: React.FC = () => {
           return [...ordered, ...remaining];
       });
       setIsHistoryModalOpen(false);
-  }, [taxonomyMap]);
+  }, [taxonomyMap, clearActivePreset]);
 
   const handleClearHistory = () => {
       logger.info('Clearing prompt history.');
@@ -876,7 +1091,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
                 newSelectedTags[lockedTag.id] = lockedTag;
             });
 
-            setLoadedPresetName(null);
+            clearActivePreset();
             setSelectedTags(newSelectedTags);
             setTextCategoryValues({}); // Clear non-locked text values
             return true;
@@ -888,7 +1103,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         logger.error("Error during thematic tag generation:", { error: e.message });
         throw e;
     }
-  }, [selectedTags, allTags, callLlm, taxonomyMap]);
+  }, [selectedTags, allTags, callLlm, taxonomyMap, clearActivePreset]);
 
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -922,6 +1137,106 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
     }
     return newConflicts;
   }, [selectedTags]);
+
+  const currentPresetSnapshot = useMemo(() => {
+    const simplified: Record<string, { categoryId: string; isLocked?: boolean }> = {};
+    Object.entries(selectedTags).forEach(([id, tag]) => {
+      const selectedTag = tag as SelectedTag;
+      simplified[id] = { categoryId: selectedTag.categoryId, isLocked: selectedTag.isLocked };
+    });
+
+    return {
+      selectedTags: buildSelectedTagsSignature(simplified),
+      textValues: buildTextValuesSignature(textCategoryValues),
+      categoryOrder: buildCategoryOrderSignature(categories.map(c => c.id)),
+      udio: buildUdioSignature(udioParams),
+    };
+  }, [selectedTags, textCategoryValues, categories, udioParams]);
+
+  const activePresetSnapshot = useMemo(() => {
+    if (!activePresetState) return null;
+
+    return {
+      selectedTags: buildSelectedTagsSignature(activePresetState.preset.selectedTags),
+      textValues: buildTextValuesSignature(activePresetState.preset.textCategoryValues || {}),
+      categoryOrder: buildCategoryOrderSignature(activePresetState.mergedCategoryOrder),
+      udio: buildUdioSignature(activePresetState.preset.udioParams),
+      name: activePresetState.preset.name,
+      description: activePresetState.preset.description?.trim() ?? '',
+    };
+  }, [activePresetState]);
+
+  const isActivePresetDirty = useMemo(() => {
+    if (!activePresetSnapshot) return false;
+    const trimmedName = activePresetDraftName.trim();
+    const trimmedDescription = activePresetDraftDescription.trim();
+
+    return (
+      trimmedName !== activePresetSnapshot.name ||
+      trimmedDescription !== activePresetSnapshot.description ||
+      currentPresetSnapshot.selectedTags !== activePresetSnapshot.selectedTags ||
+      currentPresetSnapshot.textValues !== activePresetSnapshot.textValues ||
+      currentPresetSnapshot.categoryOrder !== activePresetSnapshot.categoryOrder ||
+      currentPresetSnapshot.udio !== activePresetSnapshot.udio
+    );
+  }, [activePresetSnapshot, currentPresetSnapshot, activePresetDraftName, activePresetDraftDescription]);
+
+  const trimmedActivePresetName = activePresetDraftName.trim();
+  const trimmedActivePresetDescription = activePresetDraftDescription.trim();
+
+  const updateNameConflict = useMemo(() => {
+    if (!appSettings || !activePresetState) return false;
+    if (!trimmedActivePresetName) return false;
+    const lowered = trimmedActivePresetName.toLowerCase();
+    return appSettings.presets.some(
+      p => p.name.toLowerCase() === lowered && p.createdAt !== activePresetState.preset.createdAt
+    );
+  }, [appSettings, activePresetState, trimmedActivePresetName]);
+
+  const saveAsNewNameConflict = useMemo(() => {
+    if (!appSettings) return false;
+    if (!trimmedActivePresetName) return false;
+    const lowered = trimmedActivePresetName.toLowerCase();
+    return appSettings.presets.some(p => p.name.toLowerCase() === lowered);
+  }, [appSettings, trimmedActivePresetName]);
+
+  const nameErrorMessage = useMemo(() => {
+    if (!activePresetState) return '';
+    if (!trimmedActivePresetName) return 'Preset name is required.';
+    if (updateNameConflict) return 'Another preset already uses this name.';
+    return '';
+  }, [activePresetState, trimmedActivePresetName, updateNameConflict]);
+
+  const saveAsNewConflictMessage = useMemo(() => {
+    if (!trimmedActivePresetName) return '';
+    if (!saveAsNewNameConflict) return '';
+    if (activePresetState && trimmedActivePresetName.toLowerCase() === activePresetState.preset.name.toLowerCase()) {
+      return 'Use a different name to save a new preset.';
+    }
+    return 'A preset with this name already exists.';
+  }, [saveAsNewNameConflict, trimmedActivePresetName, activePresetState]);
+
+  const canUpdateActivePreset = Boolean(activePresetState) && !nameErrorMessage && isActivePresetDirty;
+  const updateDisabledReason = !activePresetState
+    ? 'No active preset to update.'
+    : nameErrorMessage
+      ? nameErrorMessage
+      : isActivePresetDirty
+        ? ''
+        : 'No changes to update.';
+
+  const canSaveActivePresetAsNew = Boolean(activePresetState) && !nameErrorMessage && !saveAsNewNameConflict && !!trimmedActivePresetName;
+  const saveAsNewDisabledReason = !activePresetState
+    ? 'No active preset to save.'
+    : nameErrorMessage
+      ? nameErrorMessage
+      : saveAsNewConflictMessage;
+
+  const activePresetDisplayName = activePresetState
+    ? (trimmedActivePresetName || activePresetState.preset.name)
+    : null;
+
+  const activePresetLastUpdated = activePresetState?.preset.updatedAt ?? null;
   
   if (isLoading || !appSettings || !taxonomy) {
     return (
@@ -1055,9 +1370,35 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           onClear={handleClear}
           onOpenCommandPalette={() => commandInputRef.current?.focus()}
           onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
-          loadedPresetName={loadedPresetName}
+          loadedPresetName={activePresetDisplayName}
+          isActivePresetDirty={isActivePresetDirty}
+          onEditActivePreset={activePresetState ? handleOpenActivePresetEditing : undefined}
         />
         <main className="flex-grow flex flex-col min-h-0">
+          {activeView === 'crafter' && activePresetState && (
+            <ActivePresetBanner
+              name={activePresetDraftName}
+              description={activePresetDraftDescription}
+              onNameChange={setActivePresetDraftName}
+              onDescriptionChange={setActivePresetDraftDescription}
+              promptPreview={currentPromptPreview}
+              isDirty={isActivePresetDirty}
+              canUpdate={canUpdateActivePreset}
+              canSaveAsNew={canSaveActivePresetAsNew}
+              updateDisabledReason={updateDisabledReason}
+              saveAsNewDisabledReason={saveAsNewDisabledReason}
+              onUpdate={handleUpdateActivePreset}
+              onSaveAsNew={handleSaveActivePresetAsNew}
+              onRevert={handleRevertActivePreset}
+              onOpenEditing={handleOpenActivePresetEditing}
+              onCloseEditing={handleCloseActivePresetEditing}
+              onCancelEditing={handleCancelActivePresetEditing}
+              isEditing={isActivePresetEditing}
+              nameErrorMessage={nameErrorMessage}
+              saveAsNewConflictMessage={saveAsNewConflictMessage}
+              lastUpdated={activePresetLastUpdated}
+            />
+          )}
           {renderActiveView()}
         </main>
         <StatusBar 
