@@ -73,6 +73,9 @@ const App: React.FC = () => {
   const [isActivePresetEditing, setIsActivePresetEditing] = useState(false);
   const [currentPromptPreview, setCurrentPromptPreview] = useState('');
 
+  const trimmedActivePresetName = activePresetDraftName.trim();
+  const trimmedActivePresetDescription = activePresetDraftDescription.trim();
+
   const commandInputRef = useRef<HTMLInputElement>(null);
   const commandPaletteRef = useRef<HTMLDivElement>(null);
 
@@ -1180,9 +1183,6 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
       currentPresetSnapshot.udio !== activePresetSnapshot.udio
     );
   }, [activePresetSnapshot, currentPresetSnapshot, activePresetDraftName, activePresetDraftDescription]);
-
-  const trimmedActivePresetName = activePresetDraftName.trim();
-  const trimmedActivePresetDescription = activePresetDraftDescription.trim();
 
   const updateNameConflict = useMemo(() => {
     if (!appSettings || !activePresetState) return false;
