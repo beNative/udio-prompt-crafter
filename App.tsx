@@ -200,13 +200,15 @@ const App: React.FC = () => {
       selectedTagsFromPreset[id] = entry;
     });
 
+    const categoryIds = categories.map(category => category.id);
+
     return {
       selectedTags: selectedTagsFromPreset,
       textCategoryValues: { ...(preset.textCategoryValues || {}) },
       udioParams: { instrumental: false, ...(preset.udioParams || {}) },
-      categoryOrder: [...preset.categoryOrder],
+      categoryOrder: categoryIds.length > 0 ? categoryIds : [...(preset.categoryOrder || [])],
     };
-  }, []);
+  }, [categories]);
 
   const detectServicesAndFetchModels = useCallback(async () => {
     logger.info("Detecting local LLM services...");
