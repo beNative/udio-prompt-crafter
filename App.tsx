@@ -16,7 +16,6 @@ import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
 import { InfoPage } from './components/InfoPage';
 import { StatusBar } from './components/StatusBar';
 import { SavePresetModal } from './components/SavePresetModal';
-import { PresetManagerModal } from './components/PresetManagerModal';
 import { PromptHistoryModal } from './components/PromptHistoryModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
@@ -62,7 +61,7 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info' | 'presets'>('crafter');
   
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
-  const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
+  const [loadedPresetName, setLoadedPresetName] = useState<string | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
@@ -149,6 +148,7 @@ const App: React.FC = () => {
     setSelectedTags({});
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
+    setLoadedPresetName(null);
   }, []);
 
   const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
@@ -551,6 +551,7 @@ const App: React.FC = () => {
     }
 
     logger.debug(`Toggling tag: ${tag.label}`, { selected: !isCurrentlySelected });
+    setLoadedPresetName(null);
     setSelectedTags(prev => {
       const newSelected = { ...prev };
       if (newSelected[tag.id]) {
@@ -567,6 +568,7 @@ const App: React.FC = () => {
 
   const handleToggleTagLock = useCallback((tagId: string) => {
     logger.debug(`Toggling lock for tag: ${tagId}`);
+    setLoadedPresetName(null);
     setSelectedTags(prev => produce(prev, draft => {
         if (draft[tagId]) {
             draft[tagId].isLocked = !draft[tagId].isLocked;
@@ -586,6 +588,7 @@ const App: React.FC = () => {
 
     switch (resolution) {
       case 'keep_new':
+        setLoadedPresetName(null);
         setSelectedTags(prev => {
           const newSelected = { ...prev };
           conflictingTags.forEach(tag => {
@@ -598,6 +601,7 @@ const App: React.FC = () => {
         break;
 
       case 'keep_both':
+        setLoadedPresetName(null);
         setSelectedTags(prev => {
           const newSelected = { ...prev };
           const categoryId = taxonomyMap.get(newlySelectedTag.id)?.categoryId;
@@ -615,6 +619,7 @@ const App: React.FC = () => {
   };
   
   const handleTextCategoryChange = (categoryId: string, value: string) => {
+      setLoadedPresetName(null);
       setTextCategoryValues(prev => ({ ...prev, [categoryId]: value }));
   };
   
@@ -636,7 +641,13 @@ const App: React.FC = () => {
         const remaining = prevCategories.filter(c => !preset.categoryOrder.includes(c.id));
         return [...ordered, ...remaining];
     });
+    setLoadedPresetName(preset.name);
   }, [taxonomyMap]);
+
+  const handleUdioParamsChange = useCallback((params: UdioParams) => {
+    setLoadedPresetName(null);
+    setUdioParams(params);
+  }, []);
 
   const handleSavePreset = (name: string, description: string): boolean => {
     if (!name || !appSettings) return false;
@@ -673,81 +684,9 @@ const App: React.FC = () => {
     return true;
   };
 
-  const handleUpdatePreset = (presetName: string) => {
-    logger.info(`Updating preset: ${presetName}`);
-    if (!appSettings) return;
-
-    const selectedTagsForPreset: Preset['selectedTags'] = {};
-    // FIX: Cast tag to SelectedTag to fix type inference issue.
-    Object.entries(selectedTags).forEach(([id, tag]) => {
-      selectedTagsForPreset[id] = { categoryId: (tag as SelectedTag).categoryId, isLocked: (tag as SelectedTag).isLocked };
-    });
-    
-    const categoryOrder = categories.map(c => c.id);
-
-    const updatedPresets = appSettings.presets.map(p => {
-        if (p.name === presetName) {
-            return { 
-                ...p, 
-                selectedTags: selectedTagsForPreset, 
-                categoryOrder, 
-                udioParams,
-                textCategoryValues,
-                updatedAt: new Date().toISOString()
-            };
-        }
-        return p;
-    });
-
-    setAppSettings({ ...appSettings, presets: updatedPresets });
-  };
-  
-  const handleRenamePreset = (oldName: string, newName: string): boolean => {
-      if (!newName || !appSettings) return false;
-      if (oldName.toLowerCase() !== newName.toLowerCase() && appSettings.presets.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
-          logger.error(`A preset with the name "${newName}" already exists.`);
-          setAlert({
-              title: "Duplicate Preset Name",
-              message: `A preset with the name "${newName}" already exists. Please choose a different name.`,
-              variant: 'error',
-          });
-          return false;
-      }
-
-      logger.info(`Renaming preset "${oldName}" to "${newName}"`);
-      const renamedPresets = appSettings.presets.map(p => 
-        p.name === oldName 
-        ? { ...p, name: newName, updatedAt: new Date().toISOString() } 
-        : p
-      );
-      setAppSettings({ ...appSettings, presets: renamedPresets });
-      return true;
-  };
-
-  const handleDeletePreset = (presetName: string) => {
-    logger.info(`Deleting preset: ${presetName}`);
-    if (!appSettings) return;
-    const filteredPresets = appSettings.presets.filter(p => p.name !== presetName);
-    setAppSettings({ ...appSettings, presets: filteredPresets });
-  };
-  
-  const handleTogglePresetFavorite = (presetName: string) => {
-    logger.debug(`Toggling favorite for preset: ${presetName}`);
-    if (!appSettings) return;
-
-    const updatedPresets = appSettings.presets.map(p => {
-      if (p.name === presetName) {
-        return { ...p, isFavorite: !p.isFavorite };
-      }
-      return p;
-    });
-
-    setAppSettings({ ...appSettings, presets: updatedPresets });
-  }
-  
   const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags, respecting locks.');
-    
+
     // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
     const lockedTags = (Object.values(selectedTags) as SelectedTag[]).filter(tag => tag.isLocked);
     const newSelected: Record<string, SelectedTag> = {};
@@ -776,10 +715,12 @@ const App: React.FC = () => {
     setSelectedTags(newSelected);
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
+    setLoadedPresetName(null);
   }, [selectedTags, categories, taxonomyMap]);
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
     logger.info(`Clearing tags for category: ${categoryId}`);
+    setLoadedPresetName(null);
     setSelectedTags(prev => {
         const newSelected = { ...prev };
         Object.keys(newSelected).forEach(tagId => {
@@ -826,6 +767,7 @@ const App: React.FC = () => {
       setSelectedTags(newSelectedTags);
       setTextCategoryValues(entry.textCategoryValues);
       setUdioParams(entry.udioParams || { instrumental: false });
+      setLoadedPresetName(null);
       setCategories(prevCategories => {
           const historyCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
           const ordered = entry.categoryOrder.map(id => historyCategoryMap.get(id)).filter((c): c is Category => !!c);
@@ -933,7 +875,8 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             lockedTags.forEach(lockedTag => {
                 newSelectedTags[lockedTag.id] = lockedTag;
             });
-            
+
+            setLoadedPresetName(null);
             setSelectedTags(newSelectedTags);
             setTextCategoryValues({}); // Clear non-locked text values
             return true;
@@ -1026,7 +969,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             />
           </div>
           <div className="h-full">
-            <PromptPreview 
+            <PromptPreview
               orderedCategories={categories}
               selectedTags={selectedTags}
               textCategoryValues={textCategoryValues}
@@ -1036,7 +979,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               onPromptPanelResize={handlePromptPanelResize}
               onPromptGenerated={handlePromptGenerated}
               udioParams={udioParams}
-              onUdioParamsChange={setUdioParams}
+              onUdioParamsChange={handleUdioParamsChange}
             />
           </div>
       </ResizablePanels>
@@ -1100,19 +1043,19 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
     <SettingsContext.Provider value={{ settings: appSettings, setSettings: setAppSettings }}>
       <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
         {isElectron && <TitleBar inputRef={commandInputRef} searchTerm={commandSearchTerm} onSearchTermChange={setCommandSearchTerm} onFocus={handleTitleBarFocus} onBlur={handleTitleBarBlur} />}
-        <Header 
-          theme={theme} 
+        <Header
+          theme={theme}
           activeView={activeView}
           onSetView={setActiveView}
           onToggleTheme={toggleTheme}
           onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
-          onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
           onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
           onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
           onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
           onClear={handleClear}
           onOpenCommandPalette={() => commandInputRef.current?.focus()}
           onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
+          loadedPresetName={loadedPresetName}
         />
         <main className="flex-grow flex flex-col min-h-0">
           {renderActiveView()}
@@ -1154,19 +1097,6 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
           orderedCategories={categories}
           taxonomy={taxonomy}
           callLlm={callLlm}
-        />
-        <PresetManagerModal
-          isOpen={isPresetManagerModalOpen}
-          onClose={() => setIsPresetManagerModalOpen(false)}
-          presets={appSettings.presets}
-          onLoadPreset={(preset) => {
-              handleLoadPreset(preset);
-              setIsPresetManagerModalOpen(false);
-          }}
-          onUpdatePreset={handleUpdatePreset}
-          onDeletePreset={handleDeletePreset}
-          onRenamePreset={handleRenamePreset}
-          onToggleFavorite={handleTogglePresetFavorite}
         />
         <PromptHistoryModal
           isOpen={isHistoryModalOpen}

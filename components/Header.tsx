@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Preset } from '../types';
 import { Icon } from './icons';
 import { Tooltip } from './Tooltip';
 
@@ -9,13 +8,13 @@ interface HeaderProps {
   onSetView: (view: 'crafter' | 'settings' | 'info' | 'presets') => void;
   onToggleTheme: () => void;
   onOpenSavePresetModal: () => void;
-  onOpenPresetManagerModal: () => void;
   onOpenHistoryModal: () => void;
   onOpenDeconstructModal: () => void;
   onOpenThematicRandomizerModal: () => void;
   onClear: () => void;
   onOpenCommandPalette: () => void;
   onToggleLogPanel: () => void;
+  loadedPresetName: string | null;
 }
 
 const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; children?: React.ReactNode; className?: string;}> = ({onClick, title, icon, children, className=""}) => (
@@ -30,19 +29,19 @@ const HeaderButton: React.FC<{onClick: () => void; title: string; icon: string; 
     </Tooltip>
 );
 
-export const Header: React.FC<HeaderProps> = ({ 
-    theme, 
-    activeView, 
-    onSetView, 
-    onToggleTheme, 
-    onOpenSavePresetModal, 
-    onOpenPresetManagerModal, 
+export const Header: React.FC<HeaderProps> = ({
+    theme,
+    activeView,
+    onSetView,
+    onToggleTheme,
+    onOpenSavePresetModal,
     onOpenHistoryModal,
     onOpenDeconstructModal,
-    onOpenThematicRandomizerModal, 
-    onClear, 
-    onOpenCommandPalette, 
-    onToggleLogPanel 
+    onOpenThematicRandomizerModal,
+    onClear,
+    onOpenCommandPalette,
+    onToggleLogPanel,
+    loadedPresetName
 }) => {
   
   const tabButtonStyles = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors";
@@ -51,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white/80 dark:bg-bunker-950/80 backdrop-blur-sm text-bunker-900 dark:text-white p-3 flex items-center justify-between border-b border-bunker-200/80 dark:border-bunker-800/80 shrink-0">
-      <div className="flex items-center">
+      <div className="flex items-center space-x-4">
           <nav className="flex items-center space-x-1 p-1 bg-bunker-100 dark:bg-bunker-800/80 rounded-lg">
               <button onClick={() => onSetView('crafter')} className={`${tabButtonStyles} ${activeView === 'crafter' ? activeTabStyles : inactiveTabStyles}`}>
                   Crafter
@@ -66,13 +65,23 @@ export const Header: React.FC<HeaderProps> = ({
                   Info
               </button>
           </nav>
+          {loadedPresetName && (
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 rounded-lg max-w-[11rem] sm:max-w-[14rem]">
+                  <Icon name="bookmark" className="w-4 h-4 flex-shrink-0" />
+                  <div className="min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide text-blue-600/80 dark:text-blue-200/80">Active Preset</p>
+                      <span className="block text-xs sm:text-sm font-medium truncate" title={loadedPresetName}>
+                          {loadedPresetName}
+                      </span>
+                  </div>
+              </div>
+          )}
       </div>
 
       <div className="flex items-center space-x-2">
         {activeView === 'crafter' && (
             <>
                 <HeaderButton onClick={onOpenHistoryModal} title="Prompt History" icon="history" />
-                <HeaderButton onClick={onOpenPresetManagerModal} title="Manage Presets" icon="list-bullet" />
                 <HeaderButton onClick={onOpenSavePresetModal} title="Save Current as Preset..." icon="save" />
                 <HeaderButton onClick={onOpenDeconstructModal} title="Deconstruct Prompt with AI" icon="wandSparkles" />
                 <HeaderButton onClick={onOpenThematicRandomizerModal} title="Thematic Randomizer" icon="sparkles" />
