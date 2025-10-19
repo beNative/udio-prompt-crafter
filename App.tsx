@@ -16,7 +16,6 @@ import { ResizableVerticalPanel } from './components/ResizableVerticalPanel';
 import { InfoPage } from './components/InfoPage';
 import { StatusBar } from './components/StatusBar';
 import { SavePresetModal } from './components/SavePresetModal';
-import { PresetManagerModal } from './components/PresetManagerModal';
 import { PromptHistoryModal } from './components/PromptHistoryModal';
 import { DeconstructPromptModal } from './components/DeconstructPromptModal';
 import { ThematicRandomizerModal } from './components/ThematicRandomizerModal';
@@ -34,6 +33,104 @@ interface ConflictState {
 }
 
 const isElectron = !!window.electronAPI;
+
+type PresetSnapshot = {
+  selectedTags: Array<{ id: string; categoryId: string; isLocked: boolean }>;
+  textCategoryValues: Array<{ id: string; value: string }>;
+  udioParams: UdioParams;
+  categoryOrder: string[];
+};
+
+const createPresetSnapshot = (
+  selectedTags: Record<string, SelectedTag>,
+  textCategoryValues: Record<string, string>,
+  udioParams: UdioParams,
+  categories: Category[],
+): PresetSnapshot => ({
+  selectedTags: Object.entries(selectedTags)
+    .map(([id, tag]) => ({ id, categoryId: (tag as SelectedTag).categoryId, isLocked: !!(tag as SelectedTag).isLocked }))
+    .sort((a, b) => a.id.localeCompare(b.id)),
+  textCategoryValues: Object.entries(textCategoryValues)
+    .map(([id, value]) => ({ id, value }))
+    .sort((a, b) => a.id.localeCompare(b.id)),
+  udioParams: { ...udioParams },
+  categoryOrder: categories.map(c => c.id),
+});
+
+const cloneSnapshot = (snapshot: PresetSnapshot): PresetSnapshot => ({
+  selectedTags: snapshot.selectedTags.map(tag => ({ ...tag })),
+  textCategoryValues: snapshot.textCategoryValues.map(entry => ({ ...entry })),
+  udioParams: { ...snapshot.udioParams },
+  categoryOrder: [...snapshot.categoryOrder],
+});
+
+const areSnapshotsEqual = (a: PresetSnapshot, b: PresetSnapshot): boolean => {
+  if (a.selectedTags.length !== b.selectedTags.length) return false;
+  if (a.textCategoryValues.length !== b.textCategoryValues.length) return false;
+  if (a.categoryOrder.length !== b.categoryOrder.length) return false;
+
+  for (let i = 0; i < a.selectedTags.length; i++) {
+    const tagA = a.selectedTags[i];
+    const tagB = b.selectedTags[i];
+    if (tagA.id !== tagB.id || tagA.categoryId !== tagB.categoryId || tagA.isLocked !== tagB.isLocked) {
+      return false;
+    }
+  }
+
+  for (let i = 0; i < a.textCategoryValues.length; i++) {
+    const valueA = a.textCategoryValues[i];
+    const valueB = b.textCategoryValues[i];
+    if (valueA.id !== valueB.id || valueA.value !== valueB.value) {
+      return false;
+    }
+  }
+
+  for (let i = 0; i < a.categoryOrder.length; i++) {
+    if (a.categoryOrder[i] !== b.categoryOrder[i]) return false;
+  }
+
+  const keysA = Object.keys(a.udioParams).sort();
+  const keysB = Object.keys(b.udioParams).sort();
+  if (keysA.length !== keysB.length) return false;
+  for (let i = 0; i < keysA.length; i++) {
+    const key = keysA[i] as keyof UdioParams;
+    if (key !== (keysB[i] as keyof UdioParams)) return false;
+    if (a.udioParams[key] !== b.udioParams[key]) return false;
+  }
+
+  return true;
+};
+
+const snapshotToPresetData = (snapshot: PresetSnapshot) => {
+  const selectedTags: Preset['selectedTags'] = {};
+  snapshot.selectedTags.forEach(({ id, categoryId, isLocked }) => {
+    selectedTags[id] = { categoryId };
+    if (isLocked) selectedTags[id].isLocked = true;
+  });
+
+  const textCategoryValues: Record<string, string> = {};
+  snapshot.textCategoryValues.forEach(({ id, value }) => {
+    textCategoryValues[id] = value;
+  });
+
+  return {
+    selectedTags,
+    textCategoryValues,
+    udioParams: { ...snapshot.udioParams },
+    categoryOrder: [...snapshot.categoryOrder],
+  };
+};
+
+const buildPresetCopyName = (baseName: string, presets: Preset[]): string => {
+  const existingNames = new Set(presets.map(p => p.name));
+  let copyIndex = 1;
+  let candidate = `${baseName} (Copy)`;
+  while (existingNames.has(candidate)) {
+    copyIndex += 1;
+    candidate = `${baseName} (Copy ${copyIndex})`;
+  }
+  return candidate;
+};
 
 const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
@@ -62,7 +159,12 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'crafter' | 'settings' | 'info' | 'presets'>('crafter');
   
   const [isSavePresetModalOpen, setIsSavePresetModalOpen] = useState(false);
-  const [isPresetManagerModalOpen, setIsPresetManagerModalOpen] = useState(false);
+  const [presetModalDefaults, setPresetModalDefaults] = useState<{ name?: string; description?: string } | null>(null);
+  const [activePresetContext, setActivePresetContext] = useState<{
+    name: string;
+    description?: string;
+    snapshot: PresetSnapshot;
+  } | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeconstructModalOpen, setIsDeconstructModalOpen] = useState(false);
   const [isThematicRandomizerModalOpen, setIsThematicRandomizerModalOpen] = useState(false);
@@ -149,6 +251,7 @@ const App: React.FC = () => {
     setSelectedTags({});
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
+    setActivePresetContext(null);
   }, []);
 
   const handleTaxonomyChange = useCallback(async (newTaxonomy: Taxonomy, reset: boolean = false) => {
@@ -326,6 +429,16 @@ const App: React.FC = () => {
 
   const handleCommandPaletteClose = useCallback(() => {
     setIsCommandPaletteOpen(false);
+  }, []);
+
+  const handleOpenSavePresetModal = useCallback((defaults?: { name?: string; description?: string }) => {
+    setPresetModalDefaults(defaults ?? null);
+    setIsSavePresetModalOpen(true);
+  }, []);
+
+  const handleCloseSavePresetModal = useCallback(() => {
+    setIsSavePresetModalOpen(false);
+    setPresetModalDefaults(null);
   }, []);
 
   const handleTitleBarFocus = useCallback(() => {
@@ -627,16 +740,24 @@ const App: React.FC = () => {
       else logger.warn('Tag from preset not found.', { tagId });
     });
 
+    const textValues = preset.textCategoryValues || {};
+    const udioValues = preset.udioParams || { instrumental: false };
+    const presetCategoryMap = new Map(categories.map(c => [c.id, c]));
+    const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter((c): c is Category => !!c);
+    const remaining = categories.filter(c => !preset.categoryOrder.includes(c.id));
+    const updatedCategories = [...ordered, ...remaining];
+
     setSelectedTags(newSelectedTags);
-    setTextCategoryValues(preset.textCategoryValues || {});
-    setUdioParams(preset.udioParams || { instrumental: false });
-    setCategories(prevCategories => {
-        const presetCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
-        const ordered = preset.categoryOrder.map(id => presetCategoryMap.get(id)).filter((c): c is Category => !!c);
-        const remaining = prevCategories.filter(c => !preset.categoryOrder.includes(c.id));
-        return [...ordered, ...remaining];
-    });
-  }, [taxonomyMap]);
+    setTextCategoryValues(textValues);
+    setUdioParams(udioValues);
+    setCategories(updatedCategories);
+    const snapshot = createPresetSnapshot(newSelectedTags, textValues, udioValues, updatedCategories);
+    setActivePresetContext({ name: preset.name, description: preset.description, snapshot: cloneSnapshot(snapshot) });
+  }, [taxonomyMap, categories]);
+
+  const handleUdioParamsChange = useCallback((params: UdioParams) => {
+    setUdioParams(params);
+  }, []);
 
   const handleSavePreset = (name: string, description: string): boolean => {
     if (!name || !appSettings) return false;
@@ -673,81 +794,67 @@ const App: React.FC = () => {
     return true;
   };
 
-  const handleUpdatePreset = (presetName: string) => {
-    logger.info(`Updating preset: ${presetName}`);
-    if (!appSettings) return;
+  const handleUpdateActivePreset = useCallback(() => {
+    if (!activePresetContext || !appSettings) {
+      return;
+    }
 
-    const selectedTagsForPreset: Preset['selectedTags'] = {};
-    // FIX: Cast tag to SelectedTag to fix type inference issue.
-    Object.entries(selectedTags).forEach(([id, tag]) => {
-      selectedTagsForPreset[id] = { categoryId: (tag as SelectedTag).categoryId, isLocked: (tag as SelectedTag).isLocked };
-    });
-    
-    const categoryOrder = categories.map(c => c.id);
+    const presetIndex = appSettings.presets.findIndex(p => p.name === activePresetContext.name);
+    if (presetIndex === -1) {
+      setAlert({
+        title: 'Preset Not Found',
+        message: `The preset "${activePresetContext.name}" could not be found. It may have been removed.`,
+        variant: 'error',
+      });
+      setActivePresetContext(null);
+      return;
+    }
 
-    const updatedPresets = appSettings.presets.map(p => {
-        if (p.name === presetName) {
-            return { 
-                ...p, 
-                selectedTags: selectedTagsForPreset, 
-                categoryOrder, 
-                udioParams,
-                textCategoryValues,
-                updatedAt: new Date().toISOString()
-            };
-        }
-        return p;
-    });
+    const presetName = activePresetContext.name;
+    const snapshotClone = cloneSnapshot(currentPresetSnapshot);
+    const presetData = snapshotToPresetData(snapshotClone);
+    const now = new Date().toISOString();
 
-    setAppSettings({ ...appSettings, presets: updatedPresets });
-  };
-  
-  const handleRenamePreset = (oldName: string, newName: string): boolean => {
-      if (!newName || !appSettings) return false;
-      if (oldName.toLowerCase() !== newName.toLowerCase() && appSettings.presets.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
-          logger.error(`A preset with the name "${newName}" already exists.`);
-          setAlert({
-              title: "Duplicate Preset Name",
-              message: `A preset with the name "${newName}" already exists. Please choose a different name.`,
-              variant: 'error',
-          });
-          return false;
-      }
-
-      logger.info(`Renaming preset "${oldName}" to "${newName}"`);
-      const renamedPresets = appSettings.presets.map(p => 
-        p.name === oldName 
-        ? { ...p, name: newName, updatedAt: new Date().toISOString() } 
-        : p
-      );
-      setAppSettings({ ...appSettings, presets: renamedPresets });
-      return true;
-  };
-
-  const handleDeletePreset = (presetName: string) => {
-    logger.info(`Deleting preset: ${presetName}`);
-    if (!appSettings) return;
-    const filteredPresets = appSettings.presets.filter(p => p.name !== presetName);
-    setAppSettings({ ...appSettings, presets: filteredPresets });
-  };
-  
-  const handleTogglePresetFavorite = (presetName: string) => {
-    logger.debug(`Toggling favorite for preset: ${presetName}`);
-    if (!appSettings) return;
-
-    const updatedPresets = appSettings.presets.map(p => {
-      if (p.name === presetName) {
-        return { ...p, isFavorite: !p.isFavorite };
-      }
-      return p;
+    setAppSettings(prev => {
+      if (!prev) return prev;
+      const updatedPresets = prev.presets.map((preset, index) => {
+        if (index !== presetIndex) return preset;
+        return {
+          ...preset,
+          selectedTags: presetData.selectedTags,
+          textCategoryValues: presetData.textCategoryValues,
+          udioParams: presetData.udioParams,
+          categoryOrder: presetData.categoryOrder,
+          updatedAt: now,
+        };
+      });
+      return { ...prev, presets: updatedPresets };
     });
 
-    setAppSettings({ ...appSettings, presets: updatedPresets });
-  }
-  
+    setActivePresetContext(prev => (prev ? { ...prev, snapshot: snapshotClone } : prev));
+    addToast({
+      type: 'success',
+      title: 'Preset updated',
+      message: `Saved changes to "${presetName}".`,
+    });
+  }, [activePresetContext, appSettings, currentPresetSnapshot, setAppSettings, addToast, setAlert]);
+
+  const handleSaveActivePresetAsNew = useCallback(() => {
+    if (!activePresetContext || !appSettings) {
+      handleOpenSavePresetModal();
+      return;
+    }
+
+    const suggestedName = buildPresetCopyName(activePresetContext.name, appSettings.presets);
+    handleOpenSavePresetModal({
+      name: suggestedName,
+      description: activePresetContext.description,
+    });
+  }, [activePresetContext, appSettings, handleOpenSavePresetModal]);
+
   const handleSimpleRandomize = useCallback(() => {
     logger.info('Randomizing tags, respecting locks.');
-    
+
     // FIX: Cast Object.values to SelectedTag[] to fix type inference issue.
     const lockedTags = (Object.values(selectedTags) as SelectedTag[]).filter(tag => tag.isLocked);
     const newSelected: Record<string, SelectedTag> = {};
@@ -776,6 +883,7 @@ const App: React.FC = () => {
     setSelectedTags(newSelected);
     setTextCategoryValues({});
     setUdioParams({ instrumental: false });
+    setActivePresetContext(null);
   }, [selectedTags, categories, taxonomyMap]);
 
   const handleClearCategoryTags = useCallback((categoryId: string) => {
@@ -826,6 +934,7 @@ const App: React.FC = () => {
       setSelectedTags(newSelectedTags);
       setTextCategoryValues(entry.textCategoryValues);
       setUdioParams(entry.udioParams || { instrumental: false });
+      setActivePresetContext(null);
       setCategories(prevCategories => {
           const historyCategoryMap = new Map(prevCategories.map(c => [c.id, c]));
           const ordered = entry.categoryOrder.map(id => historyCategoryMap.get(id)).filter((c): c is Category => !!c);
@@ -933,7 +1042,8 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             lockedTags.forEach(lockedTag => {
                 newSelectedTags[lockedTag.id] = lockedTag;
             });
-            
+
+            setActivePresetContext(null);
             setSelectedTags(newSelectedTags);
             setTextCategoryValues({}); // Clear non-locked text values
             return true;
@@ -946,6 +1056,16 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
         throw e;
     }
   }, [selectedTags, allTags, callLlm, taxonomyMap]);
+
+  const currentPresetSnapshot = useMemo(
+    () => createPresetSnapshot(selectedTags, textCategoryValues, udioParams, categories),
+    [selectedTags, textCategoryValues, udioParams, categories]
+  );
+
+  const hasActivePresetChanges = useMemo(
+    () => (activePresetContext ? !areSnapshotsEqual(activePresetContext.snapshot, currentPresetSnapshot) : false),
+    [activePresetContext, currentPresetSnapshot]
+  );
 
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -1026,7 +1146,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             />
           </div>
           <div className="h-full">
-            <PromptPreview 
+            <PromptPreview
               orderedCategories={categories}
               selectedTags={selectedTags}
               textCategoryValues={textCategoryValues}
@@ -1036,7 +1156,7 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
               onPromptPanelResize={handlePromptPanelResize}
               onPromptGenerated={handlePromptGenerated}
               udioParams={udioParams}
-              onUdioParamsChange={setUdioParams}
+              onUdioParamsChange={handleUdioParamsChange}
             />
           </div>
       </ResizablePanels>
@@ -1096,23 +1216,28 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
     }
   };
 
+  const activePresetName = activePresetContext?.name ?? null;
+
   return (
     <SettingsContext.Provider value={{ settings: appSettings, setSettings: setAppSettings }}>
       <div className="h-full w-full flex flex-col font-sans bg-bunker-50 dark:bg-bunker-950 text-bunker-900 dark:text-bunker-200">
         {isElectron && <TitleBar inputRef={commandInputRef} searchTerm={commandSearchTerm} onSearchTermChange={setCommandSearchTerm} onFocus={handleTitleBarFocus} onBlur={handleTitleBarBlur} />}
-        <Header 
-          theme={theme} 
+        <Header
+          theme={theme}
           activeView={activeView}
           onSetView={setActiveView}
           onToggleTheme={toggleTheme}
-          onOpenSavePresetModal={() => setIsSavePresetModalOpen(true)}
-          onOpenPresetManagerModal={() => setIsPresetManagerModalOpen(true)}
+          onOpenSavePresetModal={() => handleOpenSavePresetModal()}
           onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
           onOpenDeconstructModal={() => setIsDeconstructModalOpen(true)}
           onOpenThematicRandomizerModal={() => setIsThematicRandomizerModalOpen(true)}
           onClear={handleClear}
           onOpenCommandPalette={() => commandInputRef.current?.focus()}
           onToggleLogPanel={() => setIsLogPanelOpen(prev => !prev)}
+          loadedPresetName={activePresetName}
+          hasActivePresetChanges={hasActivePresetChanges}
+          onUpdateActivePreset={handleUpdateActivePreset}
+          onSaveActivePresetAsNew={handleSaveActivePresetAsNew}
         />
         <main className="flex-grow flex flex-col min-h-0">
           {renderActiveView()}
@@ -1140,33 +1265,22 @@ ${JSON.stringify(allTags.map(({ id, label, description }) => ({ id, label, descr
             presets={appSettings.presets}
             onToggleTag={(tag) => { handleToggleTag(tag); setCommandSearchTerm(''); commandInputRef.current?.focus(); }}
             onLoadPreset={(preset) => { handleLoadPreset(preset); handleCommandPaletteClose(); }}
-            onSavePreset={() => { handleCommandPaletteClose(); setIsSavePresetModalOpen(true); }}
+            onSavePreset={() => { handleCommandPaletteClose(); handleOpenSavePresetModal(); }}
             onRandomize={() => { handleSimpleRandomize(); handleCommandPaletteClose(); }}
             onClear={() => { handleClear(); handleCommandPaletteClose(); }}
           />
         )}
         <SavePresetModal
           isOpen={isSavePresetModalOpen}
-          onClose={() => setIsSavePresetModalOpen(false)}
+          onClose={handleCloseSavePresetModal}
           onSave={handleSavePreset}
           selectedTags={selectedTags}
           textCategoryValues={textCategoryValues}
           orderedCategories={categories}
           taxonomy={taxonomy}
           callLlm={callLlm}
-        />
-        <PresetManagerModal
-          isOpen={isPresetManagerModalOpen}
-          onClose={() => setIsPresetManagerModalOpen(false)}
-          presets={appSettings.presets}
-          onLoadPreset={(preset) => {
-              handleLoadPreset(preset);
-              setIsPresetManagerModalOpen(false);
-          }}
-          onUpdatePreset={handleUpdatePreset}
-          onDeletePreset={handleDeletePreset}
-          onRenamePreset={handleRenamePreset}
-          onToggleFavorite={handleTogglePresetFavorite}
+          initialName={presetModalDefaults?.name}
+          initialDescription={presetModalDefaults?.description}
         />
         <PromptHistoryModal
           isOpen={isHistoryModalOpen}

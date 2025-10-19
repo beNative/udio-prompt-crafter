@@ -13,6 +13,8 @@ interface SavePresetModalProps {
   orderedCategories: Category[];
   taxonomy: Taxonomy;
   callLlm: (systemPrompt: string, userPrompt: string, isResponseTextFreeform?: boolean) => Promise<any>;
+  initialName?: string;
+  initialDescription?: string;
 }
 
 const LoadingSpinner: React.FC<{className?: string}> = ({className = 'h-4 w-4'}) => (
@@ -23,14 +25,16 @@ const LoadingSpinner: React.FC<{className?: string}> = ({className = 'h-4 w-4'})
 );
 
 
-export const SavePresetModal: React.FC<SavePresetModalProps> = ({ 
-    isOpen, 
-    onClose, 
-    onSave, 
-    selectedTags, 
-    textCategoryValues, 
-    orderedCategories, 
-    callLlm 
+export const SavePresetModal: React.FC<SavePresetModalProps> = ({
+    isOpen,
+    onClose,
+    onSave,
+    selectedTags,
+    textCategoryValues,
+    orderedCategories,
+    callLlm,
+    initialName,
+    initialDescription
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -40,12 +44,12 @@ export const SavePresetModal: React.FC<SavePresetModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setName('');
-      setDescription('');
+      setName(initialName || '');
+      setDescription(initialDescription || '');
       setAiTitles([]);
       setGenerationError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialName, initialDescription]);
 
   const handleSave = () => {
     if (onSave(name.trim(), description.trim())) {
